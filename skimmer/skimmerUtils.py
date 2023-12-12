@@ -1,6 +1,13 @@
 import awkward as ak
+from coffea.nanoevents.methods import vector
 
+from utils.treeMaker.triggers import trigger_table
 from utils.Logger import *
+
+# Needed so that ak.zip({"pt": [...], "eta": [...], "phi": [...], "mass": [...]},
+#                         with_name="PtEtaPhiMLorentzVector")
+# is understood as a PtEtaPhiMLorentzVector from coffea.nanoevents.methods.vector_
+ak.behavior.update(vector.behavior)
 
 
 def update_cut_flow(cut_flow, cut_name, events):
@@ -14,11 +21,75 @@ def update_cut_flow(cut_flow, cut_name, events):
     """
 
     if cut_name in cut_flow.keys():
-        cut_flow[cut_name][0] += get_number_of_events(events)
+        cut_flow[cut_name][0] += __get_number_of_events(events)
     else:
-        cut_flow[cut_name] = [get_number_of_events(events)]
+        cut_flow[cut_name] = [__get_number_of_events(events)]
 
 
-def get_number_of_events(events):
+def apply_trigger_cut(events, trigger_list):
+    """Filter events using an or of all triggers.
+
+    Args:
+        events (ak.Array)
+        trigger_list (list[str])
+
+    Returns:
+        ak.Array
+    """
+
+    trigger_filter = ak.zeros_like(events.Weight, dtype=bool)
+    for trigger_name in trigger_list:
+        trigger_index = trigger_table[trigger_name]
+        trigger_branch = events.TriggerPass[:, trigger_index]
+        trigger_filter = trigger_filter | (trigger_branch == 1)
+ 
+    events = events[trigger_filter]
+
+    return events
+
+
+def apply_met_filters_cut(events, met_filter_names):
+    """MET filters cuts.
+
+    Args:
+        events (ak.Array)
+        met_filter_names (list[str])
+
+    Returns:
+        ak.Array
+    """
+
+    for met_filter_name in met_filter_names:
+        met_filter = getattr(events, met_filter_name)
+        events = events[met_filter>0]
+
+    return events
+
+
+def make_pt_eta_phi_mass_lorentz_vector(pt, eta=None, phi=None, mass=None):
+    """Take pt, eta, phi, mass awkward arrays and return the corresponding PtEtaPhiMLorentzVector.
+
+    eta and mass can be None, e.g. for the MET.
+    """
+
+    if eta is None:
+        eta = ak.zeros_like(pt)
+    if mass is None:
+        mass = ak.zeros_like(pt)
+
+    vec = ak.zip(
+        {
+            "pt": pt,
+            "eta": eta,
+            "phi": phi,
+            "mass": mass,
+        },
+        with_name="PtEtaPhiMLorentzVector",
+    )
+
+    return vec
+
+
+def __get_number_of_events(events):
     return ak.sum(events.Weight)
 
