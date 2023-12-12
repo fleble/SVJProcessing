@@ -37,6 +37,8 @@ def __zip_composite(ak_array):
         "x": "/.fX",
         "y": "/.fY",
         "z": "/.fZ",
+        "j": "jerFactor",
+        "o": "origIndex",
     }
 
     return ak.zip(
