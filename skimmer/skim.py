@@ -6,6 +6,7 @@ from coffea import processor
 
 import utils.uproot_utilities as uproot_utl
 from utils.coffea.ak_array_accumulator import AkArrayAccumulator
+from utils.coffea.dict_accumulator import DictAccumulator
 from utils.coffea.n_tree_maker_schema import NTreeMakerSchema
 from skimmer import skimmer_utils
 
@@ -13,8 +14,6 @@ from skimmer import skimmer_utils
 class Skimmer(processor.ProcessorABC):
 
     def __init__(self, process_function):
-        self.accumulator = AkArrayAccumulator()
-        self.converted_branches = []
         self.process_function = process_function
 
         
@@ -28,7 +27,7 @@ class Skimmer(processor.ProcessorABC):
 
         accumulator = {
             "events": AkArrayAccumulator(ak.copy(events)),
-            "cut_flow": cut_flow,
+            "cut_flow": DictAccumulator(cut_flow.copy()),
         }
 
         return accumulator
@@ -53,7 +52,7 @@ def __get_arguments():
     )
     parser.add_argument(
         "-m", "--process_module_name",
-        help="Process module name, e.g. analysisConfigs.config",
+        help="Process module name, e.g. analysis_configs.t_channel_pre_selection",
         required=True,
     )
     parser.add_argument(
@@ -63,6 +62,13 @@ def __get_arguments():
     )
 
     return parser.parse_args()
+
+
+def __prepare_cut_flow_tree(cut_flow_dict):
+    cut_flow_tree = {
+        key: [value] for key, value in cut_flow_dict.items()
+    }
+    return cut_flow_tree
 
 
 def main():
@@ -94,8 +100,9 @@ def main():
 
 
     # Making output ROOT file
+    cut_flow_tree = __prepare_cut_flow_tree(accumulator["cut_flow"].value)
     trees = {
-        "CutFlow": accumulator["cut_flow"]
+        "CutFlow": cut_flow_tree
     }
 
     uproot_utl.write_tree_maker_root_file(
@@ -107,3 +114,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

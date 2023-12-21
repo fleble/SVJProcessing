@@ -21,9 +21,9 @@ def update_cut_flow(cut_flow, cut_name, events):
     """
 
     if cut_name in cut_flow.keys():
-        cut_flow[cut_name][0] += __get_number_of_events(events)
+        cut_flow[cut_name] += __get_number_of_events(events)
     else:
-        cut_flow[cut_name] = [__get_number_of_events(events)]
+        cut_flow[cut_name] = __get_number_of_events(events)
 
 
 def apply_trigger_cut(events, trigger_list):

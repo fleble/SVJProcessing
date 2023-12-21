@@ -84,7 +84,7 @@ def __make_tree_maker_event_tree(events):
     return out
 
 
-def write_tree_maker_root_file(output_file_name, events, trees={}, mode="recreate"):
+def write_tree_maker_root_file(output_file_name, events=None, trees={}, mode="recreate"):
     """Write events opened with the TreeMaker or NTreeMaker schema to a ROOT file.
     
     Args:
@@ -99,9 +99,10 @@ def write_tree_maker_root_file(output_file_name, events, trees={}, mode="recreat
     log.blank_line()
     log.info("Writing down output ROOT file %s" % output_file_name)
     with getattr(uproot, mode)(output_file_name) as output_file:
-        output_file["Events"] = __make_tree_maker_event_tree(events)
+        if events is not None:
+            output_file["Events"] = __make_tree_maker_event_tree(events)
+            log.info("TTree Events saved to output file")
         for tree_name, tree in trees.items():
             output_file[tree_name] = ak.Array(tree)
-        
-    log.info("TTree %s saved to output file" % tree_name)
+            log.info("TTree %s saved to output file" % tree_name)
 
