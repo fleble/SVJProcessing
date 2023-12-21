@@ -1,7 +1,7 @@
 import awkward as ak
 from coffea.nanoevents.methods import vector
 
-from utils.treeMaker.triggers import trigger_table
+from utils.tree_maker.triggers import trigger_table
 from utils.Logger import *
 
 # Needed so that ak.zip({"pt": [...], "eta": [...], "phi": [...], "mass": [...]},

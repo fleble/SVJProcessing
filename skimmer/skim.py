@@ -4,10 +4,10 @@ from importlib import import_module
 import awkward as ak
 from coffea import processor
 
-import utils.uprootUtilities as uprootUtl
-from utils.coffea.akArrayAccumulator import AkArrayAccumulator
-from utils.coffea.NTreeMakerSchema import NTreeMakerSchema
-from skimmer import skimmerUtils
+import utils.uproot_utilities as uproot_utl
+from utils.coffea.ak_array_accumulator import AkArrayAccumulator
+from utils.coffea.n_tree_maker_schema import NTreeMakerSchema
+from skimmer import skimmer_utils
 
 
 class Skimmer(processor.ProcessorABC):
@@ -21,10 +21,10 @@ class Skimmer(processor.ProcessorABC):
     def process(self, events):
 
         cut_flow = {}
-        skimmerUtils.update_cut_flow(cut_flow, "Initial", events)
+        skimmer_utils.update_cut_flow(cut_flow, "Initial", events)
 
         events, cut_flow = self.process_function(events, cut_flow)
-        skimmerUtils.update_cut_flow(cut_flow, "Final", events)
+        skimmer_utils.update_cut_flow(cut_flow, "Final", events)
 
         accumulator = {
             "events": AkArrayAccumulator(ak.copy(events)),
@@ -98,7 +98,7 @@ def main():
         "CutFlow": accumulator["cut_flow"]
     }
 
-    uprootUtl.write_tree_maker_root_file(
+    uproot_utl.write_tree_maker_root_file(
         output_file_name=args.output_file_name,
         events=accumulator["events"].value,
         trees=trees,
