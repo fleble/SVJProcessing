@@ -1,6 +1,6 @@
 import awkward as ak
 
-from skimmer import skimmerUtils
+from skimmer import skimmer_utils
 
 
 def process(events, cut_flow, year):
@@ -15,7 +15,7 @@ def process(events, cut_flow, year):
     # Example for event selection
     st = events.MET + ak.sum(events.Jets.pt, axis=1)
     events = events[st > 1300]
-    skimmerUtils.update_cut_flow(cut_flow, "STGt1300GeV", events)
+    skimmer_utils.update_cut_flow(cut_flow, "STGt1300GeV", events)
 
     return events, cut_flow
 

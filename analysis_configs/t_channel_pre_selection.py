@@ -1,9 +1,9 @@
 import awkward as ak
 
-from skimmer import skimmerUtils
+from skimmer import skimmer_utils
 from utils.awkwardArrayUtilities import as_type
-import analysisConfigs.triggers as trg
-from analysisConfigs.met_filters import met_filters
+import analysis_configs.triggers as trg
+from analysis_configs.met_filters import met_filters
 
 
 def process(events, cut_flow, year):
@@ -11,8 +11,8 @@ def process(events, cut_flow, year):
 
     # Trigger event selection
     triggers = eval(f"trg.t_channel_{year}")
-    events = skimmerUtils.apply_trigger_cut(events, triggers)
-    skimmerUtils.update_cut_flow(cut_flow, "Trigger", events)
+    events = skimmer_utils.apply_trigger_cut(events, triggers)
+    skimmer_utils.update_cut_flow(cut_flow, "Trigger", events)
 
     # Objects filter
     good_jet_filter = (
@@ -43,25 +43,25 @@ def process(events, cut_flow, year):
     # ST cut for triggers to be fully efficient
     st = events.MET + ak.sum(events.Jets.pt, axis=1)
     events = events[st > 1300]
-    skimmerUtils.update_cut_flow(cut_flow, "STGt1300GeV", events)
+    skimmer_utils.update_cut_flow(cut_flow, "STGt1300GeV", events)
 
     # MET filter event selection
-    events = skimmerUtils.apply_met_filters_cut(events, met_filters)
-    skimmerUtils.update_cut_flow(cut_flow, "METFilters", events)
+    events = skimmer_utils.apply_met_filters_cut(events, met_filters)
+    skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
     # Veto events with mini-isolated leptons
     n_electrons = ak.count(events.Electrons.pt, axis=1)
     n_muons = ak.count(events.Muons.pt, axis=1)
     n_leptons = n_electrons + n_muons
     events = events[n_leptons == 0]
-    skimmerUtils.update_cut_flow(cut_flow, "LeptonVeto", events)
+    skimmer_utils.update_cut_flow(cut_flow, "LeptonVeto", events)
 
     # # Delta phi min cut
-    # met = skimmerUtils.make_pt_eta_phi_mass_lorentz_vector(
+    # met = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
     #     pt=events.MET,
     #     phi=events.METPhi,
     # )
-    # jets = skimmerUtils.make_pt_eta_phi_mass_lorentz_vector(
+    # jets = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
     #     pt=events.JetsAK8.pt,
     #     eta=events.JetsAK8.eta,
     #     phi=events.JetsAK8.phi,
@@ -74,11 +74,11 @@ def process(events, cut_flow, year):
     # # Needed otherwise type is not defined and skim cannot be written
     # filter = as_type(filter, bool)
     # events = events[filter]
-    # skimmerUtils.update_cut_flow(cut_flow, "DeltaPhiMinLt1p5", events)
+    # skimmer_utils.update_cut_flow(cut_flow, "DeltaPhiMinLt1p5", events)
 
     # Requiring at least 2 FatJets
     events = events[ak.count(events.JetsAK8.pt, axis=1) >= 2]
-    skimmerUtils.update_cut_flow(cut_flow, "nJetsAK8Gt2", events)
+    skimmer_utils.update_cut_flow(cut_flow, "nJetsAK8Gt2", events)
 
     return events, cut_flow
 
