@@ -5,6 +5,7 @@ from coffea import processor
 class AkArrayAccumulator(processor.AccumulatorABC):
     def __init__(self, value=ak.Array({})):
         self.value = value
+        self.value.behavior = None
 
     def identity(self):
         return AkArrayAccumulator(ak.Array({}))
@@ -16,4 +17,5 @@ class AkArrayAccumulator(processor.AccumulatorABC):
             self.value = other.value
         else:
             self.value = ak.concatenate((self.value, other.value), axis=0)
+        self.value.behavior = None
 
