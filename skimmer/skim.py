@@ -8,6 +8,7 @@ import utils.uproot_utilities as uproot_utl
 from utils.coffea.ak_array_accumulator import AkArrayAccumulator
 from utils.coffea.dict_accumulator import DictAccumulator
 from utils.coffea.n_tree_maker_schema import NTreeMakerSchema
+from utils.coffea.job_submission_helper import get_executor, get_executor_args
 from skimmer import skimmer_utils
 
 
@@ -51,7 +52,7 @@ def __get_arguments():
         required=True,
     )
     parser.add_argument(
-        "-m", "--process_module_name",
+        "-p", "--process_module_name",
         help="Process module name, e.g. analysis_configs.t_channel_pre_selection",
         required=True,
     )
@@ -60,8 +61,62 @@ def __get_arguments():
         help="Data-taking year",
         required=True,
     )
+    parser.add_argument(
+        "-c", "--chunk_size",
+        help="Size of the data chunks (default=%(default)s)",
+        default=10000,
+        type=int,
+    )
+    parser.add_argument(
+        "-m", "--max_chunks",
+        help="Maximum number of chunks to process, no flag means no maximum",
+        type=int,
+    )
+    parser.add_argument(
+        "-n", "--n_workers",
+        help="Number of worker nodes (default=%(default)s)",
+        default=4,
+        type=int,
+    )
+    parser.add_argument(
+        "--skip_bad_files",
+        help="Skip bad files",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-e", "--executor_name",
+        choices=[
+            "iterative",
+            "futures",
+            "dask/slurm",
+            "dask/lpccondor",
+        ],
+        default="futures",
+        help="The type of executor to use (default=%(default)s)"
+    )
+    parser.add_argument(
+        "-port", "--port",
+        help="Port for dask distributed computation (default=%(default)s)",
+        type=int,
+        default=8787,
+    )
 
     return parser.parse_args()
+
+
+def __get_input_files(input_files_arg):
+    if input_files_arg.endswith(".txt"):
+        with open(input_files_arg) as file:
+            lines = file.readlines()
+            input_file_names = []
+            for line in lines:
+                if line.startswith("#"): continue
+                if len(line) < 3: continue
+                input_file_names.append(line[:-1])
+    else:
+        input_file_names = input_files_arg.split(",")
+    
+    return input_file_names
 
 
 def __prepare_cut_flow_tree(cut_flow_dict):
@@ -78,14 +133,16 @@ def main():
     process_module = import_module(args.process_module_name)
     process_function = lambda x, y: process_module.process(x, y, year=args.year)
 
-    # TODO: replace by read arguments
-    executor = processor.iterative_executor
+    executor = get_executor(args.executor_name)
     executor_args = {
         "schema": NTreeMakerSchema,
-        "workers": 1,
     }
-    chunk_size = 400
-    max_chunks = None
+    executor_args.update(get_executor_args(
+        executor_name=args.executor_name,
+        n_workers=args.n_workers,
+        skip_bad_files=args.skip_bad_files,
+        port=args.port,
+    ))
 
     # Calculate new branches
     accumulator = processor.run_uproot_job(
@@ -94,10 +151,9 @@ def main():
         processor_instance=Skimmer(process_function),
         executor=executor,
         executor_args=executor_args,
-        chunksize=chunk_size,
-        maxchunks=max_chunks,
-        )
-
+        chunksize=args.chunk_size,
+        maxchunks=args.max_chunks,
+    )
 
     # Making output ROOT file
     cut_flow_tree = __prepare_cut_flow_tree(accumulator["cut_flow"].value)

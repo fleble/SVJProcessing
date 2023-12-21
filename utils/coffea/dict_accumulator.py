@@ -1,4 +1,3 @@
-import awkward as ak
 from coffea import processor
 
 
