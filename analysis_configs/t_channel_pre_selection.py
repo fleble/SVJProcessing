@@ -1,7 +1,7 @@
 import awkward as ak
 
 from skimmer import skimmer_utils
-from utils.awkwardArrayUtilities import as_type
+from utils.awkward_array_utilities import as_type
 import analysis_configs.triggers as trg
 from analysis_configs.met_filters import met_filters
 
