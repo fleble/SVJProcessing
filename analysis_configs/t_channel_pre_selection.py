@@ -10,7 +10,7 @@ def process(events, cut_flow, year):
     """SVJ t-channel pre-selection."""
 
     # Trigger event selection
-    triggers = eval(f"trg.t_channel_{year}")
+    triggers = getattr(trg, f"t_channel_{year}")
     events = skimmer_utils.apply_trigger_cut(events, triggers)
     skimmer_utils.update_cut_flow(cut_flow, "Trigger", events)
 
