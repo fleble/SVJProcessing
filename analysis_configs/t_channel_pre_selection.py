@@ -57,24 +57,24 @@ def process(events, cut_flow, year):
     skimmer_utils.update_cut_flow(cut_flow, "LeptonVeto", events)
 
     # # Delta phi min cut
-    # met = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
-    #     pt=events.MET,
-    #     phi=events.METPhi,
-    # )
-    # jets = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
-    #     pt=events.JetsAK8.pt,
-    #     eta=events.JetsAK8.eta,
-    #     phi=events.JetsAK8.phi,
-    #     mass=events.JetsAK8.mass,
-    # )
+    met = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
+        pt=events.MET,
+        phi=events.METPhi,
+    )
+    jets = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
+        pt=events.JetsAK8.pt,
+        eta=events.JetsAK8.eta,
+        phi=events.JetsAK8.phi,
+        mass=events.JetsAK8.mass,
+    )
 
-    # met = ak.broadcast_arrays(met, jets)[0]
-    # delta_phi_min = ak.min(abs(jets.delta_phi(met)), axis=1)
-    # filter = delta_phi_min < 1.5
-    # # Needed otherwise type is not defined and skim cannot be written
-    # filter = as_type(filter, bool)
-    # events = events[filter]
-    # skimmer_utils.update_cut_flow(cut_flow, "DeltaPhiMinLt1p5", events)
+    met = ak.broadcast_arrays(met, jets)[0]
+    delta_phi_min = ak.min(abs(jets.delta_phi(met)), axis=1)
+    filter = delta_phi_min < 1.5
+    # Needed otherwise type is not defined and skim cannot be written
+    filter = as_type(filter, bool)
+    events = events[filter]
+    skimmer_utils.update_cut_flow(cut_flow, "DeltaPhiMinLt1p5", events)
 
     # Requiring at least 2 FatJets
     events = events[ak.count(events.JetsAK8.pt, axis=1) >= 2]
