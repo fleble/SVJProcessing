@@ -53,7 +53,7 @@ def __get_arguments():
     )
     parser.add_argument(
         "-m", "--process_module_name",
-        help="Process module name, e.g. analysisConfigs.config",
+        help="Process module name, e.g. analysis_configs.t_channel_pre_selection",
         required=True,
     )
     parser.add_argument(
