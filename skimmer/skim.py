@@ -13,8 +13,6 @@ from skimmer import skimmer_utils
 class Skimmer(processor.ProcessorABC):
 
     def __init__(self, process_function):
-        self.accumulator = AkArrayAccumulator()
-        self.converted_branches = []
         self.process_function = process_function
 
         
