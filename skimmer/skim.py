@@ -38,19 +38,7 @@ class Skimmer(processor.ProcessorABC):
         return super().postprocess(accumulator)
 
 
-def __get_arguments():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "-i", "--input_file_names",
-        help="Input file names",
-        required=True,
-    )
-    parser.add_argument(
-        "-o", "--output_file_name",
-        help="Output file name",
-        required=True,
-    )
+def add_coffea_args(parser):
     parser.add_argument(
         "-p", "--process_module_name",
         help="Process module name, e.g. analysis_configs.t_channel_pre_selection",
@@ -75,7 +63,7 @@ def __get_arguments():
     parser.add_argument(
         "-n", "--n_workers",
         help="Number of worker nodes (default=%(default)s)",
-        default=4,
+        default=6,
         type=int,
     )
     parser.add_argument(
@@ -100,6 +88,25 @@ def __get_arguments():
         type=int,
         default=8787,
     )
+
+
+def __get_arguments():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-i", "--input_files",
+        help="Input files, either comma-separated list of files or "
+             "txt file with one file per line. Empty lines and lines "
+             "starting with # will be ignored.",
+        required=True,
+    )
+    parser.add_argument(
+        "-o", "--output_file_name",
+        help="Output file name",
+        required=True,
+    )
+
+    add_coffea_args(parser)
 
     return parser.parse_args()
 
@@ -126,10 +133,8 @@ def __prepare_cut_flow_tree(cut_flow_dict):
     return cut_flow_tree
 
 
-def main():
+def __prepare_uproot_job_kwargs_from_coffea_args(args):
 
-    args = __get_arguments()
-    input_file_names = args.input_file_names.split(",")
     process_module = import_module(args.process_module_name)
     process_function = lambda x, y: process_module.process(x, y, year=args.year)
 
@@ -144,16 +149,40 @@ def main():
         port=args.port,
     ))
 
-    # Calculate new branches
+    uproot_job_kwargs = {
+        "treename": "TreeMaker2/PreSelection",
+        "processor_instance": Skimmer(process_function),
+        "executor": executor,
+        "executor_args": executor_args,
+        "chunksize": args.chunk_size,
+        "maxchunks": args.max_chunks,
+    }
+
+    return uproot_job_kwargs
+
+
+def skim(
+        input_files_list,
+        coffea_args,
+    ):
+
+    uproot_job_kwargs = __prepare_uproot_job_kwargs_from_coffea_args(coffea_args)
+
+    # Skim files
     accumulator = processor.run_uproot_job(
-        {"fileset": input_file_names},
-        treename="TreeMaker2/PreSelection",
-        processor_instance=Skimmer(process_function),
-        executor=executor,
-        executor_args=executor_args,
-        chunksize=args.chunk_size,
-        maxchunks=args.max_chunks,
+        {"fileset": input_files_list},
+        **uproot_job_kwargs
     )
+
+    return accumulator
+
+
+def main():
+
+    args = __get_arguments()
+    input_file_names = __get_input_files(args.input_files)
+
+    accumulator = skim(input_file_names, args)
 
     # Making output ROOT file
     cut_flow_tree = __prepare_cut_flow_tree(accumulator["cut_flow"].value)
