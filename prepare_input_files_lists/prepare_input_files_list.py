@@ -39,7 +39,7 @@ def __get_arguments():
     parser.add_argument(
         "-m", "--max_events",
         help="Maximum number of events per file after selection, default=%(default)s.",
-        default=100000,
+        default=50000,
         type=int,
     )
     

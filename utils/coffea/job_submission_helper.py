@@ -40,7 +40,7 @@ def __get_client(executor_name, n_workers, port=8787):
                 "dashboard_address": f"{port}",
             },
             cores=1,
-            memory="2GB",
+            memory="4GB",
             disk="100MB",
             transfer_input_files=[
                 f"{repo_directory}/utils",
