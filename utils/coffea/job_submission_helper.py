@@ -31,14 +31,11 @@ def __get_client(executor_name, n_workers, port=8787):
 
     elif "lpccondor" in executor_name:
         from lpcjobqueue import LPCCondorCluster
-        import socket
 
         repo_directory = os.environ["SVJ_PROCESSING_ROOT"]
-        hostname = socket.gethostname()
 
         cluster = LPCCondorCluster(
             scheduler_options={
-                "host": f"{hostname}:10000",
                 "dashboard_address": f"{port}",
             },
             cores=1,
