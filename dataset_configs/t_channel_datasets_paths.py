@@ -56,6 +56,15 @@ qcd_bins = [
     "QCD_Pt_3200toInf",
 ]
 
+ttjets_bins = [
+    "TTJets",
+    "TTJets_HT-600to800",
+    "TTJets_HT-800to1200",
+    "TTJets_HT-1200to2500",
+    "TTJets_HT-2500toInf",
+]
+
+
 datasets_info["2018"].update({
     signal_model: [
         {
@@ -76,5 +85,16 @@ datasets_info["2018"].update({
         }
     ]
     for qcd_bin in qcd_bins
+})
+
+datasets_info["2018"].update({
+    ttjets_bin: [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL18/{ttjets_bin}_TuneCP5_13TeV-madgraphMLM-pythia8/",
+            "regex": "",
+        }
+    ]
+    for ttjets_bin in ttjets_bins
 })
 
