@@ -1,7 +1,7 @@
 #!/bin/bash
 
-CHUNK_SIZE=5000
-N_WORKERS=100
+CHUNK_SIZE=10000
+N_WORKERS=50
 EXECUTOR=dask/lpccondor   # HTCondor at LPC
 #N_WORKERS=6
 #EXECUTOR=futures     # local job
