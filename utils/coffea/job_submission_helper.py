@@ -26,6 +26,7 @@ def __get_client(executor_name, n_workers, port=8787):
             cores=n_workers,
             processes=n_workers,
             memory="4GB",
+            log_directory=f"/work/{os.environ['USER']}/tmp/logs",
             job_script_prologue=job_script_prologue,
         )
 
@@ -46,7 +47,7 @@ def __get_client(executor_name, n_workers, port=8787):
                 f"{repo_directory}/skimmer",
                 f"{repo_directory}/analysis_configs",
             ],
-            log_directory=None,
+            log_directory=f"/uscmst1b_scratch/lpc1/3DayLifetime/{os.environ['USER']}/logs",
             death_timeout=180,
             job_script_prologue=job_script_prologue,
         )
