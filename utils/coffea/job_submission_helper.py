@@ -17,7 +17,7 @@ def __get_client(executor_name, n_workers, port=8787):
         SLURMCluster or LPCCondorCluster
     """
 
-    env_extra = [
+    job_script_prologue = [
         f'export X509_USER_PROXY={os.environ["X509_USER_PROXY"]}',
     ]
 
@@ -26,7 +26,7 @@ def __get_client(executor_name, n_workers, port=8787):
             cores=n_workers,
             processes=n_workers,
             memory="4GB",
-            env_extra=env_extra,
+            job_script_prologue=job_script_prologue,
         )
 
     elif "lpccondor" in executor_name:
@@ -51,7 +51,7 @@ def __get_client(executor_name, n_workers, port=8787):
             ],
             log_directory=None,
             death_timeout=180,
-            env_extra=env_extra,
+            job_script_prologue=job_script_prologue,
         )
 
     cluster.scale(jobs=n_workers)
