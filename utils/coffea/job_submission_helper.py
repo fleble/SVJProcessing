@@ -1,7 +1,7 @@
 import os
 
 from coffea import processor, nanoevents
-from dask_jobqueue import HTCondorCluster, SLURMCluster
+from dask_jobqueue import SLURMCluster
 from distributed import Client
 
 
@@ -42,8 +42,8 @@ def __get_client(executor_name, n_workers, port=8787):
                 "dashboard_address": f"{port}",
             },
             cores=1,
-            memory="4GB",
-            disk="2GB",
+            memory="2GB",
+            disk="100MB",
             transfer_input_files=[
                 f"{repo_directory}/utils",
                 f"{repo_directory}/skimmer",
