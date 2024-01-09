@@ -79,7 +79,7 @@ make_skims() {
         xrdfs ${output_redirector} mkdir -p ${output_dir}
     fi
 
-    for files_list in $(ls ${files_list_directory}); do
+    for files_list in $(ls ${files_list_directory} | sort -V); do
 
         local input_files=${files_list_directory}/${files_list}
         local output_file=${output_directory}/${files_list/.txt/.root}
