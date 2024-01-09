@@ -67,6 +67,22 @@ def add_coffea_args(parser):
         type=int,
     )
     parser.add_argument(
+        "-nc", "--cores",
+        help="Number of cores request for HTCondor or SLURM (default=%(default)s)",
+        default=2,
+        type=int,
+    )
+    parser.add_argument(
+        "-mem", "--memory",
+        help="Memory request for HTCondor or SLURM (default=%(default)s)",
+        default="4GB",
+    )
+    parser.add_argument(
+        "-disk", "--disk",
+        help="Disk space request for HTCondor (default=%(default)s)",
+        default="100MB",
+    )
+    parser.add_argument(
         "--skip_bad_files",
         help="Skip bad files",
         action="store_true",
@@ -145,6 +161,9 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
     executor_args.update(get_executor_args(
         executor_name=args.executor_name,
         n_workers=args.n_workers,
+        cores=args.cores,
+        memory=args.memory,
+        disk=args.disk,
         skip_bad_files=args.skip_bad_files,
         port=args.port,
     ))

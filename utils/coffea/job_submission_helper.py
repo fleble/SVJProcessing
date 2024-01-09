@@ -5,12 +5,15 @@ from dask_jobqueue import SLURMCluster
 from distributed import Client
 
 
-def __get_client(executor_name, n_workers, port=8787):
+def __get_client(executor_name, n_workers, cores, memory, disk, port=8787):
     """Return batch system client for job submission.
 
     Args:
         executor_name (str)
         n_workers (int)
+        cores (int)
+        memory (str)
+        disk (str)
         port (int)
 
     Return:
@@ -23,9 +26,8 @@ def __get_client(executor_name, n_workers, port=8787):
 
     if "slurm" in executor_name:
         cluster = SLURMCluster(
-            cores=n_workers,
-            processes=n_workers,
-            memory="4GB",
+            cores=cores,
+            memory=memory,
             log_directory=f"/work/{os.environ['USER']}/tmp/logs",
             job_script_prologue=job_script_prologue,
         )
@@ -39,9 +41,9 @@ def __get_client(executor_name, n_workers, port=8787):
             scheduler_options={
                 "dashboard_address": f"{port}",
             },
-            cores=1,
-            memory="4GB",
-            disk="100MB",
+            cores=cores,
+            memory=memory,
+            disk=disk,
             transfer_input_files=[
                 f"{repo_directory}/utils",
                 f"{repo_directory}/skimmer",
@@ -89,6 +91,9 @@ def get_executor(executor_name):
 def get_executor_args(
         executor_name,
         n_workers,
+        cores,
+        memory,
+        disk,
         schema_name=None,
         skip_bad_files=True,
         port=8787,
@@ -121,7 +126,9 @@ def get_executor_args(
 
     else:
         executor_args["retries"] = 5
-        executor_args["client"] = __get_client(executor_name, n_workers, port)
+        executor_args["client"] = __get_client(
+            executor_name, n_workers, cores, memory, disk, port,
+        )
 
     return executor_args
 
