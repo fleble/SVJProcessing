@@ -85,28 +85,39 @@ def __compute_effiency(
         n_initial = sum(number_of_events[:n_input_files])
         n_final = len(accumulator["events"].value)
         efficiency = n_final / n_initial
-        uncertainty = __compute_uncertainty(n_initial, n_final)
-        relative_uncertainty = 100 * (uncertainty / efficiency)
+        log.info(f"Efficiency: {efficiency}")
+        if efficiency == 0:
+            relative_uncertainty = 100
+        else:
+            uncertainty = __compute_uncertainty(n_initial, n_final)
+            relative_uncertainty = 100 * (uncertainty / efficiency)
 
         # If relative uncertainty less than required precision,
         # increase the number of events to exceed the target
         log.info(f"Relative uncertainty: {relative_uncertainty:.2f}%")
         if relative_uncertainty > precision:
-            if n_input_files < len(number_of_events):
+            if n_input_files < len(input_files_names):
                 log.info(f"Will increase number of files to reach target "
                          f"precision of {precision}%")
             else:
                 log.info(f"Cannot reach target precision of {precision}% "
                          f"as maximum number of files as been reached!")
-            uncertainty_target = precision * efficiency / 100
-            n_events_target = efficiency * (1 - efficiency) / (uncertainty_target ** 2)
+                return efficiency
+
+            if efficiency == 0:
+                n_input_files *= 10
+            else:
+                uncertainty_target = precision * efficiency / 100
+                n_events_target = efficiency * (1 - efficiency) / (uncertainty_target ** 2)
         
-            n_events = 0
-            for i_input_files in range(len(input_files_names)):
-                n_events += number_of_events[i_input_files]
-                if n_events > n_events_target:
-                    n_input_files = i_input_files + 2  # +1 to exceed precision
-                    break
+                n_events = 0
+                current_n_input_files = n_input_files
+                for i_input_files in range(len(input_files_names)):
+                    n_events += number_of_events[i_input_files]
+                    if n_events > n_events_target:
+                        n_input_files = i_input_files + 2  # +1 to exceed precision
+                        break
+                n_input_files = i_input_files + 1
  
     return efficiency
 

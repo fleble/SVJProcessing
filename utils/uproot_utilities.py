@@ -1,7 +1,29 @@
+import numpy as np
 import awkward as ak
 import uproot
 
+from utils import awkward_array_utilities as akUtl
 from utils.Logger import *
+
+
+def __cast_unknown_type_branches(ak_array, field):
+
+    type_text = str(ak.type(ak_array))
+
+    if "unknown" in type_text:
+        log.warning(f"Branch {field} has unknown type, converting to float64")
+        ak_array = akUtl.as_type(ak_array, np.float64)
+        
+    elif "?" in type_text:
+        new_type_text = type_text.split("*")[-1].replace("?", "").replace(" ", "")
+        log.warning(f"Branch {field} has unclear type {type_text}, converting to {new_type_text}")
+        ak_array = akUtl.as_type(ak_array, getattr(np, new_type_text))
+        
+    return ak_array
+
+
+def __prepare_array(ak_array, field):
+    return  ak.packed(ak.without_parameters(__cast_unknown_type_branches(ak_array, field)))
 
 
 def __is_rootcompat(a):
@@ -43,7 +65,7 @@ def __zip_composite(ak_array):
 
     return ak.zip(
         {
-            _rename_lookup.get(n, n): ak.packed(ak.without_parameters(ak_array[n]))
+            _rename_lookup.get(n, n): __prepare_array(ak_array[n], n)
             for n in ak_array.fields
             if __is_rootcompat(ak_array[n])
         }
@@ -80,7 +102,7 @@ def __make_tree_maker_event_tree(events):
                         )
             out[bname] = __zip_composite(events[bname])
         else:
-            out[bname] = ak.packed(ak.without_parameters(events[bname]))
+            out[bname] = __prepare_array(events[bname], bname)
     return out
 
 

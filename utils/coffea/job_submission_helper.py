@@ -1,57 +1,57 @@
 import os
 
 from coffea import processor, nanoevents
-from dask_jobqueue import HTCondorCluster, SLURMCluster
+from dask_jobqueue import SLURMCluster
 from distributed import Client
 
 
-def __get_client(executor_name, n_workers, port=8787):
+def __get_client(executor_name, n_workers, cores, memory, disk, port=8787):
     """Return batch system client for job submission.
 
     Args:
         executor_name (str)
         n_workers (int)
+        cores (int)
+        memory (str)
+        disk (str)
         port (int)
 
     Return:
         SLURMCluster or LPCCondorCluster
     """
 
-    env_extra = [
+    job_script_prologue = [
         f'export X509_USER_PROXY={os.environ["X509_USER_PROXY"]}',
     ]
 
     if "slurm" in executor_name:
         cluster = SLURMCluster(
-            cores=n_workers,
-            processes=n_workers,
-            memory="4GB",
-            env_extra=env_extra,
+            cores=cores,
+            memory=memory,
+            log_directory=f"/work/{os.environ['USER']}/tmp/logs",
+            job_script_prologue=job_script_prologue,
         )
 
     elif "lpccondor" in executor_name:
         from lpcjobqueue import LPCCondorCluster
-        import socket
 
         repo_directory = os.environ["SVJ_PROCESSING_ROOT"]
-        hostname = socket.gethostname()
 
         cluster = LPCCondorCluster(
             scheduler_options={
-                "host": f"{hostname}:10000",
                 "dashboard_address": f"{port}",
             },
-            cores=1,
-            memory="4GB",
-            disk="2GB",
+            cores=cores,
+            memory=memory,
+            disk=disk,
             transfer_input_files=[
                 f"{repo_directory}/utils",
                 f"{repo_directory}/skimmer",
                 f"{repo_directory}/analysis_configs",
             ],
-            log_directory=None,
+            log_directory=f"/uscmst1b_scratch/lpc1/3DayLifetime/{os.environ['USER']}/logs",
             death_timeout=180,
-            env_extra=env_extra,
+            job_script_prologue=job_script_prologue,
         )
 
     cluster.scale(jobs=n_workers)
@@ -91,6 +91,9 @@ def get_executor(executor_name):
 def get_executor_args(
         executor_name,
         n_workers,
+        cores,
+        memory,
+        disk,
         schema_name=None,
         skip_bad_files=True,
         port=8787,
@@ -123,7 +126,9 @@ def get_executor_args(
 
     else:
         executor_args["retries"] = 5
-        executor_args["client"] = __get_client(executor_name, n_workers, port)
+        executor_args["client"] = __get_client(
+            executor_name, n_workers, cores, memory, disk, port,
+        )
 
     return executor_args
 

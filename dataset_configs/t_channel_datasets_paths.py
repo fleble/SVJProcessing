@@ -56,6 +56,42 @@ qcd_bins = [
     "QCD_Pt_3200toInf",
 ]
 
+ttjets_bins = [
+    "TTJets",
+    "TTJets_HT-600to800",
+    "TTJets_HT-800to1200",
+    "TTJets_HT-1200to2500",
+    "TTJets_HT-2500toInf",
+]
+
+wjets_bins = [
+    "WJetsToLNu",
+    "WJetsToLNu_HT-70To100",
+    "WJetsToLNu_HT-70To100",
+    "WJetsToLNu_HT-100To200",
+    "WJetsToLNu_HT-200To400",
+    "WJetsToLNu_HT-400To600",
+    "WJetsToLNu_HT-600To800",
+    "WJetsToLNu_HT-800To1200",
+    "WJetsToLNu_HT-1200To2500",
+    "WJetsToLNu_HT-2500ToInf",
+    "WJetsToQQ_HT-200to400",
+    "WJetsToQQ_HT-400to600",
+    "WJetsToQQ_HT-600to800",
+    "WJetsToQQ_HT-800toInf",
+]
+
+zjets_bins = [
+    "ZJetsToNuNu_HT-100To200",
+    "ZJetsToNuNu_HT-200To400",
+    "ZJetsToNuNu_HT-400To600",
+    "ZJetsToNuNu_HT-600To800",
+    "ZJetsToNuNu_HT-800To1200",
+    "ZJetsToNuNu_HT-1200To2500",
+    "ZJetsToNuNu_HT-2500ToInf",
+]
+
+
 datasets_info["2018"].update({
     signal_model: [
         {
@@ -76,5 +112,38 @@ datasets_info["2018"].update({
         }
     ]
     for qcd_bin in qcd_bins
+})
+
+datasets_info["2018"].update({
+    ttjets_bin: [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL18/{ttjets_bin}_TuneCP5_13TeV-madgraphMLM-pythia8/",
+            "regex": "",
+        }
+    ]
+    for ttjets_bin in ttjets_bins
+})
+
+datasets_info["2018"].update({
+    wjets_bin: [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL18/{wjets_bin}_TuneCP5_13TeV-madgraphMLM-pythia8/",
+            "regex": "",
+        }
+    ]
+    for wjets_bin in wjets_bins
+})
+
+datasets_info["2018"].update({
+    zjets_bin: [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL18/{zjets_bin}_TuneCP5_13TeV-madgraphMLM-pythia8/",
+            "regex": "",
+        }
+    ]
+    for zjets_bin in zjets_bins
 })
 
