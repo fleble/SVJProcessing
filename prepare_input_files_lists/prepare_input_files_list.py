@@ -77,11 +77,13 @@ def __prepare_input_files_list(
         for line in csv_reader:
             file_name = line[0]
             n_events = int(line[1])
-            output_files_list[-1].append(file_name)
-            sum += n_events * selection_efficiency
-            if sum > max_events:
-                output_files_list.append([])
+            n_selected_events = n_events * selection_efficiency
+            if sum + n_selected_events <= max_events:
+                output_files_list[-1].append(file_name)
+            else:
+                output_files_list.append([file_name])
                 sum = 0
+            sum += n_selected_events
         
     output_directory_ = f"{output_directory}/skim_input_files_list/{year}/{selection}/{dataset}"
     Path(output_directory_).mkdir(parents=True, exist_ok=True)
