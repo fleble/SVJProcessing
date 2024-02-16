@@ -33,7 +33,7 @@ dataset_names=(
     QCD_Pt_470to600
     QCD_Pt_600to800
     QCD_Pt_800to1000
-    #QCD_Pt_1000to1400
+    QCD_Pt_1000to1400
     QCD_Pt_1400to1800
     QCD_Pt_1800to2400
     QCD_Pt_2400to3200
@@ -62,7 +62,7 @@ prepare_input_files_list() {
 
     python list_dataset_files.py -d ${dataset_name} -y ${year} -c ${dataset_config} -o ${dataset_directory} 
     python compute_unweighted_selection_efficiency.py -d ${dataset_name} -y ${year} -p ${module} -s ${selection_name} -i ${dataset_directory} -o ${dataset_directory} -n 6 -e futures -c 10000
-    python prepare_input_files_list.py -d ${dataset_name} -y ${year} -s ${selection_name} -i ${dataset_directory} -o ${dataset_directory}
+    python prepare_input_files_list.py -d ${dataset_name} -y ${year} -s ${selection_name} -i ${dataset_directory} -o ${dataset_directory} -m 50000
 }
 
 
@@ -71,3 +71,4 @@ for dataset_name in ${dataset_names[@]}; do
     prepare_input_files_list ${dataset_config} ${dataset_directory} ${module} ${selection_name} ${year} ${dataset_name}
 
 done
+
