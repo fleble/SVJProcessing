@@ -162,6 +162,69 @@ def calculate_delta_r(
     return delta_r
 
 
+def calculate_invariant_mass(
+        physics_objects,
+        indices=(0, 1),
+        nan_value=-9999,
+    ):
+    """Calculate invariant mass between two physics objects.
+
+    Args:
+        physics_objects (awkward.Array): 
+            Ak array where axis 0 is the event axis, axis 1 is the object axis
+            with field eta (or rapidity) and phi and with name PtEtaPhiMLorentzVector.
+            Physics objects can be jets, leptons etc...
+        indices (tuple[int], optional):
+            The indices of the object for which to compute delta eta.
+            By default will do it the two leading objects.
+        nan_value (float, optional, default=-9999):
+            Value to use when the event has less objects than required
+            If None, Nones will not be replaced.
+
+    Returns:
+        awkward.Array
+    """
+
+    obj0, obj1 = __get_pair_of_objects(physics_objects, indices)
+    invariant_mass = (obj0 + obj1).mass
+    if nan_value is not None:
+        invariant_mass = ak.fill_none(invariant_mass, nan_value)
+
+    return invariant_mass
+
+
+def calculate_lund_jet_plane_z(
+        physics_objects,
+        indices=(0, 1),
+        nan_value=-9999,
+    ):
+    """Calculate the Lund jet plane variable z between two physics objects.
+
+    Args:
+        physics_objects (awkward.Array): 
+            Ak array where axis 0 is the event axis, axis 1 is the object axis
+            with field phi and with name PtEtaPhiMLorentzVector.
+            Physics objects can be jets, leptons etc...
+        indices (tuple[int], optional):
+            The indices of the object for which to compute delta eta.
+            By default will do it the two leading objects.
+        nan_value (float, optional, default=-9999):
+            Value to use when the event has less objects than required.
+            If None, Nones will not be replaced.
+
+    Returns:
+        awkward.Array
+    """
+
+    obj0, obj1 = __get_pair_of_objects(physics_objects, indices)
+    min_pt = ak.min([obj0.pt, obj1.pt], axis=0)
+    z = min_pt / (obj0.pt + obj1.pt)
+    if nan_value is not None:
+        z = ak.fill_none(z, nan_value)
+
+    return z
+
+
 def calculate_atlas_momentum_balance(jets, met, nan_value=-9999):
     """ATLAS momentum balance."""
 
