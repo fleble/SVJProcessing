@@ -63,13 +63,13 @@ def __zip_composite(ak_array):
         "o": "origIndex",
     }
 
-    return ak.zip(
-        {
-            _rename_lookup.get(n, n): __prepare_array(ak_array[n], n)
-            for n in ak_array.fields
-            if __is_rootcompat(ak_array[n])
-        }
-    )
+    dict_ = {}
+    for n in ak_array.fields:
+        ak_array_ = __prepare_array(ak_array[n], n)
+        if __is_rootcompat(ak_array_):
+            dict_[_rename_lookup.get(n, n)] = ak_array_
+
+    return ak.zip(dict_)
 
 
 def __make_tree_maker_event_tree(events):

@@ -2,7 +2,7 @@ import awkward as ak
 
 from skimmer import skimmer_utils
 from utils.awkward_array_utilities import as_type
-from utils.variables_computation import event_variables
+from utils.variables_computation import event_variables, jet_variables
 import analysis_configs.triggers as trg
 from analysis_configs.met_filters import met_filters
 
@@ -122,9 +122,12 @@ def process(events, cut_flow, year):
         phi=events.METPhi,
     )
 
-    met_bc = ak.broadcast_arrays(met_lv, jets_ak8_lv)[0]
-    new_branches["deltaPhiMET"] = jets_ak8_lv.delta_phi(met_bc)
+    # Kinematics
+    new_branches["deltaPhiMET"] = jet_variables.calculate_delta_phi_with_met(jets_ak8_lv, met_lv)
+    new_branches["LundJetPlaneZ"] = jet_variables.calculate_lund_jet_plane_z_with_met(jets_ak8_lv, met_lv)
+    new_branches["MTMET"] = jet_variables.calculate_invariant_mass_with_met(jets_ak8_lv, met_lv)
 
+    # Dark jet branches
     if "hvCategory" in gen_jets_ak8.fields:  # If signal samples
         gen_jet_index = ak.mask(jets_ak8.genIndex, jets_ak8.genIndex >= 0)
         hv_category = gen_jets_ak8.hvCategory[gen_jet_index]
@@ -165,7 +168,7 @@ def process(events, cut_flow, year):
         )
     
     # Event variables
-    nan_value = -9999
+    nan_value = 0.  # Natural choice for missing values for LJP variables and delat eta / phi!
     good_jets_ak8 = events.JetsAK8[events.JetsAK8.isGood]
     good_jets_ak8_lv = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
         pt=good_jets_ak8.pt,
@@ -174,9 +177,9 @@ def process(events, cut_flow, year):
         mass=good_jets_ak8.mass,
     )
 
-    for index_0 in [0, 1, 2, 3]:
-        for index_1 in [0, 1, 2, 3]:
-            if index_1 == index_0: continue
+    n_jets_max = 4
+    for index_0 in range(n_jets_max):
+        for index_1 in range(index_0+1, n_jets_max):
             delta_eta = event_variables.calculate_delta_eta(
                 physics_objects=good_jets_ak8_lv,
                 indices=(index_0, index_1),
@@ -194,6 +197,16 @@ def process(events, cut_flow, year):
                 indices=(index_0, index_1),
                 nan_value=nan_value,
             )
+            dijet_mass = event_variables.calculate_invariant_mass(
+                physics_objects=good_jets_ak8_lv,
+                indices=(index_0, index_1),
+                nan_value=nan_value,
+            )
+            lund_jet_plane_z = event_variables.calculate_lund_jet_plane_z(
+                physics_objects=good_jets_ak8_lv,
+                indices=(index_0, index_1),
+                nan_value=nan_value,
+            )
             delta_eta_abs = abs(delta_eta)
             delta_phi_abs = abs(delta_phi)
             delta_eta = ak.fill_none(delta_eta, nan_value)
@@ -206,6 +219,8 @@ def process(events, cut_flow, year):
             events[f"DeltaR{index_0}{index_1}GoodJetsAK8"] = delta_r
             events[f"DeltaEtaAbs{index_0}{index_1}GoodJetsAK8"] = delta_eta_abs
             events[f"DeltaPhiAbs{index_0}{index_1}GoodJetsAK8"] = delta_phi_abs
+            events[f"DijetMass{index_0}{index_1}GoodJetsAK8"] = dijet_mass
+            events[f"LundJetPlaneZ{index_0}{index_1}GoodJetsAK8"] = lund_jet_plane_z
    
     events["DeltaPhiMinGoodJetsAK8"] = ak.min(abs(good_jets_ak8.deltaPhiMET), axis=1)
     events["ST"] = events.MET + events.HT
