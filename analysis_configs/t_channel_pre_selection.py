@@ -177,9 +177,9 @@ def process(events, cut_flow, year):
         mass=good_jets_ak8.mass,
     )
 
-    for index_0 in [0, 1, 2, 3]:
-        for index_1 in [0, 1, 2, 3]:
-            if index_1 == index_0: continue
+    n_jets_max = 4
+    for index_0 in range(n_jets_max):
+        for index_1 in range(index_0+1, n_jets_max):
             delta_eta = event_variables.calculate_delta_eta(
                 physics_objects=good_jets_ak8_lv,
                 indices=(index_0, index_1),
