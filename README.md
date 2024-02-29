@@ -30,12 +30,12 @@ The environment to run the code is borrowed from the [t-channel analysis framewo
 Fill in the dataset config, see instructions in [analysis_configs/t_channel_pre_selection.py](https://github.com/fleble/SVJProcessing/blob/main/analysis_configs/t_channel_pre_selection.py). Each process / "datatet" must only list files with same cross-section! E.g. different QCD bins are treated as different datasets.    
 Prepare the skim preparation config, see e.g. [analysis_configs/t_channel_pre_selection.py](https://github.com/fleble/SVJProcessing/blob/main/analysis_configs/t_channel_pre_selection.py)
 
-The preparation on the input files proceeds in 3 steps:
+The preparation on the input files proceeds in 3 steps:     
 1- Fetching the number of events in each input file    
 2- Computing the expected unweighted selection efficiency    
 3- Preparing the list of N files to skim into one output skim file such that each output skim file has at most N events.    
 
-The goal is that:
+The goal is that:    
 1- the number of skim files is reduced compared to the number of initial input files to reduce I/O operations     
 2- all output skim files have the same size and can be processed with similar memory request
 
