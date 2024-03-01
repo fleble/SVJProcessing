@@ -123,6 +123,7 @@ def process(events, cut_flow, year):
     )
 
     # Kinematics
+    new_branches["mass"] = jets_ak8_lv.mass
     new_branches["deltaPhiMET"] = jet_variables.calculate_delta_phi_with_met(jets_ak8_lv, met_lv)
     new_branches["LundJetPlaneZ"] = jet_variables.calculate_lund_jet_plane_z_with_met(jets_ak8_lv, met_lv)
     new_branches["MTMET"] = jet_variables.calculate_invariant_mass_with_met(jets_ak8_lv, met_lv)
