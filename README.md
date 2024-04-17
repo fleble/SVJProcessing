@@ -53,3 +53,7 @@ You can run locally on the interactive nodes where you are logged in, or distrib
 * If you run distributed, you need to adjust the memory request: the more you ask, the more your jobs will queue, but if you do not request enough the jobs will run out of memory and crash. For 50k events per file and TreeMaker NTuples containing PF candidates, 4 GB of memory should be enough!
 
 For processes with high efficiency, the bottleneck is the queuing time... It is much faster to run locally requesting one node if the queuing time is non-zero...
+
+## ParticleNet Jet Tagger Score
+
+By default, the skimming code does not inference on the ParticleNet jet tagger. To add ParticleNet jet tagger score to the skims, use `analysis_configs.t_channel_pre_selection.py` as the module and add the `-pn_tagger` flag to the skimming command. The inferencing will be done on the triton server, and the network scores will be saved to the skims. This part of the skimming code can be done using either TreeMaker NTuples or skims as input files. To run the code over skims, add the `-skim_source` flag.
