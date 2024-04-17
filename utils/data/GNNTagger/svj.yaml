@@ -1,0 +1,70 @@
+selection:
+   ### use `&`, `|`, `~` for logical operations on numpy arrays
+   ### can use functions from `math`, `np` (numpy), and `awkward` in the expression
+
+new_variables:
+   ### [format] name: formula
+   ### can use functions from `math`, `np` (numpy), and `awkward` in the expression
+   mask: awkward.JaggedArray.ones_like(del_eta)
+
+preprocess:
+  ### method: [manual, auto] - whether to use manually specified parameters for variable standardization
+  method: manual
+  ### data_fraction: fraction of events to use when calculating the mean/scale for the standardization
+  data_fraction: 
+
+inputs:
+   points:
+      length: 100
+      vars: 
+         - del_eta
+         - del_phi
+   features:
+      length: 100
+      vars: 
+      ### [format 1]: var_name (no transformation)
+      ### [format 2]: [var_name, 
+      ###              subtract_by(optional, default=None, no transf. if preprocess.method=manual, auto transf. if preprocess.method=auto), 
+      ###              multiply_by(optional, default=1), 
+      ###              clip_min(optional, default=-5), 
+      ###              clip_max(optional, default=5), 
+      ###              pad_value(optional, default=0)]
+         - del_eta
+         - del_phi
+         - log_pt
+         - log_e
+         - log_pt_jetpt
+         - log_e_jete
+         - del_r
+         - pdgId-13
+         - pdgId-211
+         - pdgId1
+         - pdgId11
+         - pdgId13
+         - pdgId130
+         - pdgId2
+         - pdgId211
+         - pdgId22
+
+   mask:
+      length: 100
+      vars: 
+         - mask
+
+labels:
+   ### type can be `simple`, `custom`
+   ### [option 1] use `simple` for binary/multi-class classification, then `value` is a list of 0-1 labels
+   type: simple
+   value: [is_QCD, is_TTJets, is_SVJDark]
+   ### [option 2] otherwise use `custom` to define the label, then `value` is a map
+   # type: custom
+   # value: 
+      # target_mass: np.where(fj_isQCD, fj_genjet_sdmass, fj_gen_mass) 
+
+modelStructure:
+   num_of_k_nearest: 16
+   num_of_edgeConv_convLayers: 2
+   num_of_edgeConv_dim: [64, 128]
+   num_of_fc_layers: 5
+   num_of_fc_nodes: 256
+   fc_dropout: 0.3
