@@ -5,6 +5,7 @@ class NTreeMakerSchema(BaseSchema):
     def __init__(self, base_form):
         super().__init__(base_form)
         self._remove_subjets()
+        self._remove_variables()
         self._form["contents"] = self._build_collections(self._form["contents"])
 
     def _remove_subjets(self):
@@ -12,6 +13,17 @@ class NTreeMakerSchema(BaseSchema):
         for key in keys:
             if "_subjets" in key:
                 self._form["contents"].pop(key)
+
+    def _remove_variables(self):
+        keys = list(self._form["contents"].keys())
+        for branch_name in keys:
+            bname = "n" + branch_name.split("_")[0]
+            if bname in self._form["contents"].keys():
+                self._form["contents"].pop(bname)
+        extra_variables_to_remove = ["nJetsAK8_constituentsIndex"]
+        for var in extra_variables_to_remove:
+            if var in self._form["contents"].keys():
+                self._form["contents"].pop(var)
 
     def _build_collections(self, branch_forms):
         # Turn any special classes into the appropriate awkward form
