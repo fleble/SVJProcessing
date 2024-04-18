@@ -99,6 +99,18 @@ def add_coffea_args(parser):
         help="The type of executor to use (default=%(default)s)"
     )
     parser.add_argument(
+        '-skim_source', '--skim_source',       
+        help='Set True if input files are skim files', 
+        default=False, 
+        action='store_true'
+    )
+    parser.add_argument(
+        '-pn_tagger', '--pn_tagger',       
+        help='Add particleNet jet tagger score', 
+        default=False, 
+        action='store_true'
+    )
+    parser.add_argument(
         "-port", "--port",
         help="Port for dask distributed computation (default=%(default)s)",
         type=int,
@@ -152,7 +164,7 @@ def __prepare_cut_flow_tree(cut_flow_dict):
 def __prepare_uproot_job_kwargs_from_coffea_args(args):
 
     process_module = import_module(args.process_module_name)
-    process_function = lambda x, y: process_module.process(x, y, year=args.year)
+    process_function = lambda x, y: process_module.process(x, y, year=args.year, pn_tagger=args.pn_tagger)
 
     executor = get_executor(args.executor_name)
     executor_args = {
@@ -168,8 +180,13 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
         port=args.port,
     ))
 
+    if args.skim_source:
+        treename = "Events"
+    else:
+        treename = "TreeMaker2/PreSelection"
+
     uproot_job_kwargs = {
-        "treename": "TreeMaker2/PreSelection",
+        "treename": treename,
         "processor_instance": Skimmer(process_function),
         "executor": executor,
         "executor_args": executor_args,

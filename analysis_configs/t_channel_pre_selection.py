@@ -5,7 +5,7 @@ from utils.awkward_array_utilities import as_type
 from utils.variables_computation import event_variables, jet_variables
 import analysis_configs.triggers as trg
 from analysis_configs.met_filters import met_filters
-
+from utils.inference_particlenet import run_jet_tagger
 
 def __is_good_jet(jets_ak8):
     return jets_ak8.ID == 1
@@ -19,9 +19,8 @@ def __is_analysis_jet(jets_ak8):
     return filter
 
 
-def process(events, cut_flow, year):
+def process(events, cut_flow, year, pn_tagger=False):
     """SVJ t-channel pre-selection."""
-
     # Trigger event selection
     triggers = getattr(trg, f"t_channel_{year}")
     events = skimmer_utils.apply_trigger_cut(events, triggers)
@@ -161,13 +160,18 @@ def process(events, cut_flow, year):
             & (hv_category != 16)
         )
 
+    # Adding particleNet score
+    if pn_tagger:
+        new_branches["pNetJetTaggerScore"] = run_jet_tagger(events,jets_ak8)
+
     for branch_name, branch in new_branches.items():
         events["JetsAK8"] = ak.with_field(
             events["JetsAK8"],
             branch,
             branch_name,
         )
-    
+
+
     # Event variables
     nan_value = 0.  # Natural choice for missing values for LJP variables and delat eta / phi!
     good_jets_ak8 = events.JetsAK8[events.JetsAK8.isGood]
@@ -211,9 +215,9 @@ def process(events, cut_flow, year):
             delta_eta_abs = abs(delta_eta)
             delta_phi_abs = abs(delta_phi)
             delta_eta = ak.fill_none(delta_eta, nan_value)
-            delta_phi = ak.fill_none(delta_eta, nan_value)
-            delta_eta_abs = ak.fill_none(delta_eta, nan_value)
-            delta_phi_abs = ak.fill_none(delta_eta, nan_value)
+            delta_phi = ak.fill_none(delta_phi, nan_value)
+            delta_eta_abs = ak.fill_none(delta_eta_abs, nan_value)
+            delta_phi_abs = ak.fill_none(delta_phi_abs, nan_value)
 
             events[f"DeltaEta{index_0}{index_1}GoodJetsAK8"] = delta_eta
             events[f"DeltaPhi{index_0}{index_1}GoodJetsAK8"] = delta_phi
@@ -238,7 +242,7 @@ def process(events, cut_flow, year):
 
     # Removing un-necessary collections
     events = events[[x for x in events.fields if x != "JetsAK15"]]
-
+    
 
     return events, cut_flow
 
