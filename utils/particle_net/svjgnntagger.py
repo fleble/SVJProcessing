@@ -4,8 +4,8 @@ import numpy as np
 import awkward as ak
 
 from utils.data.GNNTagger.config import DataConfig
-from utils.python.tritonutils import wrapped_triton
-from utils.python.jetutils import *
+from utils.particle_net.tritonutils import wrapped_triton
+from utils.particle_net.jetutils import *
 from scipy.special import softmax
 
 

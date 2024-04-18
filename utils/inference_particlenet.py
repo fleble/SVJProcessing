@@ -1,7 +1,7 @@
 import numpy as np
 import awkward as ak
-from utils.python import jetutils as ju
-from utils.python.svjgnntagger import SVJGNNTagger
+from utils.particle_net import jetutils as ju
+from utils.particle_net.svjgnntagger import SVJGNNTagger
 from scipy.special import softmax
 
 def run_jet_tagger(events,fjets):
