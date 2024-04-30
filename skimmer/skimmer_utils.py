@@ -94,7 +94,7 @@ def make_pt_eta_phi_mass_lorentz_vector(pt, eta=None, phi=None, mass=None):
 def __get_number_of_events(events):
     return ak.sum(events.Weight)
 
-def get_cutFlow_from_skims(input_file, cut_flow_tree):
+def __get_cutFlow_from_skims(input_file, cut_flow_tree):
     f = uproot.open(input_file)
-    cut_flow = f["CutFlow"].arrays(cut_flow_tree.keys(),  library="pd")#.head(100)
-    return cut_flow.to_dict()
+    cut_flow = f["CutFlow"].arrays(cut_flow_tree.keys(),  library="pd")
+    return cut_flow.to_dict("list")
