@@ -3,6 +3,7 @@ from coffea.nanoevents.methods import vector
 
 from utils.tree_maker.triggers import trigger_table
 from utils.Logger import *
+import uproot
 
 # Needed so that ak.zip({"pt": [...], "eta": [...], "phi": [...], "mass": [...]},
 #                         with_name="PtEtaPhiMLorentzVector")
@@ -93,3 +94,7 @@ def make_pt_eta_phi_mass_lorentz_vector(pt, eta=None, phi=None, mass=None):
 def __get_number_of_events(events):
     return ak.sum(events.Weight)
 
+def get_cutFlow_from_skims(input_file, cut_flow_tree):
+    f = uproot.open(input_file)
+    cut_flow = f["CutFlow"].arrays(cut_flow_tree.keys(),  library="pd")#.head(100)
+    return cut_flow.to_dict()
