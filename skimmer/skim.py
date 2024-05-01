@@ -222,6 +222,10 @@ def main():
 
     # Making output ROOT file
     cut_flow_tree = __prepare_cut_flow_tree(accumulator["cut_flow"].value)
+    if args.skim_source:
+        # use original values from the skim's cutFlow
+        cut_flow_tree = skimmer_utils.__get_cutFlow_from_skims(args.input_files, cut_flow_tree)
+
     trees = {
         "CutFlow": cut_flow_tree
     }
