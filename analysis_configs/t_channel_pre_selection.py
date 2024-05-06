@@ -7,6 +7,7 @@ import analysis_configs.triggers as trg
 from analysis_configs.met_filters import met_filters
 from utils.inference_particlenet import run_jet_tagger
 
+
 def __is_good_jet(jets_ak8):
     return jets_ak8.ID == 1
 
@@ -173,7 +174,7 @@ def process(events, cut_flow, year, pn_tagger=False):
 
 
     # Event variables
-    nan_value = 0.  # Natural choice for missing values for LJP variables and delat eta / phi!
+    nan_value = 0.  # Natural choice for missing values for LJP variables and delta eta / phi!
     good_jets_ak8 = events.JetsAK8[events.JetsAK8.isGood]
     good_jets_ak8_lv = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
         pt=good_jets_ak8.pt,
@@ -242,7 +243,7 @@ def process(events, cut_flow, year, pn_tagger=False):
 
     # Removing un-necessary collections
     events = events[[x for x in events.fields if x != "JetsAK15"]]
-    
+    events = events[[x for x in events.fields if x != "GenJetsAK15"]]
 
     return events, cut_flow
 
