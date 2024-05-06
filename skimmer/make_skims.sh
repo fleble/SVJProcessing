@@ -13,7 +13,8 @@ dataset_directory=${HOME}/nobackup/SVJ/store/datasets
 module=analysis_configs.t_channel_pre_selection
 selection_name=t_channel_pre_selection
 year=2018
-output_directory=root://cmseos.fnal.gov//store/user/${USER}/SVJ/tChannel/analysisSkims
+# Output directory for nominal samples - no variation of the uncertainties
+output_directory=root://cmseos.fnal.gov//store/user/lpcdarkqcd/tchannel_UL/${year}/Full/PrivateSkims/nominal
 
 
 dataset_names=(
