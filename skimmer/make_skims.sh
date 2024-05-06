@@ -59,6 +59,43 @@ dataset_names=(
     TTJets_HT-800to1200
     TTJets_HT-1200to2500
     TTJets_HT-2500toInf
+    TTJets_SingleLeptFromT
+    TTJets_SingleLeptFromTbar
+    TTJets_SingleLeptFromT_genMET-150
+    TTJets_SingleLeptFromTbar_genMET-150
+    TTJets_DiLept
+    TTJets_DiLept_genMET-150
+    #
+    # WJets
+    #
+    WJetsToLNu_HT-400To600
+    WJetsToLNu_HT-600To800
+    WJetsToLNu_HT-800To1200
+    WJetsToLNu_HT-1200To2500
+    WJetsToLNu_HT-2500ToInf
+    #
+    # ZJets
+    #
+    ZJetsToNuNu_HT-400To600
+    ZJetsToNuNu_HT-600To800
+    ZJetsToNuNu_HT-800To1200
+    ZJetsToNuNu_HT-1200To2500
+    ZJetsToNuNu_HT-2500ToInf
+    #
+    # Single top
+    #
+    ST_s-channel_4f_hadronicDecays
+    ST_s-channel_4f_leptonDecays
+    ST_t-channel_antitop_5f_InclusiveDecays
+    ST_t-channel_top_5f_InclusiveDecays
+    ST_tW_top_5f_inclusiveDecays
+    ST_tW_antitop_5f_inclusiveDecays
+    #
+    # Diboson
+    #
+    ZZTo2Q2Nu
+    WZTo2Q2Nu
+    WWTo1L1Nu2Q
 )
 
 
