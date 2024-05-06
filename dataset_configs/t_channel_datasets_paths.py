@@ -18,13 +18,11 @@
 #
 ################################################################################
 
-# TODO: Add signals for all years
-# TODO: Add all bkgs for all years
+
+years = ["2016", "2016APV", "2017", "2018"]
 
 datasets_info = {
-    "2016": {},
-    "2017": {},
-    "2018": {},
+    year: {} for year in years
 }
 
 signal_models = [
@@ -62,6 +60,12 @@ ttjets_bins = [
     "TTJets_HT-800to1200",
     "TTJets_HT-1200to2500",
     "TTJets_HT-2500toInf",
+    "TTJets_SingleLeptFromT",
+    "TTJets_SingleLeptFromTbar",
+    "TTJets_DiLept",
+    "TTJets_SingleLeptFromT_genMET-150", 
+    "TTJets_SingleLeptFromTbar_genMET-150", 
+    "TTJets_DiLept_genMET-150",
 ]
 
 wjets_bins = [
@@ -91,59 +95,74 @@ zjets_bins = [
     "ZJetsToNuNu_HT-2500ToInf",
 ]
 
+single_top_bins = [
+    "ST_s-channel_4f_hadronicDecays",
+    "ST_s-channel_4f_leptonDecays",
+    "ST_t-channel_antitop_5f_InclusiveDecays",
+    "ST_t-channel_top_5f_InclusiveDecays",
+    "ST_tW_top_5f_inclusiveDecays",
+    "ST_tW_antitop_5f_inclusiveDecays",
+    "tZq_ll_4f_ckm_NLO",
+]
 
-datasets_info["2018"].update({
-    signal_model: [
-        {
-            "redirector": "root://cmseos.fnal.gov/",
-            "path": f"/store/user/lpcdarkqcd/tchannel_UL/2018/Full_11142022/PrivateSamples/SVJ_UL2018_{signal_model}_13TeV-madgraphMLM-pythia8_n-1000",
-            "regex": "",
-        }
-    ]
-    for signal_model in signal_models
-})
+diboson_bins = [
+    "ZZTo2Q2Nu",
+    "WZTo2Q2Nu",
+    "WWTo1L1Nu2Q",
+]
 
-datasets_info["2018"].update({
-    qcd_bin: [
-        {
-            "redirector": "root://cmseos.fnal.gov/",
-            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL18/{qcd_bin}_TuneCP5_13TeV_pythia8/",
-            "regex": "",
-        }
-    ]
-    for qcd_bin in qcd_bins
-})
+background_bins = (
+    qcd_bins
+    + ttjets_bins
+    + wjets_bins
+    + zjets_bins
+    + single_top_bins
+    + diboson_bins
+)
 
-datasets_info["2018"].update({
-    ttjets_bin: [
-        {
-            "redirector": "root://cmseos.fnal.gov/",
-            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL18/{ttjets_bin}_TuneCP5_13TeV-madgraphMLM-pythia8/",
-            "regex": "",
-        }
-    ]
-    for ttjets_bin in ttjets_bins
-})
+for year in years:
+    datasets_info[year].update({
+        signal_model: [
+            {
+                "redirector": "root://cmseos.fnal.gov/",
+                "path": f"/store/user/lpcdarkqcd/tchannel_UL/{year}/Full/PrivateSamples/SVJ_UL{year}_{signal_model}_13TeV-madgraphMLM-pythia8_n-1000",
+                "regex": "",
+            },
+        ]
+        for signal_model in signal_models
+    })
 
-datasets_info["2018"].update({
-    wjets_bin: [
-        {
-            "redirector": "root://cmseos.fnal.gov/",
-            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL18/{wjets_bin}_TuneCP5_13TeV-madgraphMLM-pythia8/",
-            "regex": "",
-        }
-    ]
-    for wjets_bin in wjets_bins
-})
 
-datasets_info["2018"].update({
-    zjets_bin: [
-        {
-            "redirector": "root://cmseos.fnal.gov/",
-            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL18/{zjets_bin}_TuneCP5_13TeV-madgraphMLM-pythia8/",
-            "regex": "",
-        }
-    ]
-    for zjets_bin in zjets_bins
-})
+for year in years:
+    year_tag = year[2:]
+
+    for bin in background_bins:
+        if "QCD_" in bin:
+              suffix = "TuneCP5_13TeV_pythia8"
+        elif "TTJets_" in bin or "WJets" in bin or "ZJets" in bin:
+            suffix = "TuneCP5_13TeV-madgraphMLM-pythia8"
+        elif "ST_s-channel" in bin or "tZq_" in bin:
+            suffix = "TuneCP5_13TeV-amcatnlo-pythia8"
+        elif "ST_t-channel" in bin or "ST_tW" in bin:
+            suffix = "TuneCP5_13TeV-powheg-pythia8"
+        elif "WWTo" in bin or "ZZTo" in bin or "WZTo":
+            suffix = "TuneCP5_13TeV-amcatnloFXFX-pythia8"
+        else:
+            print(f"Unknown background {bin}")
+            exit(1)
+    
+        datasets_info[year].update({
+            bin: [
+                {
+                    "redirector": "root://cmseos.fnal.gov/",
+                    "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL{year_tag}/{bin}_{suffix}/",
+                    "regex": "",
+                }
+            ]
+        })
+    
+
+# To check the content of the dataset config dict
+# import json
+# print(json.dumps(datasets_info["2018"], indent=4))
 

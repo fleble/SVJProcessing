@@ -115,7 +115,7 @@ def __compute_effiency(
                 for i_input_files in range(len(input_files_names)):
                     n_events += number_of_events[i_input_files]
                     if n_events > n_events_target:
-                        n_input_files = i_input_files + 2  # +1 to exceed precision
+                        n_input_files = math.ceil((i_input_files + 1) * 1.1)  # +1 to exceed precision
                         break
                 n_input_files = i_input_files + 1
  
