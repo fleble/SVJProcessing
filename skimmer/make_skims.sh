@@ -8,6 +8,8 @@ EXECUTOR=dask/lpccondor   # HTCondor at LPC
 #N_WORKERS=6
 #EXECUTOR=futures     # local job
 FORCE_RECREATE=0   # 1 to recreate output file if it exists, 0 else
+FIRST_FILE=0
+LAST_FILE=6  # Use -1 to skim all input files
 
 dataset_directory=${HOME}/nobackup/SVJ/store/datasets
 module=analysis_configs.t_channel_pre_selection
