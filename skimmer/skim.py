@@ -165,7 +165,7 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
 
     year = args.year.replace("APV", "")
     process_module = import_module(args.process_module_name)
-    process_function = lambda x, y: process_module.process(x, y, year=year)
+    process_function = lambda x, y: process_module.process(x, y, year=year, pn_tagger=args.pn_tagger)
 
     executor = get_executor(args.executor_name)
     executor_args = {
