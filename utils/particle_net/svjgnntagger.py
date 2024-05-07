@@ -81,8 +81,14 @@ class SVJGNNTagger(object):
     """
 
     # get proper configuration of data
-    with open(self.model_inputs, 'r') as file:
-      yaml_file = yaml.safe_load(file)
+    try:
+        # for running on dask condor
+        with open(self.model_inputs, 'r') as file: 
+          yaml_file = yaml.safe_load(file)
+    except:
+        # for running locally
+        with open(f"../{self.model_inputs}", 'r') as file: 
+          yaml_file = yaml.safe_load(file)
     data_config = DataConfig(yaml_file, print_info=False)
 
     return data_config
