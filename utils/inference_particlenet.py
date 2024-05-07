@@ -8,7 +8,7 @@ def run_jet_tagger(events,fjets):
     gnn_triton = SVJGNNTagger(score_tag='score',
             triton_path='triton+grpc://triton.fnal.gov:443/svj_tch_gnn/1',
             model_structure='utils.data.GNNTagger.SVJTagger',
-            model_inputs='../utils/data/GNNTagger/svj.yaml',
+            model_inputs='utils/data/GNNTagger/svj.yaml',
             dec_thresh=0.999)
     # initialize model if not already done
     gnn_triton.use_triton = True
