@@ -38,7 +38,7 @@ def apply_trigger_cut(events, trigger_list):
         ak.Array
     """
 
-    trigger_filter = ak.zeros_like(events.Weight, dtype=bool)
+    trigger_filter = ak.zeros_like(events.EvtNum, dtype=bool)
     for trigger_name in trigger_list:
         trigger_index = trigger_table[trigger_name]
         trigger_branch = events.TriggerPass[:, trigger_index]
@@ -91,10 +91,19 @@ def make_pt_eta_phi_mass_lorentz_vector(pt, eta=None, phi=None, mass=None):
     return vec
 
 
+def is_mc(events):
+    return "Weight" in events.fields
+
+
 def __get_number_of_events(events):
-    return ak.sum(events.Weight)
+    if is_mc(events):
+        return ak.sum(events.Weight)
+    else:
+        return len(events)
+
 
 def __get_cutFlow_from_skims(input_file, cut_flow_tree):
     f = uproot.open(input_file)
     cut_flow = f["CutFlow"].arrays(cut_flow_tree.keys(),  library="pd")
     return cut_flow.to_dict("list")
+
