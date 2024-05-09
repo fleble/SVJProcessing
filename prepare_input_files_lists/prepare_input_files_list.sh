@@ -53,6 +53,22 @@ dataset_names=(
     TTJets_SingleLeptFromTbar_genMET-150
     TTJets_DiLept_genMET-150
     #
+    # WJets
+    #
+    WJetsToLNu_HT-400To600
+    WJetsToLNu_HT-600To800
+    WJetsToLNu_HT-800To1200
+    WJetsToLNu_HT-1200To2500
+    WJetsToLNu_HT-2500ToInf
+    #
+    # ZJets
+    #
+    ZJetsToNuNu_HT-400To600
+    ZJetsToNuNu_HT-600To800
+    ZJetsToNuNu_HT-800To1200
+    ZJetsToNuNu_HT-1200To2500
+    ZJetsToNuNu_HT-2500ToInf
+    #
     # Single top
     #
     ST_s-channel_4f_hadronicDecays
