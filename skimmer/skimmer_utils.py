@@ -95,6 +95,51 @@ def is_mc(events):
     return "Weight" in events.fields
 
 
+def apply_hem_veto(events):
+    """Apply HEM veto for the second part of 2018 data."""
+
+    def hem_veto(events):
+
+        jets = events.Jets
+        electrons = events.Electrons
+        muons = events.Muons
+
+        jet_hem_condition = (
+            (jets.eta > -3.05)
+            & (jets.eta < -1.35)
+            & (jets.phi > -1.62)
+            & (jets.phi < -0.82)
+        )
+        electron_hem_condition = (
+            (electrons.eta > -3.05)
+            & (electrons.eta < -1.35)
+            & (electrons.phi > -1.62)
+            & (electrons.phi < -0.82)
+        )
+        muon_hem_condition = (
+            (muons.eta > -3.05)
+            & (muons.eta < -1.35)
+            & (muons.phi > -1.62)
+            & (muons.phi < -0.82)
+        )
+        veto = (
+            ((ak.num(jets) > 0) & ak.any(jet_hem_condition, axis=1))
+            | ((ak.num(muons) > 0) & ak.any(muon_hem_condition, axis=1))
+            | ((ak.num(electrons) > 0) & ak.any(electron_hem_condition, axis=1))
+        )
+        return ~veto
+    
+    if is_mc(events):
+        veto = hem_veto(events)
+    else:
+        veto = (
+            ((events.RunNum >= 319077) & hem_veto(events))
+            | (events.RunNum < 319077)
+        )
+
+    return events[veto]
+
+
 def __get_number_of_events(events):
     if is_mc(events):
         return ak.sum(events.Weight)
