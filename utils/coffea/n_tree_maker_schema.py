@@ -4,23 +4,30 @@ from coffea.nanoevents.schemas.base import BaseSchema, zip_forms, nest_jagged_fo
 class NTreeMakerSchema(BaseSchema):
     def __init__(self, base_form):
         super().__init__(base_form)
-        self._remove_subjets()
-        self._remove_variables()
+        self._remove_faulty_branches()
         self._form["contents"] = self._build_collections(self._form["contents"])
 
-    def _remove_subjets(self):
+    def _remove_faulty_branches(self):
         keys = list(self._form["contents"].keys())
+
         for key in keys:
+            # Removing subjet branches as they were affected by a bug
             if "_subjets" in key:
+                # TODO: This could have been removed after April 2024 TreeMaker update...
+                # To remove if making skims from scratch again!
                 self._form["contents"].pop(key)
 
-    def _remove_variables(self):
-        keys = list(self._form["contents"].keys())
-        for branch_name in keys:
-            bname = "n" + branch_name.split("_")[0]
-            if bname in self._form["contents"].keys():
-                self._form["contents"].pop(bname)
-        extra_variables_to_remove = ["nJetsAK8_constituentsIndex"]
+            # Removing automatically added counter branches
+            branch_name = "n" + key.split("_")[0]
+            if branch_name in self._form["contents"].keys():
+                self._form["contents"].pop(branch_name)
+
+        # Remove specific branches causing issues
+        extra_variables_to_remove = [
+            "nJetsAK8_constituentsIndex",
+            "Photons_electronFakes",
+            "Photons_nonPrompt",
+        ]
         for var in extra_variables_to_remove:
             if var in self._form["contents"].keys():
                 self._form["contents"].pop(var)
