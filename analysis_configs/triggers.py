@@ -43,3 +43,15 @@ t_channel_2018 = [
     "PFMETNoMu120_PFMHTNoMu120_IDTight"
 ]
 
+photon_2016 = [
+    "Photon165_HE10",
+]
+
+photon_2017 = [
+    "Photon200",
+]
+
+photon_2018 = [
+    "Photon200",
+]
+
