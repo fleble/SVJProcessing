@@ -102,7 +102,7 @@ def __get_number_of_events(events):
         return len(events)
 
 
-def __get_cutFlow_from_skims(input_file, cut_flow_tree):
+def get_cut_flow_from_skims(input_file, cut_flow_tree):
     f = uproot.open(input_file)
     cut_flow = f["CutFlow"].arrays(cut_flow_tree.keys(),  library="pd")
     return cut_flow.to_dict("list")
