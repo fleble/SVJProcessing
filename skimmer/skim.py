@@ -50,6 +50,11 @@ def add_coffea_args(parser):
         required=True,
     )
     parser.add_argument(
+        "-pd", "--primary_dataset",
+        help="If data, name of the primary dataset",
+        default="",
+    )
+    parser.add_argument(
         "-c", "--chunk_size",
         help="Size of the data chunks (default=%(default)s)",
         default=10000,
@@ -165,7 +170,13 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
 
     year = args.year.replace("APV", "")
     process_module = import_module(args.process_module_name)
-    process_function = lambda x, y: process_module.process(x, y, year=year, pn_tagger=args.pn_tagger)
+    process_function = lambda x, y: process_module.process(
+        x,
+        y,
+        year=year,
+        primary_dataset=args.primary_dataset,
+        pn_tagger=args.pn_tagger,
+    )
 
     executor = get_executor(args.executor_name)
     executor_args = {

@@ -7,8 +7,12 @@ from analysis_configs.met_filters import met_filters
 from analysis_configs import sequences
 
 
-def process(events, cut_flow, year, pn_tagger=False):
+def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     """SVJ t-channel pre-selection."""
+
+    if not skimmer_utils.is_mc(events):
+        events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
+        skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)
 
     # Trigger event selection
     triggers = getattr(trg, f"t_channel_{year}")

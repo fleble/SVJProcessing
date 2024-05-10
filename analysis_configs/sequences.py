@@ -1,9 +1,42 @@
+import numpy as np
 import awkward as ak
 
 from skimmer import skimmer_utils
 from utils.variables_computation import event_variables, jet_variables
 from utils.inference_particlenet import run_jet_tagger
+from utils.data.triggers import primary_dataset_triggers
+from utils.tree_maker.triggers import trigger_table
 from analysis_configs import objects_definition as obj
+
+from utils.Logger import *
+
+
+def remove_primary_dataset_overlap(events, year, primary_dataset):
+
+    def trigger_list_to_index_list(year, primary_dataset):
+        return [trigger_table[trigger] for trigger in primary_dataset_triggers[primary_dataset][year]]
+
+    def is_passing_primary_dataset_triggers(events, year, primary_dataset):
+        trigger_indices = trigger_list_to_index_list(year, primary_dataset)
+        primary_dataset_trigger_mask = np.zeros(len(events.TriggerPass[0]), dtype=int)
+        primary_dataset_trigger_mask[trigger_indices] = 1
+        primary_dataset_trigger_mask = np.tile(primary_dataset_trigger_mask, [len(events), 1])
+        return ak.any(events.TriggerPass * primary_dataset_trigger_mask, axis=1)
+
+    pass_jetht_triggers = is_passing_primary_dataset_triggers(events, year, "JetHT")
+    pass_met_triggers = is_passing_primary_dataset_triggers(events, year, "MET")
+
+    if primary_dataset == "JetHT":
+        overlap_mask = np.ones(len(events), dtype=bool)
+    elif primary_dataset == "MET":
+        overlap_mask = np.bitwise_not(pass_jetht_triggers)
+    elif primary_dataset == "HTMHT":
+        overlap_mask = np.bitwise_not(pass_jetht_triggers | pass_met_triggers)
+    else:
+        log.critical(f"Invalid primary dataset name {primary_dataset}!")
+        exit(1)
+    
+    return events[overlap_mask]
 
 
 def apply_good_jet_filter(events):

@@ -139,7 +139,7 @@ make_skims() {
                 local output_file_path=$(echo ${output_file} | cut -d/ -f 4-)
                 xrdfs ${output_redirector} ls ${output_file_path} > /dev/null 2>&1
                 if [ "$?" != "0" ] || [ "${FORCE_RECREATE}" == "1" ]; then
-                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -y ${year} -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger
+                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -pd ${dataset_name} -y ${year} -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger
                     xrdcp -f ${output_file_tmp} ${output_file}
                     echo ${output_file} has been saved.
                     rm ${output_file_tmp}
