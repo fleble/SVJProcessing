@@ -89,8 +89,16 @@ def __write_dataset_info(
     output_directory_ = f"{output_directory}/files_list/{year}"
     Path(output_directory_).mkdir(parents=True, exist_ok=True)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
-        number_of_events = list(tqdm(executor.map(__get_number_of_events, files_list), total=len(files_list)))
+    files_list_batches = []
+    max_n_files = 8000
+    for i in range(1 + len(files_list)//max_n_files):
+        files_list_batches.append(files_list[i * max_n_files: (i+1) * max_n_files])
+
+    number_of_events = []
+    for i, files_list_batch in enumerate(files_list_batches):
+        log.info(f"Processing batch {i+1}/{len(files_list_batches)}...")
+        with concurrent.futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
+            number_of_events += list(tqdm(executor.map(__get_number_of_events, files_list_batch), total=len(files_list_batch)))
 
     output_file_name = f"{output_directory_}/{dataset}.csv"
     header = ["file_name", "number_of_events"]
