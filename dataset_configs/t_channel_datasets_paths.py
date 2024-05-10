@@ -121,6 +121,7 @@ background_bins = (
     + diboson_bins
 )
 
+
 for year in years:
     datasets_info[year].update({
         signal_model: [
@@ -161,7 +162,34 @@ for year in years:
                 }
             ]
         })
-    
+
+# Data
+# EGamma 2018
+datasets_info["2018"].update({
+    "EGamma": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018A-UL2018-v1/EGamma/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018B-UL2018-v1/EGamma/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018C-UL2018-v1/EGamma/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018D-UL2018-v2/EGamma/",
+            "regex": "",
+        },
+    ]
+})
+
 
 # To check the content of the dataset config dict
 # import json

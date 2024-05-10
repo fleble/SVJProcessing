@@ -12,9 +12,15 @@ FIRST_FILE=0
 LAST_FILE=6  # Use -1 to skim all input files
 
 dataset_directory=${HOME}/nobackup/SVJ/store/datasets
+
 module=analysis_configs.t_channel_pre_selection
 selection_name=t_channel_pre_selection
-year=2016
+
+#module=analysis_configs.t_channel_wnae_qcd_training_region
+#selection_name=t_channel_wnae_qcd_training_region
+
+year=2018
+
 # Output directory for nominal samples - no variation of the uncertainties
 output_directory=root://cmseos.fnal.gov//store/user/lpcdarkqcd/tchannel_UL/${year}/Full/PrivateSkims/nominal
 
@@ -97,6 +103,12 @@ dataset_names=(
     WZTo2Q2Nu
     WZTo1L1Nu2Q
     WWTo1L1Nu2Q
+    #
+    ##################################
+    # DATA
+    ##################################
+    #
+    EGamma
 )
 
 

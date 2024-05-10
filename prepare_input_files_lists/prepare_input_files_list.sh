@@ -2,8 +2,13 @@
 
 dataset_directory=${HOME}/nobackup/SVJ/store/datasets
 dataset_config=dataset_configs.t_channel_datasets_paths
+
 module=analysis_configs.t_channel_pre_selection
 selection_name=t_channel_pre_selection
+
+#module=analysis_configs.t_channel_wnae_qcd_training_region
+#selection_name=t_channel_wnae_qcd_training_region
+
 year=2018
 
 dataset_names=(
@@ -84,6 +89,12 @@ dataset_names=(
     WZTo2Q2Nu
     WZTo1L1Nu2Q
     WWTo1L1Nu2Q
+    #
+    ##################################
+    # DATA
+    ##################################
+    #
+    EGamma
 )
 
 prepare_input_files_list() {
