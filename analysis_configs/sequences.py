@@ -41,7 +41,6 @@ def add_analysis_branches(events):
     # Jets AK8 variables
     new_branches = {}
     jets_ak8 = events.JetsAK8
-    gen_jets_ak8 = events.GenJetsAK8
     jets_ak8_lv = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
         pt=jets_ak8.pt,
         eta=jets_ak8.eta,
@@ -60,37 +59,39 @@ def add_analysis_branches(events):
     new_branches["MTMET"] = jet_variables.calculate_invariant_mass_with_met(jets_ak8_lv, met_lv)
 
     # Dark jet branches
-    if "hvCategory" in gen_jets_ak8.fields:  # If signal samples
-        gen_jet_index = ak.mask(jets_ak8.genIndex, jets_ak8.genIndex >= 0)
-        hv_category = gen_jets_ak8.hvCategory[gen_jet_index]
-        hv_category = ak.fill_none(hv_category, -9999)
-        new_branches["hvCategory"] = hv_category
+    if skimmer_utils.is_mc(events):
+        gen_jets_ak8 = events.GenJetsAK8
+        if "hvCategory" in gen_jets_ak8.fields:  # If signal samples
+            gen_jet_index = ak.mask(jets_ak8.genIndex, jets_ak8.genIndex >= 0)
+            hv_category = gen_jets_ak8.hvCategory[gen_jet_index]
+            hv_category = ak.fill_none(hv_category, -9999)
+            new_branches["hvCategory"] = hv_category
 
-        new_branches["isDarkJetTightNoMix"] = (
-            (hv_category == 1)
-            | (hv_category == 3)
-            | (hv_category == 5)
-            | (hv_category == 9)
-        )
+            new_branches["isDarkJetTightNoMix"] = (
+                (hv_category == 1)
+                | (hv_category == 3)
+                | (hv_category == 5)
+                | (hv_category == 9)
+            )
 
-        new_branches["isDarkJetTight"] = (
-            (hv_category != -9999)
-            & (hv_category != 0)
-            & (hv_category < 16)
-        )
+            new_branches["isDarkJetTight"] = (
+                (hv_category != -9999)
+                & (hv_category != 0)
+                & (hv_category < 16)
+            )
 
-        new_branches["isDarkJetMedium"] = (
-            (hv_category != -9999)
-            & (hv_category != 0)
-            & (hv_category != 16)
-            & (hv_category != 17)
-        )
+            new_branches["isDarkJetMedium"] = (
+                (hv_category != -9999)
+                & (hv_category != 0)
+                & (hv_category != 16)
+                & (hv_category != 17)
+            )
 
-        new_branches["isDarkJetLoose"] = (
-            (hv_category != -9999)
-            & (hv_category != 0)
-            & (hv_category != 16)
-        )
+            new_branches["isDarkJetLoose"] = (
+                (hv_category != -9999)
+                & (hv_category != 0)
+                & (hv_category != 16)
+            )
 
     for branch_name, branch in new_branches.items():
         events["JetsAK8"] = ak.with_field(
