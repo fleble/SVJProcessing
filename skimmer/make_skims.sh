@@ -19,6 +19,9 @@ selection_name=t_channel_pre_selection
 #module=analysis_configs.t_channel_wnae_qcd_training_region
 #selection_name=t_channel_wnae_qcd_training_region
 
+#module=analysis_configs.t_channel_wnae_top_training_region
+#selection_name=t_channel_wnae_top_training_region
+
 year=2018
 
 # Output directory for nominal samples - no variation of the uncertainties
