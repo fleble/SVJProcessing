@@ -129,4 +129,26 @@ primary_dataset_triggers = {
             "PFMETTypeOne200_HBHE_BeamHaloCleaned",
         ],
     },
+    "SingleMuon": {
+        "2016": [
+        ],
+        "2017": [
+        ],
+        "2018": [
+            "IsoMu24",
+            "Mu50",
+        ],
+    },
+    "SingleElectron": {
+        "2016": [
+        ],
+        "2017": [
+        ],
+    },
+    "EGamma": {
+        "2018": [
+            "Ele23_Ele12_CaloIdL_TrackIdL_IsoVL",
+            "Ele28_eta2p1_WPTight_Gsf_HT150",
+        ],
+    },
 }

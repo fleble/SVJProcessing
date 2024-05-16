@@ -55,3 +55,15 @@ photon_2018 = [
     "Photon200",
 ]
 
+single_muon_2018 = [
+    "IsoMu24",
+    "Mu50",
+]
+
+single_electron_2018 = [
+    "Ele23_Ele12_CaloIdL_TrackIdL_IsoVL",
+    "Ele28_eta2p1_WPTight_Gsf_HT150",
+]
+
+single_lepton_2018 = single_muon_2018 + single_electron_2018
+

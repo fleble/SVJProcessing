@@ -1,6 +1,7 @@
 import awkward as ak
 from coffea.nanoevents.methods import vector
 
+from utils.awkward_array_utilities import as_type
 from utils.tree_maker.triggers import trigger_table
 from utils.Logger import *
 import uproot
@@ -138,6 +139,87 @@ def apply_hem_veto(events):
         )
 
     return events[veto]
+
+
+def is_clean(
+        cleaned_collection,
+        cleaning_collection,
+        radius,
+    ):
+
+    cleaned_objects = make_pt_eta_phi_mass_lorentz_vector(
+        pt=cleaned_collection.pt,
+        eta=cleaned_collection.eta,
+        phi=cleaned_collection.phi,
+        mass=cleaned_collection.mass,
+    )
+    cleaning_objects = make_pt_eta_phi_mass_lorentz_vector(
+        pt=cleaning_collection.pt,
+        eta=cleaning_collection.eta,
+        phi=cleaning_collection.phi,
+        mass=cleaning_collection.mass,
+    )
+
+    
+    cleaned_objects_, cleaning_objects_ = ak.unzip(ak.cartesian([cleaned_objects, cleaning_objects], axis=-1, nested=True))
+    min_delta_r = ak.min(cleaned_objects_.delta_r(cleaning_objects_), axis=-1)
+    min_delta_r = ak.fill_none(min_delta_r, 2*radius)
+    filter = (min_delta_r > radius)
+    filter = as_type(filter, bool)
+
+    return filter
+
+
+def collections_matching(
+        collection1,
+        collection2,
+    ):
+    """Return the mapping of closest object in collection1 to each object of collection2.
+    
+    Use as:
+    mapping = collections_matching(collection1, collection2)
+    matched_collection2 = collection2[mapping]
+
+    The matching is a simple closest delta R with repetition!
+    There can be several times the same object from collection2 matched.
+
+    Args:
+        events (EventsFromAkArray)
+        collection1 (ak.Array): ak array with fields "pt", "eta", "phi", "mass"
+        collection2 (ak.Array): ak array with fields "pt", "eta", "phi", "mass" 
+    """
+
+    collection1_4vector = make_pt_eta_phi_mass_lorentz_vector(
+        pt=collection1.pt,
+        eta=collection1.eta,
+        phi=collection1.phi,
+        mass=collection1.mass,
+    )
+    collection2_4vector = make_pt_eta_phi_mass_lorentz_vector(
+        pt=collection2.pt,
+        eta=collection2.eta,
+        phi=collection2.phi,
+        mass=collection2.mass,
+    )
+
+    collection1_, collection2_ = ak.unzip(ak.cartesian([collection1_4vector, collection2_4vector], axis=-1, nested=True))
+    mapping = ak.argmin(collection1_.delta_r(collection2_), axis=-1)
+    mapping = as_type(mapping, int)
+
+    return mapping
+
+
+def get_b_tagging_wp(year):
+    """Tight b-tagging working points."""
+
+    if year == "2016":
+        return 0.6502
+    elif year == "2016APV":
+        return 0.6377
+    elif year == "2017":
+        return 0.7476
+    elif year == "2018":
+        return 0.7100
 
 
 def __get_number_of_events(events):
