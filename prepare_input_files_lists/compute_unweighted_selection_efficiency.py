@@ -66,7 +66,7 @@ def __compute_uncertainty(n_initial, n_final):
     return math.sqrt(eff * (1 - eff) / n)
 
 
-def __compute_effiency(
+def __compute_efficiency(
         input_files_names,
         number_of_events,
         precision,
@@ -138,7 +138,7 @@ def __compute_unweighted_selection_efficiency(
 
     input_files_names, number_of_events = __read_files_list_csv_file(input_files_list)
 
-    efficiency = __compute_effiency(
+    efficiency = __compute_efficiency(
         input_files_names,
         number_of_events,
         precision,
