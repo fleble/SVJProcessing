@@ -95,6 +95,7 @@ dataset_names=(
     ##################################
     #
     EGamma
+    SingleMuon
 )
 
 prepare_input_files_list() {
