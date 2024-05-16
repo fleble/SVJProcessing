@@ -129,7 +129,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     skimmer_utils.update_cut_flow(cut_flow, "nBTagEq2", events)
 
 
-    # Define as training jets the AK8 jets with angular separation
+    # Do not consider as training jets the AK8 jets with angular separation
     # less than 0.8 from the b-tagged AK4 jet closest to the tag lepton
     tag_electrons = events.Electrons[obj.is_tag_electron(events.Electrons)]
     tag_muons = events.Muons[obj.is_tag_muon(events.Muons)]
