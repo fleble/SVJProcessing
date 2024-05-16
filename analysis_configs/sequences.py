@@ -39,14 +39,14 @@ def remove_primary_dataset_overlap(events, year, primary_dataset):
     return events[overlap_mask]
 
 
-def apply_good_jet_filter(events):
+def apply_good_ak8_jet_filter(events):
     analysis_jets = events.JetsAK8[obj.is_analysis_jet(events.JetsAK8)]
     good_jets_filter = ak.all(obj.is_good_jet(analysis_jets), axis=1)
     events = events[good_jets_filter]
     return events
 
 
-def add_good_jet_branch(events):
+def add_good_ak8_jet_branch(events):
     is_good_analysis_jet = (
         obj.is_analysis_jet(events.JetsAK8)
         & obj.is_good_jet(events.JetsAK8)

@@ -18,7 +18,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
 
     # Adding branches already so that it can be used in the rest of the selection
     # JetsAK8_isGood
-    events = sequences.add_good_jet_branch(events)
+    events = sequences.add_good_ak8_jet_branch(events)
     # Photons_isGood
     events["Photons"] = ak.with_field(
         events["Photons"],

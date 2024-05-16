@@ -29,12 +29,12 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
     # Good jet filters
-    events = sequences.apply_good_jet_filter(events)
+    events = sequences.apply_good_ak8_jet_filter(events)
     skimmer_utils.update_cut_flow(cut_flow, "GoodJetsAK8", events)
 
     # Adding JetsAK8_isGood branch already so that it can be used
     # in the rest of the pre-selection
-    events = sequences.add_good_jet_branch(events)
+    events = sequences.add_good_ak8_jet_branch(events)
 
     # Requiring at least 2 good FatJets
     filter = ak.count(events.JetsAK8.pt[events.JetsAK8.isGood], axis=1) >= 2
