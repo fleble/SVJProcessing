@@ -190,6 +190,33 @@ datasets_info["2018"].update({
     ]
 })
 
+# SingleMuon 2018
+datasets_info["2018"].update({
+    "SingleMuon": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018A-UL2018-v3/SingleMuon/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018B-UL2018-v2/SingleMuon/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018C-UL2018-v2/SingleMuon/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018D-UL2018-v3/SingleMuon/",
+            "regex": "",
+        },
+    ]
+})
+
+
 
 # To check the content of the dataset config dict
 # import json
