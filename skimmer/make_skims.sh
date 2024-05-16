@@ -140,7 +140,7 @@ make_skims() {
     i_file=-1
     for files_list in $(ls ${files_list_directory} | sort -V); do
         ((i_file++))
-        if [ ${i_file} -le ${LAST_FILE} ]; then
+        if [ ${i_file} -le ${LAST_FILE} ] || [ "${LAST_FILE}" == "-1" ]; then
             if [ ${i_file} -ge ${FIRST_FILE} ]; then
 
                 local input_files=${files_list_directory}/${files_list}
