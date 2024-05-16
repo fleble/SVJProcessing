@@ -90,7 +90,7 @@ def __write_dataset_info(
     Path(output_directory_).mkdir(parents=True, exist_ok=True)
 
     files_list_batches = []
-    max_n_files = 8000
+    max_n_files = 5000
     for i in range(1 + len(files_list)//max_n_files):
         files_list_batches.append(files_list[i * max_n_files: (i+1) * max_n_files])
 
