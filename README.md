@@ -57,7 +57,7 @@ You can run locally on the interactive nodes where you are logged in, or distrib
 
 For processes with high efficiency, the bottleneck is the queuing time... It is much faster to run locally requesting one node if the queuing time is non-zero...
 
-If the total number of workers is too high, the OS limit of maximum number of files opened by one process is reached. At FNAL, this limit seems to be around 400 workers. It is recommended to ask for a maximum of 300 workers at once.
+If the total number of workers is too high, the OS limit of maximum number of files opened by one process is reached. At FNAL, this limit seems to be around 200 workers. It is recommended to ask for a maximum of 150 workers at once. It seems that the code terminates well if asking for more workers, but workers will all crash throwing an OSError...
 
 
 ## ParticleNet Jet Tagger Score
