@@ -138,6 +138,8 @@ def __compute_unweighted_selection_efficiency(
 
     input_files_names, number_of_events = __read_files_list_csv_file(input_files_list)
 
+    coffea_args.primary_dataset = dataset
+
     efficiency = __compute_efficiency(
         input_files_names,
         number_of_events,
