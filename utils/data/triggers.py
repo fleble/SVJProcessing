@@ -131,8 +131,14 @@ primary_dataset_triggers = {
     },
     "SingleMuon": {
         "2016": [
+            "IsoMu24",
+            "IsoTkMu24",
+            "Mu50",
         ],
         "2017": [
+            "IsoMu24",
+            "IsoMu27",
+            "Mu50",
         ],
         "2018": [
             "IsoMu24",
@@ -141,8 +147,13 @@ primary_dataset_triggers = {
     },
     "SingleElectron": {
         "2016": [
+            "Ele23_Ele12_CaloIdL_TrackIdL_IsoVL",
+            "Ele25_eta2p1_WPTight_Gsf",
+            "Ele27_WPTight_Gsf",
         ],
         "2017": [
+            "Ele23_Ele12_CaloIdL_TrackIdL_IsoVL",
+            "Ele35_WPTight_Gsf",
         ],
     },
     "EGamma": {
@@ -152,3 +163,4 @@ primary_dataset_triggers = {
         ],
     },
 }
+
