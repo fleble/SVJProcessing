@@ -108,6 +108,7 @@ def main ():
     datasets = args.datasets
 
     for dataset in datasets:
+        args.primary_dataset = dataset
         __prepare_input_files_list(
             dataset,
             args.selection,

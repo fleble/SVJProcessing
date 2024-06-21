@@ -2,8 +2,16 @@
 
 dataset_directory=${HOME}/nobackup/SVJ/store/datasets
 dataset_config=dataset_configs.t_channel_datasets_paths
+
 module=analysis_configs.t_channel_pre_selection
 selection_name=t_channel_pre_selection
+
+#module=analysis_configs.t_channel_wnae_qcd_training_region
+#selection_name=t_channel_wnae_qcd_training_region
+
+#module=analysis_configs.t_channel_wnae_top_training_region
+#selection_name=t_channel_wnae_top_training_region
+
 year=2018
 
 dataset_names=(
@@ -53,6 +61,22 @@ dataset_names=(
     TTJets_SingleLeptFromTbar_genMET-150
     TTJets_DiLept_genMET-150
     #
+    # WJets
+    #
+    WJetsToLNu_HT-400To600
+    WJetsToLNu_HT-600To800
+    WJetsToLNu_HT-800To1200
+    WJetsToLNu_HT-1200To2500
+    WJetsToLNu_HT-2500ToInf
+    #
+    # ZJets
+    #
+    ZJetsToNuNu_HT-400To600
+    ZJetsToNuNu_HT-600To800
+    ZJetsToNuNu_HT-800To1200
+    ZJetsToNuNu_HT-1200To2500
+    ZJetsToNuNu_HT-2500ToInf
+    #
     # Single top
     #
     ST_s-channel_4f_hadronicDecays
@@ -68,6 +92,13 @@ dataset_names=(
     WZTo2Q2Nu
     WZTo1L1Nu2Q
     WWTo1L1Nu2Q
+    #
+    ##################################
+    # DATA
+    ##################################
+    #
+    EGamma
+    SingleMuon
 )
 
 prepare_input_files_list() {

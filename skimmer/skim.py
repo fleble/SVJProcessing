@@ -10,6 +10,7 @@ from utils.coffea.dict_accumulator import DictAccumulator
 from utils.coffea.n_tree_maker_schema import NTreeMakerSchema
 from utils.coffea.job_submission_helper import get_executor, get_executor_args
 from skimmer import skimmer_utils
+from utils.Logger import *
 
 
 class Skimmer(processor.ProcessorABC):
@@ -48,6 +49,11 @@ def add_coffea_args(parser):
         "-y", "--year",
         help="Data-taking year",
         required=True,
+    )
+    parser.add_argument(
+        "-pd", "--primary_dataset",
+        help="If data, name of the primary dataset",
+        default="",
     )
     parser.add_argument(
         "-c", "--chunk_size",
@@ -165,7 +171,13 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
 
     year = args.year.replace("APV", "")
     process_module = import_module(args.process_module_name)
-    process_function = lambda x, y: process_module.process(x, y, year=year, pn_tagger=args.pn_tagger)
+    process_function = lambda x, y: process_module.process(
+        x,
+        y,
+        year=year,
+        primary_dataset=args.primary_dataset,
+        pn_tagger=args.pn_tagger,
+    )
 
     executor = get_executor(args.executor_name)
     executor_args = {
@@ -225,15 +237,20 @@ def main():
     cut_flow_tree = __prepare_cut_flow_tree(accumulator["cut_flow"].value)
     if args.skim_source:
         # use original values from the skim's cutFlow
-        cut_flow_tree = skimmer_utils.__get_cutFlow_from_skims(args.input_files, cut_flow_tree)
+        cut_flow_tree = skimmer_utils.get_cut_flow_from_skims(args.input_files, cut_flow_tree)
 
     trees = {
         "CutFlow": cut_flow_tree
     }
 
+    events = accumulator["events"].value
+    if len(events) == 0:
+        log.warning("No events passed selection")
+        return
+
     uproot_utl.write_tree_maker_root_file(
         output_file_name=args.output_file_name,
-        events=accumulator["events"].value,
+        events=events,
         trees=trees,
     )
 

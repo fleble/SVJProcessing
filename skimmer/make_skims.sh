@@ -12,9 +12,18 @@ FIRST_FILE=0
 LAST_FILE=6  # Use -1 to skim all input files
 
 dataset_directory=${HOME}/nobackup/SVJ/store/datasets
+
 module=analysis_configs.t_channel_pre_selection
 selection_name=t_channel_pre_selection
-year=2016
+
+#module=analysis_configs.t_channel_wnae_qcd_training_region
+#selection_name=t_channel_wnae_qcd_training_region
+
+#module=analysis_configs.t_channel_wnae_top_training_region
+#selection_name=t_channel_wnae_top_training_region
+
+year=2018
+
 # Output directory for nominal samples - no variation of the uncertainties
 output_directory=root://cmseos.fnal.gov//store/user/lpcdarkqcd/tchannel_UL/${year}/Full/PrivateSkims/nominal
 
@@ -97,6 +106,13 @@ dataset_names=(
     WZTo2Q2Nu
     WZTo1L1Nu2Q
     WWTo1L1Nu2Q
+    #
+    ##################################
+    # DATA
+    ##################################
+    #
+    EGamma
+    SingleMuon
 )
 
 
@@ -124,7 +140,7 @@ make_skims() {
     i_file=-1
     for files_list in $(ls ${files_list_directory} | sort -V); do
         ((i_file++))
-        if [ ${i_file} -le ${LAST_FILE} ]; then
+        if [ ${i_file} -le ${LAST_FILE} ] || [ "${LAST_FILE}" == "-1" ]; then
             if [ ${i_file} -ge ${FIRST_FILE} ]; then
 
                 local input_files=${files_list_directory}/${files_list}
@@ -139,7 +155,7 @@ make_skims() {
                 local output_file_path=$(echo ${output_file} | cut -d/ -f 4-)
                 xrdfs ${output_redirector} ls ${output_file_path} > /dev/null 2>&1
                 if [ "$?" != "0" ] || [ "${FORCE_RECREATE}" == "1" ]; then
-                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -y ${year} -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger
+                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -pd ${dataset_name} -y ${year} -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger
                     xrdcp -f ${output_file_tmp} ${output_file}
                     echo ${output_file} has been saved.
                     rm ${output_file_tmp}

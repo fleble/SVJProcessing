@@ -2,26 +2,18 @@ import awkward as ak
 
 from skimmer import skimmer_utils
 from utils.awkward_array_utilities import as_type
-from utils.variables_computation import event_variables, jet_variables
 import analysis_configs.triggers as trg
 from analysis_configs.met_filters import met_filters
-from utils.inference_particlenet import run_jet_tagger
+from analysis_configs import sequences
 
 
-def __is_good_jet(jets_ak8):
-    return jets_ak8.ID == 1
-
-
-def __is_analysis_jet(jets_ak8):
-    filter = (
-        (jets_ak8.pt > 50)
-        & (abs(jets_ak8.eta) < 2.4)
-    )
-    return filter
-
-
-def process(events, cut_flow, year, pn_tagger=False):
+def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     """SVJ t-channel pre-selection."""
+
+    if not skimmer_utils.is_mc(events):
+        events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
+        skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)
+
     # Trigger event selection
     triggers = getattr(trg, f"t_channel_{year}")
     events = skimmer_utils.apply_trigger_cut(events, triggers)
@@ -37,22 +29,12 @@ def process(events, cut_flow, year, pn_tagger=False):
     skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
     # Good jet filters
-    analysis_jets = events.JetsAK8[__is_analysis_jet(events.JetsAK8)]
-    good_jets_filter = ak.all(__is_good_jet(analysis_jets), axis=1)
-    events = events[good_jets_filter]
+    events = sequences.apply_good_ak8_jet_filter(events)
     skimmer_utils.update_cut_flow(cut_flow, "GoodJetsAK8", events)
 
-    # Adding JetsAK8_idGood branch already so that it can be used
+    # Adding JetsAK8_isGood branch already so that it can be used
     # in the rest of the pre-selection
-    is_good_analysis_jet = (
-        __is_analysis_jet(events.JetsAK8)
-        & __is_good_jet(events.JetsAK8)
-    )
-    events["JetsAK8"] = ak.with_field(
-        events["JetsAK8"],
-        is_good_analysis_jet,
-        "isGood",
-    )
+    events = sequences.add_good_ak8_jet_branch(events)
 
     # Requiring at least 2 good FatJets
     filter = ak.count(events.JetsAK8.pt[events.JetsAK8.isGood], axis=1) >= 2
@@ -60,22 +42,7 @@ def process(events, cut_flow, year, pn_tagger=False):
     skimmer_utils.update_cut_flow(cut_flow, "nJetsAK8Gt2", events)
 
     # Veto events with mini-isolated leptons
-    good_electron_filter = (
-        (events.Electrons.pt > 10)
-        & (abs(events.Electrons.eta) < 2.4)
-        & (abs(events.Electrons.iso) < 0.1)
-    )
-    good_muon_filter = (
-        (events.Muons.pt > 10)
-        & (abs(events.Muons.eta) < 2.4)
-        & (abs(events.Muons.iso) < 0.4)
-    )
-    good_electrons = events.Electrons[good_electron_filter]
-    good_muons = events.Muons[good_muon_filter]
-    n_electrons = ak.count(good_electrons.pt, axis=1)
-    n_muons = ak.count(good_muons.pt, axis=1)
-    n_leptons = n_electrons + n_muons
-    events = events[n_leptons == 0]
+    events = sequences.apply_lepton_veto(events)
     skimmer_utils.update_cut_flow(cut_flow, "LeptonVeto", events)
 
     # Delta phi min cut
@@ -104,146 +71,12 @@ def process(events, cut_flow, year, pn_tagger=False):
 
     skimmer_utils.update_cut_flow(cut_flow, "DeltaPhiMinLt1p5", events)
 
+    events = sequences.add_analysis_branches(events)
 
-    # Adding new branches
-    
-    # Jets AK8 variables
-    new_branches = {}
-    jets_ak8 = events.JetsAK8
-    gen_jets_ak8 = events.GenJetsAK8
-    jets_ak8_lv = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
-        pt=jets_ak8.pt,
-        eta=jets_ak8.eta,
-        phi=jets_ak8.phi,
-        mass=jets_ak8.mass,
-    )
-    met_lv = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
-        pt=events.MET,
-        phi=events.METPhi,
-    )
-
-    # Kinematics
-    new_branches["mass"] = jets_ak8_lv.mass
-    new_branches["deltaPhiMET"] = jet_variables.calculate_delta_phi_with_met(jets_ak8_lv, met_lv)
-    new_branches["LundJetPlaneZ"] = jet_variables.calculate_lund_jet_plane_z_with_met(jets_ak8_lv, met_lv)
-    new_branches["MTMET"] = jet_variables.calculate_invariant_mass_with_met(jets_ak8_lv, met_lv)
-
-    # Dark jet branches
-    if "hvCategory" in gen_jets_ak8.fields:  # If signal samples
-        gen_jet_index = ak.mask(jets_ak8.genIndex, jets_ak8.genIndex >= 0)
-        hv_category = gen_jets_ak8.hvCategory[gen_jet_index]
-        hv_category = ak.fill_none(hv_category, -9999)
-        new_branches["hvCategory"] = hv_category
-
-        new_branches["isDarkJetTightNoMix"] = (
-            (hv_category == 1)
-            | (hv_category == 3)
-            | (hv_category == 5)
-            | (hv_category == 9)
-        )
-
-        new_branches["isDarkJetTight"] = (
-            (hv_category != -9999)
-            & (hv_category != 0)
-            & (hv_category < 16)
-        )
-
-        new_branches["isDarkJetMedium"] = (
-            (hv_category != -9999)
-            & (hv_category != 0)
-            & (hv_category != 16)
-            & (hv_category != 17)
-        )
-
-        new_branches["isDarkJetLoose"] = (
-            (hv_category != -9999)
-            & (hv_category != 0)
-            & (hv_category != 16)
-        )
-
-    # Adding particleNet score
     if pn_tagger:
-        new_branches["pNetJetTaggerScore"] = run_jet_tagger(events,jets_ak8)
+        events = sequences.add_particle_net_tagger(events)
 
-    for branch_name, branch in new_branches.items():
-        events["JetsAK8"] = ak.with_field(
-            events["JetsAK8"],
-            branch,
-            branch_name,
-        )
-
-
-    # Event variables
-    nan_value = 0.  # Natural choice for missing values for LJP variables and delta eta / phi!
-    good_jets_ak8 = events.JetsAK8[events.JetsAK8.isGood]
-    good_jets_ak8_lv = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
-        pt=good_jets_ak8.pt,
-        eta=good_jets_ak8.eta,
-        phi=good_jets_ak8.phi,
-        mass=good_jets_ak8.mass,
-    )
-
-    n_jets_max = 4
-    for index_0 in range(n_jets_max):
-        for index_1 in range(index_0+1, n_jets_max):
-            delta_eta = event_variables.calculate_delta_eta(
-                physics_objects=good_jets_ak8_lv,
-                indices=(index_0, index_1),
-                absolute_value=False,
-                nan_value=None,
-            )
-            delta_phi = event_variables.calculate_delta_phi(
-                physics_objects=good_jets_ak8_lv,
-                indices=(index_0, index_1),
-                absolute_value=False,
-                nan_value=None,
-            )
-            delta_r = event_variables.calculate_delta_r(
-                physics_objects=good_jets_ak8_lv,
-                indices=(index_0, index_1),
-                nan_value=nan_value,
-            )
-            dijet_mass = event_variables.calculate_invariant_mass(
-                physics_objects=good_jets_ak8_lv,
-                indices=(index_0, index_1),
-                nan_value=nan_value,
-            )
-            lund_jet_plane_z = event_variables.calculate_lund_jet_plane_z(
-                physics_objects=good_jets_ak8_lv,
-                indices=(index_0, index_1),
-                nan_value=nan_value,
-            )
-            delta_eta_abs = abs(delta_eta)
-            delta_phi_abs = abs(delta_phi)
-            delta_eta = ak.fill_none(delta_eta, nan_value)
-            delta_phi = ak.fill_none(delta_phi, nan_value)
-            delta_eta_abs = ak.fill_none(delta_eta_abs, nan_value)
-            delta_phi_abs = ak.fill_none(delta_phi_abs, nan_value)
-
-            events[f"DeltaEta{index_0}{index_1}GoodJetsAK8"] = delta_eta
-            events[f"DeltaPhi{index_0}{index_1}GoodJetsAK8"] = delta_phi
-            events[f"DeltaR{index_0}{index_1}GoodJetsAK8"] = delta_r
-            events[f"DeltaEtaAbs{index_0}{index_1}GoodJetsAK8"] = delta_eta_abs
-            events[f"DeltaPhiAbs{index_0}{index_1}GoodJetsAK8"] = delta_phi_abs
-            events[f"DijetMass{index_0}{index_1}GoodJetsAK8"] = dijet_mass
-            events[f"LundJetPlaneZ{index_0}{index_1}GoodJetsAK8"] = lund_jet_plane_z
-   
-    events["DeltaPhiMinGoodJetsAK8"] = ak.min(abs(good_jets_ak8.deltaPhiMET), axis=1)
-    events["ST"] = events.MET + events.HT
-    events["ATLASDeltaPhiMinMax"] = event_variables.calculate_atlas_delta_phi_max_min(
-        jets=good_jets_ak8_lv,
-        met=met_lv,
-        nan_value=nan_value,
-    )
-    events["ATLASPtBalance"] = event_variables.calculate_atlas_momentum_balance(
-        jets=good_jets_ak8_lv,
-        met=met_lv,
-        nan_value=nan_value,
-    )
-
-    # Removing un-necessary collections
-    events = events[[x for x in events.fields if x != "JetsAK15"]]
-    events = events[[x for x in events.fields if x != "GenJetsAK15"]]
+    events = sequences.remove_collections(events)
 
     return events, cut_flow
 
