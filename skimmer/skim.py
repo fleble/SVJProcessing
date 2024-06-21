@@ -10,6 +10,7 @@ from utils.coffea.dict_accumulator import DictAccumulator
 from utils.coffea.n_tree_maker_schema import NTreeMakerSchema
 from utils.coffea.job_submission_helper import get_executor, get_executor_args
 from skimmer import skimmer_utils
+from utils.Logger import *
 
 
 class Skimmer(processor.ProcessorABC):
@@ -242,9 +243,14 @@ def main():
         "CutFlow": cut_flow_tree
     }
 
+    events = accumulator["events"].value
+    if len(events) == 0:
+        log.warning("No events passed selection")
+        return
+
     uproot_utl.write_tree_maker_root_file(
         output_file_name=args.output_file_name,
-        events=accumulator["events"].value,
+        events=events,
         trees=trees,
     )
 
