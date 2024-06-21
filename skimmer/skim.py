@@ -3,6 +3,7 @@ from importlib import import_module
 
 import awkward as ak
 from coffea import processor
+from coffea.nanoevents import BaseSchema
 
 import utils.uproot_utilities as uproot_utl
 from utils.coffea.ak_array_accumulator import AkArrayAccumulator
@@ -108,13 +109,25 @@ def add_coffea_args(parser):
         '-skim_source', '--skim_source',       
         help='Set True if input files are skim files', 
         default=False, 
-        action='store_true'
+        action='store_true',
+    )
+    parser.add_argument(
+        '-nano', '--nano_aod',
+        help='Set True if input files are (PF)NanoAOD files', 
+        default=False, 
+        action='store_true',
+    )
+    parser.add_argument(
+        '-xsec', '--cross_section',
+        help='If cross-section not in file, adding it', 
+        type=float,
+        action='store',
     )
     parser.add_argument(
         '-pn_tagger', '--pn_tagger',       
         help='Add particleNet jet tagger score', 
         default=False, 
-        action='store_true'
+        action='store_true',
     )
     parser.add_argument(
         "-port", "--port",
@@ -180,9 +193,14 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
     )
 
     executor = get_executor(args.executor_name)
-    executor_args = {
-        "schema": NTreeMakerSchema,
-    }
+    if args.nano_aod:
+        executor_args = {
+            "schema": BaseSchema,
+        }
+    else:
+        executor_args = {
+            "schema": NTreeMakerSchema,
+        }
     executor_args.update(get_executor_args(
         executor_name=args.executor_name,
         n_workers=args.n_workers,
@@ -193,7 +211,7 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
         port=args.port,
     ))
 
-    if args.skim_source:
+    if args.skim_source or args.nano_aod:
         treename = "Events"
     else:
         treename = "TreeMaker2/PreSelection"
@@ -243,16 +261,28 @@ def main():
         "CutFlow": cut_flow_tree
     }
 
+    if args.cross_section:
+        trees["Metadata"] = {
+            "GenCrossSection": [args.cross_section],
+        }
+    
     events = accumulator["events"].value
     if len(events) == 0:
         log.warning("No events passed selection")
         return
 
-    uproot_utl.write_tree_maker_root_file(
-        output_file_name=args.output_file_name,
-        events=events,
-        trees=trees,
-    )
+    if args.nano_aod:
+        uproot_utl.write_nano_aod_root_file(
+            output_file_name=args.output_file_name,
+            events=events,
+            trees=trees,
+        )
+    else:
+        uproot_utl.write_tree_maker_root_file(
+            output_file_name=args.output_file_name,
+            events=events,
+            trees=trees,
+        )
 
 
 if __name__ == "__main__":
