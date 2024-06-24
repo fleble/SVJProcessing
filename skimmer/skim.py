@@ -260,17 +260,20 @@ def main():
     trees = {
         "CutFlow": cut_flow_tree
     }
-
-    if args.cross_section:
-        trees["Metadata"] = {
-            "GenCrossSection": [args.cross_section],
-        }
-    
+   
     events = accumulator["events"].value
     if len(events) == 0:
         log.warning("No events passed selection")
         return
 
+    if args.cross_section:
+        # Add cross-section in the custom PFNanoAOD way
+        trees["Metadata"] = {
+            "GenCrossSection": [args.cross_section],
+        }
+        # But also in the same way as TreeMaker, which is better
+        events["CrossSection"] = ak.Array([args.cross_section for i in range(len(events))])
+ 
     if args.nano_aod:
         uproot_utl.write_nano_aod_root_file(
             output_file_name=args.output_file_name,
