@@ -8,9 +8,10 @@ from analysis_configs import sequences
 
 
 def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
-    """SVJ t-channel pre-selection."""
-
-    # If this config is changed, changes must be reflected in t_channel_lost_lepton_control_region.py
+    """SVJ t-channel lost lepton control region.
+    
+    Same selections as for preselection region, but requiring exactly 1 veto lepton.
+    """
 
     if not skimmer_utils.is_mc(events):
         events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
@@ -43,9 +44,9 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     events = events[filter]
     skimmer_utils.update_cut_flow(cut_flow, "nJetsAK8Gt2", events)
 
-    # Veto events with mini-isolated leptons
-    events = sequences.apply_lepton_veto(events)
-    skimmer_utils.update_cut_flow(cut_flow, "LeptonVeto", events)
+    # Exactly 1 veto lepton
+    events = sequences.require_n_veto_leptons(events, n=1)
+    skimmer_utils.update_cut_flow(cut_flow, "OneVetoLepton", events)
 
     # Delta phi min cut
     if len(events) != 0:
