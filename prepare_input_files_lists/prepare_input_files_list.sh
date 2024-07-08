@@ -101,6 +101,7 @@ dataset_names=(
     ##################################
     #
     EGamma
+    SingleElectron
     SingleMuon
 )
 
