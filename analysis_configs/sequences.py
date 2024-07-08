@@ -111,6 +111,18 @@ def apply_lepton_veto(
     return events
 
 
+def require_n_veto_leptons(events, n):
+    is_veto_electron = obj.is_veto_electron(events.Electrons)
+    is_veto_muon = obj.is_veto_muon(events.Muons)
+    veto_electrons = events.Electrons[is_veto_electron]
+    veto_muons = events.Muons[is_veto_muon]
+    n_veto_electrons = ak.count(veto_electrons.pt, axis=1)
+    n_veto_muons = ak.count(veto_muons.pt, axis=1)
+    n_veto_leptons = n_veto_electrons + n_veto_muons
+    events = events[n_veto_leptons == n]
+    return events
+
+
 def add_analysis_branches(events):
 
     # Jets AK8 variables
