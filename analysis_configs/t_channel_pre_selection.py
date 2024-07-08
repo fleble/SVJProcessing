@@ -10,6 +10,8 @@ from analysis_configs import sequences
 def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     """SVJ t-channel pre-selection."""
 
+    # If this config is changed, changes must be reflected in t_channel_lost_lepton_control_region.py
+
     if not skimmer_utils.is_mc(events):
         events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
         skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)

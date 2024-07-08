@@ -8,7 +8,10 @@ from analysis_configs import sequences
 
 
 def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
-    """SVJ t-channel pre-selection."""
+    """SVJ t-channel lost lepton control region.
+    
+    Same selections as for preselection region, but requiring exactly 1 veto lepton.
+    """
 
     if not skimmer_utils.is_mc(events):
         events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
