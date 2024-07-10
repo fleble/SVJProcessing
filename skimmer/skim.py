@@ -85,6 +85,16 @@ def add_coffea_args(parser):
         default="4GB",
     )
     parser.add_argument(
+        "-walltime", "--walltime",
+        help="Time requested for HTCondor or SLURM (default=%(default)s)",
+        default="00:30:00",
+    )
+    parser.add_argument(
+        "-queue", "--queue",
+        help="Queue for HTCondor or SLURM (default=%(default)s)",
+        default="00:30:00",
+    )
+    parser.add_argument(
         "-disk", "--disk",
         help="Disk space request for HTCondor (default=%(default)s)",
         default="100MB",
@@ -207,8 +217,11 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
         cores=args.cores,
         memory=args.memory,
         disk=args.disk,
+        time=args.walltime,
+        partition=args.queue,
         skip_bad_files=args.skip_bad_files,
         port=args.port,
+
     ))
 
     if args.skim_source or args.nano_aod:
