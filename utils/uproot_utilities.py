@@ -203,17 +203,16 @@ def __make_nano_aod_event_tree(ak_array, sort_by_name=True):
 
     # Fill in those dictionaries
     for field in ak_array.fields:
-        ak_array = __cast_unknown_type_branches(ak_array, field)
         is_collection_variable = False
         
         collection_candidate, variable = __get_collection_and_variable_names(field)
         for collection in collections:
             if collection_candidate == collection:
-                branches_to_zip[collection][variable] = ak_array[field]
+                branches_to_zip[collection][variable] = __cast_unknown_type_branches(ak_array[field], field)
                 is_collection_variable = True
 
         if not is_collection_variable:
-            single_branches[field] = ak_array[field]
+            single_branches[field] = __cast_unknown_type_branches(ak_array[field], field)
 
     # Zip branches and add everything in a dict
     collections_branches = {}
