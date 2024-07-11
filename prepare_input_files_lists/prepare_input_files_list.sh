@@ -100,6 +100,9 @@ dataset_names=(
     # DATA
     ##################################
     #
+    JetHT
+    MET
+    HTMHT
     EGamma
     SingleElectron
     SingleMuon
