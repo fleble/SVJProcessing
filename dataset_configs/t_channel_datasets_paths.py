@@ -166,8 +166,8 @@ for year in years:
 
 
 # Data
-# SingleElectron 2016
-datasets_info["2016"].update({
+# SingleElectron 2016APV
+datasets_info["2016APV"].update({
     "SingleElectron": [
         {
             "redirector": "root://cmseos.fnal.gov/",
@@ -192,6 +192,18 @@ datasets_info["2016"].update({
         {
             "redirector": "root://cmseos.fnal.gov/",
             "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016_HIPM-v2/SingleElectron/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# SingleElectron 2016
+datasets_info["2016"].update({
+    "SingleElectron": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016-v2/SingleElectron/",
             "regex": "",
         },
         {
@@ -268,8 +280,8 @@ datasets_info["2018"].update({
 })
 
 
-# SingleMuon 2016
-datasets_info["2016"].update({
+# SingleMuon 2016APV
+datasets_info["2016APV"].update({
     "SingleMuon": [
         {
             "redirector": "root://cmseos.fnal.gov/",
@@ -294,6 +306,18 @@ datasets_info["2016"].update({
         {
             "redirector": "root://cmseos.fnal.gov/",
             "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016_HIPM-v2/SingleMuon/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# SingleMuon 2016
+datasets_info["2016"].update({
+    "SingleMuon": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016-v2/SingleMuon/",
             "regex": "",
         },
         {
