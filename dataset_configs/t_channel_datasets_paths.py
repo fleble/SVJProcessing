@@ -166,6 +166,318 @@ for year in years:
 
 
 # Data
+# JetHT 2016APV
+datasets_info["2016APV"].update({
+    "JetHT": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016B-UL2016_HIPM-ver2-v2/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016C-UL2016_HIPM-v2/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016D-UL2016_HIPM-v2/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016E-UL2016_HIPM-v2/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016_HIPM-v2/JetHT/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# JetHT 2016
+datasets_info["2016"].update({
+    "JetHT": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016-v2/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016G-UL2016-v2/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016H-UL2016-v2/JetHT/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# JetHT 2017
+datasets_info["2017"].update({
+    "JetHT": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017B-UL2017-v1/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017C-UL2017-v1/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017D-UL2017-v1/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017E-UL2017-v1/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017F-UL2017-v1/JetHT/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# JetHT 2018
+datasets_info["2018"].update({
+    "JetHT": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018A-UL2018-v1/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018B-UL2018-v1/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018C-UL2018-v1/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018D-UL2018-v2/JetHT/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# MET 2016APV
+datasets_info["2016APV"].update({
+    "MET": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016B-UL2016_HIPM-ver2-v2/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016C-UL2016_HIPM-v2/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016D-UL2016_HIPM-v2/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016E-UL2016_HIPM-v2/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016_HIPM-v2/MET/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# MET 2016
+datasets_info["2016"].update({
+    "MET": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016-v2/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016G-UL2016-v2/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016H-UL2016-v2/MET/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# MET 2017
+datasets_info["2017"].update({
+    "MET": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017B-UL2017-v1/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017C-UL2017-v1/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017D-UL2017-v1/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017E-UL2017-v1/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017F-UL2017-v1/MET/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# MET 2018
+datasets_info["2018"].update({
+    "MET": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018A-UL2018-v2/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018B-UL2018-v2/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018C-UL2018-v1/MET/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": f"/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018D-UL2018-v1/MET/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# HTMHT 2016APV
+datasets_info["2016APV"].update({
+    "HTMHT": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016B-UL2016_HIPM-ver2-v1/HTMHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016C-UL2016_HIPM-v1/HTMHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016D-UL2016_HIPM-v1/HTMHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016E-UL2016_HIPM-v1/HTMHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016_HIPM-v1/HTMHT/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# HTMHT 2016
+datasets_info["2016"].update({
+    "HTMHT": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016-v1/HTMHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016G-UL2016-v1/HTMHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016H-UL2016-v1/HTMHT/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# HTMHT 2017
+datasets_info["2017"].update({
+    "HTMHT": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017B-UL2017-v1/HTMHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017C-UL2017-v1/HTMHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017D-UL2017-v1/HTMHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017E-UL2017-v1/HTMHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017F-UL2017-v2/HTMHT/",
+            "regex": "",
+        },
+    ]
+})
+
+
 # SingleElectron 2016APV
 datasets_info["2016APV"].update({
     "SingleElectron": [
