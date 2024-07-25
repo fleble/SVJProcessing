@@ -87,7 +87,13 @@ dataset_names=(
     # DATA
     ##################################
     #
-    #JetHT
+    JetHT
+    MET
+    HTMHT
+    EGamma
+    SingleElectron
+    SingleMuon
+
 )
 
 cross_sections=(

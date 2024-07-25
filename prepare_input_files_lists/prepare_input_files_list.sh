@@ -69,8 +69,14 @@ dataset_names=(
     # DATA
     ##################################
     #
-    #JetHT
     
+    JetHT
+    MET
+    HTMHT
+    EGamma
+    SingleElectron
+    SingleMuon
+
 )
 
 prepare_input_files_list() {
