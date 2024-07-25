@@ -74,6 +74,11 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
 
     skimmer_utils.update_cut_flow(cut_flow, "DeltaPhiMinLt1p5", events)
 
+    # MET cut
+    events = events[events.MET > 200]
+    skimmer_utils.update_cut_flow(cut_flow, "METGt200GeV", events)
+
+
     events = sequences.add_analysis_branches(events)
 
     if pn_tagger:
