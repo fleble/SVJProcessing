@@ -10,6 +10,7 @@ def __cast_unknown_type_branches(ak_array, field):
 
     type_text = str(ak.type(ak_array))
 
+
     if "unknown" in type_text:
         log.warning(f"Branch {field} has unknown type, converting to float64")
         ak_array = akUtl.as_type(ak_array, np.float64)

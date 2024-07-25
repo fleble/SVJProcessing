@@ -26,6 +26,12 @@ def __get_arguments():
         required=True,
     )
     parser.add_argument(
+        '-nano', '--nano_aod',
+        help='Set True if input files are (PF)NanoAOD files', 
+        default=False, 
+        action='store_true',
+    )
+    parser.add_argument(
         "-c", "--config",
         help="Config file describing the location of the datasets",
         required=True,
@@ -56,8 +62,26 @@ def __get_files_list_from_info_dict(info_dict):
     bash_command = f"xrdfs {redirector} ls {path} | grep -E \"{regex}\" | sort -n"
     files_list = __run_bash_command(bash_command).split("\n")
     files_list = [f"{redirector}{file_name}" for file_name in files_list]
-    files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("_")[0]))
-
+    #if log is in file name, remove it
+    print(path)
+    files_list = [file_name for file_name in files_list if "log" not in file_name]
+    files_list = [file_name for file_name in files_list if "test.sh" not in file_name]
+    #check if nanodata is in file name, then sort by the number after the last underscore
+    print("file: " , files_list[0])
+    if "nano_data" in files_list[0].split("/")[-1]:
+        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("_")[2].replace(".root","")))
+    elif "PFNanoSuper" in files_list[0].split("/")[-1]:
+        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
+    elif "PFNanoAOD_SVJL_" in files_list[0].split("/")[-1]:
+        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[6].replace(".root","")))
+    elif "PFNanoAOD_SVJtaus_" in files_list[0].split("/")[-1]:
+        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[6].replace(".root","")))
+    elif "PFNANOAOD" in files_list[0].split("/")[-1]:
+        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
+    elif "PFNanoAOD" in files_list[0].split("/")[-1]:
+        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
+    else:
+        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("_")[0]))
     return files_list
 
 
@@ -69,8 +93,12 @@ def __list_files(dataset_info):
     return files_list
 
 
-def __get_number_of_events(file_name, tree_name="TreeMaker2/PreSelection"):
+def __get_number_of_events(file_name, nano_aod, tree_name=""):     #TreeMaker2/PreSelection
     file_ = uproot.open(file_name)
+    if nano_aod:
+        tree_name = "Events"
+    else:
+        tree_name = "TreeMaker2/PreSelection"
     events = file_[tree_name]
     f0 = events.keys()[0]
     return events[f0].num_entries
@@ -82,6 +110,7 @@ def __write_dataset_info(
         year,
         output_directory,
         n_workers,
+        nano_aod=False,
     ):
     
     files_list = __list_files(dataset_info)
@@ -98,8 +127,8 @@ def __write_dataset_info(
     for i, files_list_batch in enumerate(files_list_batches):
         log.info(f"Processing batch {i+1}/{len(files_list_batches)}...")
         with concurrent.futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
-            number_of_events += list(tqdm(executor.map(__get_number_of_events, files_list_batch), total=len(files_list_batch)))
-
+            #number_of_events += list(tqdm(executor.map(__get_number_of_events, files_list_batch, nano_aod), total=len(files_list_batch)))
+            number_of_events += list(tqdm(executor.map(__get_number_of_events, files_list_batch, len(files_list_batch)*[nano_aod]), total=len(files_list_batch)))
     output_file_name = f"{output_directory_}/{dataset}.csv"
     header = ["file_name", "number_of_events"]
     with open(output_file_name, "w") as output_file:
@@ -124,6 +153,7 @@ def main ():
             args.year,
             args.output,
             args.n_workers,
+            args.nano_aod,
         )
 
 
