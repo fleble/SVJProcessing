@@ -93,7 +93,7 @@ def __list_files(dataset_info):
     return files_list
 
 
-def __get_number_of_events(file_name, nano_aod, tree_name=""):     #TreeMaker2/PreSelection
+def __get_number_of_events(file_name, nano_aod, tree_name=""):  
     file_ = uproot.open(file_name)
     if nano_aod:
         tree_name = "Events"
