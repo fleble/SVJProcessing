@@ -5,7 +5,6 @@ from coffea.nanoevents.methods import vector
 
 from utils.awkward_array_utilities import as_type
 from utils.tree_maker.triggers import trigger_table as trigger_table_treemaker
-from utils.nanoaod.triggers import trigger_table as trigger_table_nanoaod
 from utils.Logger import *
 import uproot
 
@@ -88,7 +87,6 @@ def apply_trigger_cut(events, trigger_list):
             trigger_filter = trigger_filter | (trigger_branch == 1)
     else: #if TriggerPass is not inside events, nano trigger skim
         for idx,trigger_name in enumerate(trigger_list):
-            trigger_index = trigger_table_nanoaod[trigger_name]
             trigger_branch = getattr(events, trigger_name)
             if idx == 0:
                 trigger_filter = (trigger_branch == 1)
@@ -109,16 +107,16 @@ def apply_met_filters_cut(events, met_filter_names):
         met_filter_names (list[str])
 
     Returns:
-        None
+        ak.Array
     """
 
     for met_filter_name in met_filter_names:
-        branch_name = "Flag_" + met_filter_name
+        if met_filter_name not in events.fields:
+            branch_name = "Flag_" + met_filter_name
         if branch_name in events.fields:
             met_filter = getattr(events, branch_name)
             events = events[met_filter]
-            # Comment out the line below to have MET filter
-            #update_cut_flow(cut_flow, utl.capitalize(met_filter_name), events)
+            
 
     return events
 
@@ -197,31 +195,82 @@ def apply_phi_spike_filter(events, year, jet_eta_branch_name="Jet_eta", jet_phi_
 def apply_hem_filter(events, year, jet_pt_branch_name="Jet_pt", jet_eta_branch_name="Jet_eta",
                      jet_phi_branch_name="Jet_phi"):
 
-    hem_min_pt = 30
-    hem_min_eta = -3.05
-    hem_max_eta = -1.35
-    hem_min_phi = -1.62
-    hem_max_phi = -0.82
+    def hem_veto_pfnano(events):
 
-    if year != "2018":
-        hem_filter = ak.ones_like(events.genWeight)
-    else:
-        jets_pt = getattr(events, jet_pt_branch_name)
-        jets_eta = getattr(events, jet_eta_branch_name)
-        jets_phi = getattr(events, jet_phi_branch_name)
+        hem_min_pt = 30
+        hem_min_eta = -3.05
+        hem_max_eta = -1.35
+        hem_min_phi = -1.62
+        hem_max_phi = -0.82
+
+        if year != "2018":
+            hem_filter = ak.ones_like(events.genWeight)
+        else:
+            jets_pt = getattr(events, jet_pt_branch_name)
+            jets_eta = getattr(events, jet_eta_branch_name)
+            jets_phi = getattr(events, jet_phi_branch_name)
+            
+            condition_per_jet = (jets_pt > hem_min_pt) \
+                & (jets_eta > hem_min_eta) & (jets_eta < hem_max_eta) \
+                & (jets_phi > hem_min_phi) & (jets_phi < hem_max_phi)
+            hem_filter = ak.any(condition_per_jet, axis=1) == False
         
-        condition_per_jet = (jets_pt > hem_min_pt) \
-            & (jets_eta > hem_min_eta) & (jets_eta < hem_max_eta) \
-            & (jets_phi > hem_min_phi) & (jets_phi < hem_max_phi)
-        hem_filter = ak.any(condition_per_jet, axis=1) == False
+        return hem_filter
+
+    def hem_veto_treemaker(events):
+
+        jets = events.Jets
+        electrons = events.Electrons
+        muons = events.Muons
+
+        jet_hem_condition = (
+            (jets.eta > -3.05)
+            & (jets.eta < -1.35)
+            & (jets.phi > -1.62)
+            & (jets.phi < -0.82)
+        )
+        electron_hem_condition = (
+            (electrons.eta > -3.05)
+            & (electrons.eta < -1.35)
+            & (electrons.phi > -1.62)
+            & (electrons.phi < -0.82)
+        )
+        muon_hem_condition = (
+            (muons.eta > -3.05)
+            & (muons.eta < -1.35)
+            & (muons.phi > -1.62)
+            & (muons.phi < -0.82)
+        )
+        veto = (
+            ((ak.num(jets) > 0) & ak.any(jet_hem_condition, axis=1))
+            | ((ak.num(muons) > 0) & ak.any(muon_hem_condition, axis=1))
+            | ((ak.num(electrons) > 0) & ak.any(electron_hem_condition, axis=1))
+        )
+        return ~veto
+
+    #check if pfnano or treemaker, and use the corresponding hem filter
+    if "Jets" in events.fields:
+        hem_filter = hem_veto_treemaker(events)
+    else:
+        hem_filter = hem_veto_pfnano(events)
 
     if is_mc(events):
         events = events[hem_filter]
     else:
-        hem_filter_data = (
-            ((events.run >= 319077) & hem_filter)
-            | (events.run < 319077)
-        )
+        #if run in events fields, use it, otherwise use RunNum
+        if "run" in events.fields:
+            hem_filter_data = (
+                ((events.run >= 319077) & hem_filter)
+                | (events.run < 319077)
+            )
+            events = events[hem_filter_data]
+        else:
+            hem_filter_data = (
+                ((events.RunNum >= 319077) & hem_filter)
+                | (events.RunNum < 319077)
+            )
+            events = events[hem_filter_data]
+        
         events = events[hem_filter_data]
 
     return events
