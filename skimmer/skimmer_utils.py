@@ -76,7 +76,9 @@ def apply_met_filters_cut(events, met_filter_names):
     for met_filter_name in met_filter_names:
         if met_filter_name not in events.fields:
             branch_name = "Flag_" + met_filter_name
-            
+        else:
+            branch_name = met_filter
+
         met_filter = getattr(events, branch_name)
         events = events[met_filter]
             
@@ -155,7 +157,7 @@ def apply_phi_spike_filter(events, year, jet_eta_branch_name="Jet_eta", jet_phi_
 
 
 
-def apply_hem_filter(events, year, jet_pt_branch_name="Jet_pt", jet_eta_branch_name="Jet_eta",
+def apply_hem_filter(events, year="2018", jet_pt_branch_name="Jet_pt", jet_eta_branch_name="Jet_eta",
                      jet_phi_branch_name="Jet_phi"):
 
     def hem_veto_pfnano(events):
