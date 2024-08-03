@@ -14,42 +14,6 @@ import uproot
 ak.behavior.update(vector.behavior)
 
 
-def calculate_number_of_objects(physics_objects):
-    """Calculate number of a physics objects in all events.
-
-    Args:
-        physics_objects (awkward.Array): Jagged ak array where axis 0 is the
-            event axis and axis 1 is the object axis.
-
-    Returns:
-        awkward.Array
-    """
-
-    return ak.num(physics_objects, axis=1)
-
-def __get_pair_of_objects(physics_objects, indices=(0, 1), n_objects=None):
-    """Returns a tuple of masked ak arrays corresponding to physics objects with required indices.
-
-    Args:
-        physics_objects (ak.Array)
-        indices (tuple[int], optional): By default 2 leading objects
-        n_objects (ak.Array, optional): Number of objects per event
-
-    Returns:
-        tuple[ak.Array]
-    """
-
-    if n_objects is None:
-        n_objects = calculate_number_of_objects(physics_objects)
-
-    max_index = max(indices)
-    physics_objects = ak.mask(physics_objects, n_objects >= max_index + 1)
-
-    obj0 = physics_objects[:, indices[0]]
-    obj1 = physics_objects[:, indices[1]]
-
-    return obj0, obj1
-
 
 def update_cut_flow(cut_flow, cut_name, events):
     """Update cut flow table in a coffea accumulator.
