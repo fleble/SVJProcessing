@@ -66,8 +66,7 @@ def apply_met_filters_cut(events, met_filter_names):
     """MET filters cuts.
 
     Args:
-        events (EventsFromAkArray)
-        cut_flow (dict[str, float])
+        events (ak.Array)
         met_filter_names (list[str])
 
     Returns:
