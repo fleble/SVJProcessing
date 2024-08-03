@@ -55,40 +55,39 @@ def __run_bash_command(bash_command):
     return subprocess.Popen(bash_command, shell=True, stdout=subprocess.PIPE).stdout.read().decode("utf-8")[:-1]
 
 
-def __get_files_list_from_info_dict(info_dict):
+def __get_files_list_from_info_dict(info_dict,nano_aod):
     redirector = info_dict["redirector"]
     path = info_dict["path"]
     regex = info_dict["regex"]
     bash_command = f"xrdfs {redirector} ls {path} | grep -E \"{regex}\" | sort -n"
     files_list = __run_bash_command(bash_command).split("\n")
     files_list = [f"{redirector}{file_name}" for file_name in files_list]
-    #if log is in file name, remove it
-    print(path)
     files_list = [file_name for file_name in files_list if "log" not in file_name]
     files_list = [file_name for file_name in files_list if "test.sh" not in file_name]
-    #check if nanodata is in file name, then sort by the number after the last underscore
-    print("file: " , files_list[0])
-    if "nano_data" in files_list[0].split("/")[-1]:
-        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("_")[2].replace(".root","")))
-    elif "PFNanoSuper" in files_list[0].split("/")[-1]:
-        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
-    elif "PFNanoAOD_SVJL_" in files_list[0].split("/")[-1]:
-        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[6].replace(".root","")))
-    elif "PFNanoAOD_SVJtaus_" in files_list[0].split("/")[-1]:
-        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[6].replace(".root","")))
-    elif "PFNANOAOD" in files_list[0].split("/")[-1]:
-        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
-    elif "PFNanoAOD" in files_list[0].split("/")[-1]:
-        files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
+    if nano_aod:
+        if "nano_data" in files_list[0].split("/")[-1]:
+            files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("_")[2].replace(".root","")))
+        elif "PFNanoSuper" in files_list[0].split("/")[-1]:
+            files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
+        elif "PFNanoAOD_SVJL_" in files_list[0].split("/")[-1]:
+            files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[6].replace(".root","")))
+        elif "PFNanoAOD_SVJtaus_" in files_list[0].split("/")[-1]:
+            files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[6].replace(".root","")))
+        elif "PFNANOAOD" in files_list[0].split("/")[-1]:
+            files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
+        elif "PFNanoAOD" in files_list[0].split("/")[-1]:
+            files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
+        else:
+            files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("_")[0]))
     else:
         files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("_")[0]))
     return files_list
 
 
-def __list_files(dataset_info):
+def __list_files(dataset_info,nano_aod):
     files_list = []
     for info_dict in dataset_info:
-        files_list += __get_files_list_from_info_dict(info_dict)
+        files_list += __get_files_list_from_info_dict(info_dict, nano_aod)
 
     return files_list
 
@@ -113,7 +112,7 @@ def __write_dataset_info(
         nano_aod=False,
     ):
     
-    files_list = __list_files(dataset_info)
+    files_list = __list_files(dataset_info,nano_aod)
 
     output_directory_ = f"{output_directory}/files_list/{year}"
     Path(output_directory_).mkdir(parents=True, exist_ok=True)
