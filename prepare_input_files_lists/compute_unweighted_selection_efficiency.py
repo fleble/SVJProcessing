@@ -27,12 +27,7 @@ def __get_arguments():
         help="Input directory where the dataset files were stored",
         required=True,
     )
-    #parser.add_argument(
-    #    '-nano', '--nano_aod',
-    #    help='Set True if input files are (PF)NanoAOD files', 
-    #    default=False, 
-    #    action='store_true',
-    #)
+  
     parser.add_argument(
         "-o", "--output",
         help="Output directory where the dataset files list will be stored",
