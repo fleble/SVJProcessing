@@ -10,10 +10,6 @@ from analysis_configs import objects_definition_s_channel_leptons as obj
 from utils.Logger import *
 
 
-#CZZ: to  be implemented: remove_primary_dataset_overlap
-#CZZ: to  be implemented: remove_single_lepton_primary_dataset_overlap
-
-
 def apply_good_ak8_jet_filter(events):
     #analysis_jets = events.FatJet[obj.is_analysis_ak8_jet(events.FatJet)]
     #good_ak8_jets_filter = ak.all(obj.is_good_ak8_jet(analysis_jets), axis=1)
@@ -56,10 +52,6 @@ def add_good_ak8_jet_branch(events):
 
     return events
 
-
-#CZZ: to  be implemented: apply_lepton_veto
-
-#CZZ: to  be implemented: require_n_veto_leptons
 
 
 def add_analysis_branches(events):
