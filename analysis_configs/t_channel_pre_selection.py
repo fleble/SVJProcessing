@@ -30,6 +30,11 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     events = skimmer_utils.apply_met_filters_cut(events, met_filters)
     skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
+    # HEM veto
+    if year == "2018" and not skimmer_utils.is_mc(events):
+        events = skimmer_utils.apply_hem_veto(events)
+        skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
+
     # Good jet filters
     events = sequences.apply_good_ak8_jet_filter(events)
     skimmer_utils.update_cut_flow(cut_flow, "GoodJetsAK8", events)
