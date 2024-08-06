@@ -13,7 +13,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     Same selections as for preselection region, but requiring exactly 1 veto lepton.
     """
 
-    if not skimmer_utils.is_mc(events):
+    if skimmer_utils.is_data(events):
         events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
         skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)
 
@@ -31,6 +31,11 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     events = skimmer_utils.apply_met_filters_cut(events, met_filters)
     skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
+    # HEM veto
+    if year == "2018" and skimmer_utils.is_data(events):
+        events = skimmer_utils.apply_hem_veto(events)
+        skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
+
     # Good jet filters
     events = sequences.apply_good_ak8_jet_filter(events)
     skimmer_utils.update_cut_flow(cut_flow, "GoodJetsAK8", events)
@@ -44,9 +49,10 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     events = events[filter]
     skimmer_utils.update_cut_flow(cut_flow, "nJetsAK8Gt2", events)
 
-    # Exactly 1 veto lepton
-    events = sequences.require_n_veto_leptons(events, n=1)
-    skimmer_utils.update_cut_flow(cut_flow, "OneVetoLepton", events)
+    # At least 1 veto lepton
+    events = sequences.add_n_lepton_veto_branch(events)
+    events = events[events["NVetoLeptons"] >= 1]
+    skimmer_utils.update_cut_flow(cut_flow, "NVetoLeptonsGt1", events)
 
     # Delta phi min cut
     if len(events) != 0:

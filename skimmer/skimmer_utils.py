@@ -113,6 +113,10 @@ def make_pt_eta_phi_mass_lorentz_vector(pt, eta=None, phi=None, mass=None):
 def is_mc(events):
     return "Weight" in events.fields
 
+  
+def is_data(events):
+    return not is_mc(events)
+
 
 def apply_phi_spike_filter(events, year, jet_eta_branch_name="Jet_eta", jet_phi_branch_name="Jet_phi", reverse=False):
     rad = 0.028816 # half the length of the diagonal of the eta-phi rectangular cell
