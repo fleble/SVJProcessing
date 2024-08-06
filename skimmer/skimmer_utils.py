@@ -96,6 +96,10 @@ def is_mc(events):
     return "Weight" in events.fields
 
 
+def is_data(events):
+    return not is_mc(events)
+
+
 def apply_hem_veto(events):
     """Apply HEM veto for the second part of 2018 data."""
 
