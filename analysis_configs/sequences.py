@@ -88,7 +88,7 @@ def add_good_ak8_jet_branch(events):
     return events
 
 
-def apply_lepton_veto(
+def __get_number_of_veto_leptons(
         events,
         electron_extra_condition=None,
         muon_extra_condition=None,
@@ -107,7 +107,46 @@ def apply_lepton_veto(
     n_veto_electrons = ak.count(veto_electrons.pt, axis=1)
     n_veto_muons = ak.count(veto_muons.pt, axis=1)
     n_veto_leptons = n_veto_electrons + n_veto_muons
-    events = events[n_veto_leptons == 0]
+
+    return n_veto_leptons
+
+
+def add_n_lepton_veto_branch(events):
+    n_veto_leptons = __get_number_of_veto_leptons(
+        events,
+        electron_extra_condition=None,
+        muon_extra_condition=None,
+    )
+
+    events = ak.with_field(
+        events,
+        n_veto_leptons,
+        "NVetoLeptons",
+    )
+
+    return events
+ 
+
+def apply_lepton_veto(
+        events,
+        electron_extra_condition=None,
+        muon_extra_condition=None,
+        revert=False,
+    ):
+
+    n_veto_leptons = __get_number_of_veto_leptons(
+        events,
+        electron_extra_condition=electron_extra_condition,
+        muon_extra_condition=muon_extra_condition,
+    )
+
+    if revert:
+        filter = (n_veto_leptons == 0)
+    else:
+
+        filter = (n_veto_leptons != 0)
+    events = events[filter]
+
     return events
 
 
