@@ -141,13 +141,13 @@ for year in years:
     for bin in background_bins:
         if "QCD_" in bin:
               suffix = "TuneCP5_13TeV_pythia8"
-        elif "TTJets_" in bin or "WJets" in bin or "ZJets" in bin:
+        elif "TTJets" in bin or "WJets" in bin or "ZJets" in bin:
             suffix = "TuneCP5_13TeV-madgraphMLM-pythia8"
         elif "ST_s-channel" in bin or "tZq_" in bin:
             suffix = "TuneCP5_13TeV-amcatnlo-pythia8"
         elif "ST_t-channel" in bin or "ST_tW" in bin:
             suffix = "TuneCP5_13TeV-powheg-pythia8"
-        elif "WWTo" in bin or "ZZTo" in bin or "WZTo":
+        elif "WWTo" in bin or "ZZTo" in bin or "WZTo" in bin:
             suffix = "TuneCP5_13TeV-amcatnloFXFX-pythia8"
         else:
             print(f"Unknown background {bin}")
