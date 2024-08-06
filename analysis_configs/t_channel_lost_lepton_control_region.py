@@ -13,7 +13,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     Same selections as for preselection region, but requiring exactly 1 veto lepton.
     """
 
-    if not skimmer_utils.is_mc(events):
+    if skimmer_utils.is_data(events):
         events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
         skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)
 
@@ -32,7 +32,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
     # HEM veto
-    if year == "2018" and not skimmer_utils.is_mc(events):
+    if year == "2018" and skimmer_utils.is_data(events):
         events = skimmer_utils.apply_hem_veto(events)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
 
