@@ -49,9 +49,10 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     events = events[filter]
     skimmer_utils.update_cut_flow(cut_flow, "nJetsAK8Gt2", events)
 
-    # Exactly 1 veto lepton
-    events = sequences.require_n_veto_leptons(events, n=1)
-    skimmer_utils.update_cut_flow(cut_flow, "OneVetoLepton", events)
+    # At least 1 veto lepton
+    events = sequences.add_n_lepton_veto_branch(events)
+    events = events[events["NVetoLeptons"] >= 1]
+    skimmer_utils.update_cut_flow(cut_flow, "NVetoLeptonsGt1", events)
 
     # Delta phi min cut
     if len(events) != 0:
