@@ -24,6 +24,19 @@ source setup.sh
 
 The environment to run the code is borrowed from the [t-channel analysis framework](https://github.com/cms-svj/t-channel_Analysis/tree/master). Follow instructions there to install the repo and initialize the singularity container.
 
+To check your environment, run the automated tests (see below).
+
+
+## Tests
+
+Automated tests were implemented to check the execution of the code (input files list preparation and skimming).
+To run those tests, do:
+```
+source setup.sh
+cd tests/
+./run_tests.sh
+```
+
 
 ## Preparing list of input files to skim
 
