@@ -3,7 +3,7 @@ import awkward as ak
 from skimmer import skimmer_utils
 from utils.awkward_array_utilities import as_type
 import analysis_configs.triggers as trg
-from analysis_configs.met_filters import met_filters
+from analysis_configs.met_filters import met_filters_treemaker as met_filters
 from analysis_configs import objects_definition as obj
 from analysis_configs import sequences
 

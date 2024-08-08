@@ -180,4 +180,3 @@ for dataset_name in ${dataset_names[@]}; do
     make_skims ${dataset_directory} ${module} ${selection_name} ${year} ${dataset_name} ${output_directory}
 
 done
-
