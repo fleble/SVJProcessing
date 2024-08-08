@@ -91,7 +91,7 @@ To access the screen session again, log in on the same machine and do:
 screen -ls  # to find the number of the screen session
 screen -r <screen_session_number>
 ```
-Then either exit the screen session again (`Ctrl + A + D`) to continue to run the code, kill the code running (`Ctrl + C`) to run something different, or kill the screen session (`Ctrl +D`).
+Then either exit the screen session again (`Ctrl + A` followed by `D`) to continue to run the code, kill the code running (`Ctrl + C`) to run something different, or kill the screen session (`Ctrl +D`).
 
 
 #### Tips for running at the PSI T3

@@ -141,10 +141,9 @@ def apply_lepton_veto(
     )
 
     if revert:
-        filter = (n_veto_leptons == 0)
-    else:
-
         filter = (n_veto_leptons != 0)
+    else:
+        filter = (n_veto_leptons == 0)
     events = events[filter]
 
     return events
