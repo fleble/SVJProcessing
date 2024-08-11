@@ -23,9 +23,9 @@ def update_cut_flow(cut_flow, cut_name, events):
     """
 
     if cut_name in cut_flow.keys():
-        cut_flow[cut_name] += __get_number_of_events(events)
+        cut_flow[cut_name] += get_number_of_events(events)
     else:
-        cut_flow[cut_name] = __get_number_of_events(events)
+        cut_flow[cut_name] = get_number_of_events(events)
 
 
 def apply_trigger_cut(events, trigger_list):
@@ -226,7 +226,7 @@ def get_b_tagging_wp(year):
         return 0.7100
 
 
-def __get_number_of_events(events):
+def get_number_of_events(events):
     if is_mc(events):
         return ak.sum(events.Weight)
     else:

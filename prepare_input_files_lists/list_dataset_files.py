@@ -1,13 +1,11 @@
 import argparse
-import subprocess
 import csv 
-import concurrent.futures
 from importlib import import_module
 from pathlib import Path
 
 import uproot
-from tqdm import tqdm
 
+from utils.misc import get_files_list, process_in_parallel
 from utils.Logger import *
 
 
@@ -45,26 +43,16 @@ def __get_arguments():
     return parser.parse_args()
 
 
-def __run_bash_command(bash_command):
-    return subprocess.Popen(bash_command, shell=True, stdout=subprocess.PIPE).stdout.read().decode("utf-8")[:-1]
-
-
-def __get_files_list_from_info_dict(info_dict):
-    redirector = info_dict["redirector"]
-    path = info_dict["path"]
-    regex = info_dict["regex"]
-    bash_command = f"xrdfs {redirector} ls {path} | grep -E \"{regex}\" | sort -n"
-    files_list = __run_bash_command(bash_command).split("\n")
-    files_list = [f"{redirector}{file_name}" for file_name in files_list]
-    files_list = sorted(files_list, key=lambda x: int(x.split("/")[-1].split("_")[0]))
-
-    return files_list
-
-
 def __list_files(dataset_info):
     files_list = []
     for info_dict in dataset_info:
-        files_list += __get_files_list_from_info_dict(info_dict)
+        files_list_ = get_files_list(
+            path=info_dict["path"],
+            redirector=info_dict["redirector"],
+            regex=info_dict["regex"],
+        )
+        files_list_ = sorted(files_list_, key=lambda x: int(x.split("/")[-1].split("_")[0]))
+        files_list += files_list_
 
     return files_list
 
@@ -89,16 +77,11 @@ def __write_dataset_info(
     output_directory_ = f"{output_directory}/files_list/{year}"
     Path(output_directory_).mkdir(parents=True, exist_ok=True)
 
-    files_list_batches = []
-    max_n_files = 5000
-    for i in range(1 + len(files_list)//max_n_files):
-        files_list_batches.append(files_list[i * max_n_files: (i+1) * max_n_files])
-
-    number_of_events = []
-    for i, files_list_batch in enumerate(files_list_batches):
-        log.info(f"Processing batch {i+1}/{len(files_list_batches)}...")
-        with concurrent.futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
-            number_of_events += list(tqdm(executor.map(__get_number_of_events, files_list_batch), total=len(files_list_batch)))
+    number_of_events = process_in_parallel(
+        files_list=files_list,
+        process_function=__get_number_of_events,
+        n_workers=n_workers,
+    )
 
     output_file_name = f"{output_directory_}/{dataset}.csv"
     header = ["file_name", "number_of_events"]
