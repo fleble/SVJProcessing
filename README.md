@@ -101,6 +101,11 @@ At the PSI T3, to avoid the code to stop when closing the terminal, run the code
 nohup ./make_skims.sh > log.log 2>&1 &
 ```
 
+## Checking skims completion
+
+To check that no event is missing in the output skims compared to the input NTuples list, adapt and execute the bash script [skimmer/check_number_of_events.sh](https://github.com/fleble/SVJProcessing/blob/main/skimmer/check_number_of_events.sh).     
+The code is designed to check if you have processed the entire input files list, not partially.
+
 
 ## ParticleNet Jet Tagger Score
 
