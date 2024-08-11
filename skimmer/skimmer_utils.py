@@ -92,8 +92,15 @@ def make_pt_eta_phi_mass_lorentz_vector(pt, eta=None, phi=None, mass=None):
     return vec
 
 
+def is_tree_maker(events):
+    return "TriggerPass" in events.fields
+
+
 def is_mc(events):
-    return "Weight" in events.fields
+    if is_tree_maker(events):
+        return "Weight" in events.fields
+    else:
+        return "genWeight" in events.fields
 
 
 def is_data(events):
@@ -228,7 +235,10 @@ def get_b_tagging_wp(year):
 
 def get_number_of_events(events):
     if is_mc(events):
-        return ak.sum(events.Weight)
+        if is_tree_maker(events):
+            return ak.sum(events.Weight)
+        else:
+            return ak.sum(events.genWeight)
     else:
         return len(events)
 
