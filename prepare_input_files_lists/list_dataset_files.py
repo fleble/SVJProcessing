@@ -126,10 +126,7 @@ def __write_dataset_info(
     for i, files_list_batch in enumerate(files_list_batches):
         log.info(f"Processing batch {i+1}/{len(files_list_batches)}...")
         with concurrent.futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
-            if nano_aod:
-                number_of_events += list(tqdm(executor.map(__get_number_of_events, files_list_batch, len(files_list_batch)*[nano_aod]), total=len(files_list_batch)))
-            else:
-                number_of_events += list(tqdm(executor.map(__get_number_of_events, files_list_batch, nano_aod), total=len(files_list_batch)))
+            number_of_events += list(tqdm(executor.map(__get_number_of_events, files_list_batch, len(files_list_batch)*[nano_aod]), total=len(files_list_batch)))
 
     output_file_name = f"{output_directory_}/{dataset}.csv"
     header = ["file_name", "number_of_events"]
