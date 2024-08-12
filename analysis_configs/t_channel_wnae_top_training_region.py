@@ -34,7 +34,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
 
     # HEM veto
     if year == "2018":
-        events = skimmer_utils.apply_hem_veto(events)
+        events = skimmer_utils.apply_hem_filter(events)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
 
 
