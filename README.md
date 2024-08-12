@@ -22,7 +22,22 @@ At each new login do:
 source setup.sh
 ```
 
-The environment to run the code is borrowed from the [t-channel analysis framework](https://github.com/cms-svj/t-channel_Analysis/tree/master). Follow instructions there to install the repo and initialize the singularity container.
+The environment to run the code at the LPC is borrowed from the [FNAL t-channel analysis framework](https://github.com/cms-svj/t-channel_Analysis/tree/master). Follow instructions there to install the repo and initialize the singularity container.
+
+The environment to run the code at the PSI T3 is borrowed from the [ETH t-channel analysis framework](https://github.com/eth-svj/SVJanalysis). Follow instructions [here](https://github.com/jniedzie/SVJanalysis_wiki/wiki/Creating-SVJ-virtual-environment) to install the virtual environment.
+
+To check your environment, run the automated tests (see below).
+
+
+## Tests
+
+Automated tests were implemented to check the execution of the code (input files list preparation and skimming).
+To run those tests, do:
+```
+source setup.sh
+cd tests/
+./run_tests.sh
+```
 
 
 ## Preparing list of input files to skim
@@ -58,6 +73,38 @@ You can run locally on the interactive nodes where you are logged in, or distrib
 For processes with high efficiency, the bottleneck is the queuing time... It is much faster to run locally requesting one node if the queuing time is non-zero...
 
 If the total number of workers is too high, the OS limit of maximum number of files opened by one process is reached. At FNAL, this limit seems to be around 200 workers. It is recommended to ask for a maximum of 150 workers at once. It seems that the code terminates well if asking for more workers, but workers will all crash throwing an OSError...
+
+#### Tips for running at LPC
+
+At LPC, to avoid the code to stop when closing the terminal, run the code in a `screen` session:
+```
+screen -S <name_of_session>
+<set up the environment>
+cd skimmer
+./make_skims.sh
+Ctrl + A + D   # to exit the screen session
+```
+Then you can close your terminal, disconnect from internet, the code will run in the screen session. Remember the machine on which you logged in, you need to log in on the same machine to access your screen session again.
+
+To access the screen session again, log in on the same machine and do:
+```
+screen -ls  # to find the number of the screen session
+screen -r <screen_session_number>
+```
+Then either exit the screen session again (`Ctrl + A` followed by `D`) to continue to run the code, kill the code running (`Ctrl + C`) to run something different, or kill the screen session (`Ctrl +D`).
+
+
+#### Tips for running at the PSI T3
+
+At the PSI T3, to avoid the code to stop when closing the terminal, run the code with `nohup`:
+```
+nohup ./make_skims.sh > log.log 2>&1 &
+```
+
+## Checking skims completion
+
+To check that no event is missing in the output skims compared to the input NTuples list, adapt and execute the bash script [skimmer/check_number_of_events.sh](https://github.com/fleble/SVJProcessing/blob/main/skimmer/check_number_of_events.sh).     
+The code is designed to check if you have processed the entire input files list, not partially.
 
 
 ## ParticleNet Jet Tagger Score

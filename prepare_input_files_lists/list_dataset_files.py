@@ -1,13 +1,11 @@
 import argparse
-import subprocess
 import csv 
-import concurrent.futures
 from importlib import import_module
 from pathlib import Path
 
 import uproot
-from tqdm import tqdm
 
+from utils.misc import get_files_list, process_in_parallel
 from utils.Logger import *
 
 
@@ -89,6 +87,7 @@ def __list_files(dataset_info,nano_aod):
     for info_dict in dataset_info:
         files_list += __get_files_list_from_info_dict(info_dict, nano_aod)
 
+
     return files_list
 
 
@@ -117,6 +116,7 @@ def __write_dataset_info(
     output_directory_ = f"{output_directory}/files_list/{year}"
     Path(output_directory_).mkdir(parents=True, exist_ok=True)
 
+
     files_list_batches = []
     max_n_files = 5000
     for i in range(1 + len(files_list)//max_n_files):
@@ -127,6 +127,7 @@ def __write_dataset_info(
         log.info(f"Processing batch {i+1}/{len(files_list_batches)}...")
         with concurrent.futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
             number_of_events += list(tqdm(executor.map(__get_number_of_events, files_list_batch, len(files_list_batch)*[nano_aod]), total=len(files_list_batch)))
+
 
     output_file_name = f"{output_directory_}/{dataset}.csv"
     header = ["file_name", "number_of_events"]
