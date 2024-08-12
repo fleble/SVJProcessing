@@ -42,13 +42,13 @@ def apply_trigger_cut(events, trigger_list):
     """
 
     #check if TriggerPass is inside events or not, and use it if it is (for treemaker skims)
-    if "TriggerPass" in events.fields:
+    if is_tree_maker(events):
         trigger_filter = ak.zeros_like(events.EvtNum, dtype=bool)
         for trigger_name in trigger_list:
             trigger_index = trigger_table_treemaker[trigger_name]
             trigger_branch = events.TriggerPass[:, trigger_index]
             trigger_filter = trigger_filter | (trigger_branch == 1)
-    else: #if TriggerPass is not inside events, nano trigger skim
+    else:
         for idx,trigger_name in enumerate(trigger_list):
             trigger_branch = getattr(events, trigger_name)
             if idx == 0:
