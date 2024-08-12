@@ -77,10 +77,10 @@ def apply_met_filters_cut(events, met_filter_names):
         if met_filter_name not in events.fields:
             branch_name = "Flag_" + met_filter_name
         else:
-            branch_name = met_filter
+            branch_name = met_filter_name
 
         met_filter = getattr(events, branch_name)
-        events = events[met_filter]
+        events = events[met_filter>0]
             
 
     return events
