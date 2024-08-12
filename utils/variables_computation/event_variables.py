@@ -255,6 +255,7 @@ def calculate_atlas_delta_phi_max_min(jets, met, nan_value=-9999):
 
     return delta_phi_max_min
 
+
 def calculate_transverse_mass(jets, met, jet_indices=(0, 1), n_jets=None, nan_value=-9999):
     """Calculate transverse mass variable for all events using 2 leading jets.
 
@@ -285,6 +286,7 @@ def calculate_transverse_mass(jets, met, jet_indices=(0, 1), n_jets=None, nan_va
 
     return mt
 
+
 def calculate_delta_phi_min(jets, met, nan_value=-9999):
     """Calculate the minimum delta phi between the MET and the jets.
 
@@ -307,3 +309,4 @@ def calculate_delta_phi_min(jets, met, nan_value=-9999):
     delta_phi_min = ak.min(abs(jets.delta_phi(met)), axis=1)
 
     return delta_phi_min
+

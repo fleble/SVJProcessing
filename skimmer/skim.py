@@ -221,7 +221,6 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
         partition=args.queue,
         skip_bad_files=args.skip_bad_files,
         port=args.port,
-
     ))
 
     if args.skim_source or args.nano_aod:
