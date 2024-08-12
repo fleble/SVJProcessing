@@ -14,7 +14,6 @@ import uproot
 ak.behavior.update(vector.behavior)
 
 
-
 def update_cut_flow(cut_flow, cut_name, events):
     """Update cut flow table in a coffea accumulator.
 
@@ -120,7 +119,7 @@ def is_mc(events):
     else:
         return "genWeight" in events.fields
 
-  
+
 def is_data(events):
     return not is_mc(events)
 
@@ -167,86 +166,63 @@ def apply_phi_spike_filter(events, year, jet_eta_branch_name="Jet_eta", jet_phi_
     return events
 
 
+def apply_hem_veto(events):
 
-def apply_hem_filter(events, year="2018", jet_pt_branch_name="Jet_pt", jet_eta_branch_name="Jet_eta",
-                     jet_phi_branch_name="Jet_phi"):
-
-    def hem_veto_pfnano(events):
-
-        hem_min_pt = 30
-        hem_min_eta = -3.05
-        hem_max_eta = -1.35
-        hem_min_phi = -1.62
-        hem_max_phi = -0.82
-
-        if year != "2018":
-            hem_filter = ak.ones_like(events.genWeight)
-        else:
-            jets_pt = getattr(events, jet_pt_branch_name)
-            jets_eta = getattr(events, jet_eta_branch_name)
-            jets_phi = getattr(events, jet_phi_branch_name)
-            
-            condition_per_jet = (jets_pt > hem_min_pt) \
-                & (jets_eta > hem_min_eta) & (jets_eta < hem_max_eta) \
-                & (jets_phi > hem_min_phi) & (jets_phi < hem_max_phi)
-            hem_filter = ak.any(condition_per_jet, axis=1) == False
-        
-        return hem_filter
-
-    def hem_veto_treemaker(events):
-
+    if is_tree_maker(events):
         jets = events.Jets
         electrons = events.Electrons
         muons = events.Muons
 
-        jet_hem_condition = (
-            (jets.eta > -3.05)
-            & (jets.eta < -1.35)
-            & (jets.phi > -1.62)
-            & (jets.phi < -0.82)
-        )
-        electron_hem_condition = (
-            (electrons.eta > -3.05)
-            & (electrons.eta < -1.35)
-            & (electrons.phi > -1.62)
-            & (electrons.phi < -0.82)
-        )
-        muon_hem_condition = (
-            (muons.eta > -3.05)
-            & (muons.eta < -1.35)
-            & (muons.phi > -1.62)
-            & (muons.phi < -0.82)
-        )
-        veto = (
-            ((ak.num(jets) > 0) & ak.any(jet_hem_condition, axis=1))
-            | ((ak.num(muons) > 0) & ak.any(muon_hem_condition, axis=1))
-            | ((ak.num(electrons) > 0) & ak.any(electron_hem_condition, axis=1))
-        )
-        return ~veto
-
-    #check if pfnano or treemaker, and use the corresponding hem filter
-    if "Jets" in events.fields:
-        hem_filter = hem_veto_treemaker(events)
     else:
-        hem_filter = hem_veto_pfnano(events)
+        jets = ak.zip({
+            "pt": events["Jet_pt"],
+            "eta": events["Jet_eta"],
+            "phi": events["Jet_phi"],
+        })
+        electrons = ak.zip({
+            "pt":  events["Electron_pt"],
+            "eta": events["Electron_eta"],
+            "phi": events["Electron_phi"],
+        })
+        muons = ak.zip({
+            "pt":  events["Muon_pt"],
+            "eta": events["Muon_eta"],
+            "phi": events["Muon_phi"],
+        })
+
+    jet_hem_condition = (
+        (jets.eta > -3.05)
+        & (jets.eta < -1.35)
+        & (jets.phi > -1.62)
+        & (jets.phi < -0.82)
+    )
+    electron_hem_condition = (
+        (electrons.eta > -3.05)
+        & (electrons.eta < -1.35)
+        & (electrons.phi > -1.62)
+        & (electrons.phi < -0.82)
+    )
+    muon_hem_condition = (
+        (muons.eta > -3.05)
+        & (muons.eta < -1.35)
+        & (muons.phi > -1.62)
+        & (muons.phi < -0.82)
+    )
+    veto = (
+        ((ak.num(jets) > 0) & ak.any(jet_hem_condition, axis=1))
+        | ((ak.num(muons) > 0) & ak.any(muon_hem_condition, axis=1))
+        | ((ak.num(electrons) > 0) & ak.any(electron_hem_condition, axis=1))
+    )
+    hem_filter = ~veto
 
     if is_mc(events):
         events = events[hem_filter]
     else:
-        #if run in events fields, use it, otherwise use RunNum
-        if "run" in events.fields:
-            hem_filter_data = (
-                ((events.run >= 319077) & hem_filter)
-                | (events.run < 319077)
-            )
-            events = events[hem_filter_data]
-        else:
-            hem_filter_data = (
-                ((events.RunNum >= 319077) & hem_filter)
-                | (events.RunNum < 319077)
-            )
-            events = events[hem_filter_data]
-        
+        run_number = events.RunNum if is_tree_maker(events) else events.run
+        hem_filter_data = (
+            ((run_number >= 319077) & hem_filter)
+            | (run_number < 319077)
+        )
         events = events[hem_filter_data]
 
     return events

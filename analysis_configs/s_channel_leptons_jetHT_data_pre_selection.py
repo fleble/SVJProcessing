@@ -94,8 +94,9 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     skimmer_utils.update_cut_flow(cut_flow, "PhiSpikeFilter", events)
 
     # apply HEM issue filter - to be applied only on 2018 data
-    events = skimmer_utils.apply_hem_filter(events, year)
-    skimmer_utils.update_cut_flow(cut_flow, "HEMIssueFilter", events)
+    if year == "2018" and skimmer_utils.is_data(events):
+        events = skimmer_utils.apply_hem_veto(events)
+        skimmer_utils.update_cut_flow(cut_flow, "HEMIssueFilter", events)
 
     # Delta phi min cut
     if len(events) != 0:
