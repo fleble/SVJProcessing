@@ -5,7 +5,7 @@ from dask_jobqueue import SLURMCluster
 from distributed import Client
 
 
-def __get_client(executor_name, n_workers, cores, memory, disk, port=8787):
+def __get_client(executor_name, n_workers, cores, memory, disk, time, partition, port=8787):
     """Return batch system client for job submission.
 
     Args:
@@ -30,6 +30,8 @@ def __get_client(executor_name, n_workers, cores, memory, disk, port=8787):
             memory=memory,
             log_directory=f"/work/{os.environ['USER']}/tmp/logs",
             job_script_prologue=job_script_prologue,
+            walltime=time,
+            queue=partition,
         )
 
     elif "lpccondor" in executor_name:
@@ -94,6 +96,8 @@ def get_executor_args(
         cores,
         memory,
         disk,
+        time, 
+        partition,
         schema_name=None,
         skip_bad_files=True,
         port=8787,
@@ -127,7 +131,7 @@ def get_executor_args(
     else:
         executor_args["retries"] = 5
         executor_args["client"] = __get_client(
-            executor_name, n_workers, cores, memory, disk, port,
+            executor_name, n_workers, cores, memory, disk,time ,partition , port,
         )
 
     return executor_args

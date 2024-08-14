@@ -255,3 +255,58 @@ def calculate_atlas_delta_phi_max_min(jets, met, nan_value=-9999):
 
     return delta_phi_max_min
 
+
+def calculate_transverse_mass(jets, met, jet_indices=(0, 1), n_jets=None, nan_value=-9999):
+    """Calculate transverse mass variable for all events using 2 leading jets.
+
+    Args:
+        jets (awkward.Array):
+            Ak array where axis 0 is the event axis, axis 1 is the jet axis
+            with fields pt, rapidity, phi and mass and with name
+            PtEtaPhiMLorentzVector.
+        met (awkward.Array):
+            Missing transverse energy. 1D ak array with fields pt, eta, phi,
+            mass and with name PtEtaPhiMLorentzVector.
+        jet_indices (list[int], optional, default=[0, 1]):
+            Indices of the two jets used to compute MT
+        n_jets (awkward.Array, optional, default=None):
+            Ak array with one axis with number of jets in each event.
+            If None, will be computed from jets.
+        nan_value (float, optional, default=0):
+            Value to use when the event has less than 2 jets.
+
+    Returns:
+        awkward.Array
+    """
+
+    jet0, jet1 = __get_pair_of_objects(jets, jet_indices)
+    dijet = jet0 + jet1
+    mt = np.sqrt( dijet.mass**2 + 2 * ( np.sqrt(dijet.mass**2 + dijet.pt**2) * met.pt - met.dot(dijet) ) )
+    mt = ak.fill_none(mt, nan_value)
+
+    return mt
+
+
+def calculate_delta_phi_min(jets, met, nan_value=-9999):
+    """Calculate the minimum delta phi between the MET and the jets.
+
+    Args:
+        physics_objects (awkward.Array): 
+            Ak array where axis 0 is the event axis, axis 1 is the object axis
+            with field eta and with name PtEtaPhiMLorentzVector.
+            Physics objects can be jets, leptons etc...
+        indices (tuple[int], optional):
+            The indices of the object for which to compute delta eta.
+            By default will do it the tw leading objects.
+        nan_value (float, optional, default=-9999):
+            Value to use when the event has less objects than required
+
+    Returns:
+        awkward.Array
+    """
+
+    met = ak.broadcast_arrays(met, jets)[0]
+    delta_phi_min = ak.min(abs(jets.delta_phi(met)), axis=1)
+
+    return delta_phi_min
+

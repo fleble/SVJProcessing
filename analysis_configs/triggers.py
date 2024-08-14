@@ -43,6 +43,20 @@ t_channel_2018 = [
     "PFMETNoMu120_PFMHTNoMu120_IDTight"
 ]
 
+
+s_channel_2018 = [
+    "HLT_AK8PFJet500",
+    "HLT_AK8PFJet550",
+    "HLT_CaloJet500_NoJetID",
+    "HLT_CaloJet550_NoJetID",
+    "HLT_PFHT1050",
+    "HLT_PFJet500",
+    "HLT_PFJet550",
+    "HLT_Mu50"
+]
+
+
+
 photon_2016 = [
     "Photon165_HE10",
 ]
@@ -54,6 +68,7 @@ photon_2017 = [
 photon_2018 = [
     "Photon200",
 ]
+
 
 single_muon_2016 = [
     "IsoMu24",
@@ -89,7 +104,12 @@ single_electron_2018 = [
     "Ele28_eta2p1_WPTight_Gsf_HT150",
 ]
 
+
 single_lepton_2016 = single_muon_2016 + single_electron_2016
 single_lepton_2017 = single_muon_2017 + single_electron_2017
 single_lepton_2018 = single_muon_2018 + single_electron_2018
+
+jetht_2018 = [
+    "HLT_PFHT1050",
+]
 
