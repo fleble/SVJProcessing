@@ -8,7 +8,7 @@ from analysis_configs.met_filters import met_filters_nanoaod as met_filters
 from analysis_configs import sequences_s_channel_leptons as sequences
 
 
-def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
+def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwargs):
     """SVJ s-channel leptons pre-selection."""
 
     # Trigger event selection

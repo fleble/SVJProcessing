@@ -3,7 +3,7 @@ import awkward as ak
 from skimmer import skimmer_utils
 
 
-def process(events, cut_flow, year):
+def process(events, cut_flow, year, **kwargs):
     """Example pre-selection config."""
 
     # Example for object selection

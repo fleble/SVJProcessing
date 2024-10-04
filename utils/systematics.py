@@ -32,8 +32,9 @@ def calc_jec_variation(
         variation_jer_factor (ak.Array): the variation's JER factor
 
     Returns:
-        (ak.Array, ak.Array, ak.Array, ak.Array) : pt, eta, phi, and energy after
-            applying the variation and reordered by the pT after variation.
+        (ak.Array, ak.Array, ak.Array, ak.Array, ak.Array) : pt, eta, phi, energy after
+            applying the variation and reordered by the pT after variation; permutation
+            to propagate the reordering to the whole collection
     """
 
     # Create a map to reorder final corrected jets to the ordering of the variation
