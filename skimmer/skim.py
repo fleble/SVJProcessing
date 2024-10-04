@@ -149,7 +149,7 @@ def add_coffea_args(parser):
         "-var", "--variation",
         help="What systematic variation to compute (choice=%(choices)s)",
         type=str,
-        choices=["jec_up", "jec_down"],
+        choices=["jec_up", "jec_down", "jer_up", "jer_down"],
         default=None,
     )
 

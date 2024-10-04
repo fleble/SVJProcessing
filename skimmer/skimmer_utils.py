@@ -6,7 +6,7 @@ import uproot
 
 from utils.awkward_array_utilities import as_type
 from utils.tree_maker.triggers import trigger_table as trigger_table_treemaker
-from utils.systematics import calc_jec_variation
+from utils.systematics import calc_jec_variation, calc_jer_variation
 from utils.Logger import *
 
 # Needed so that ak.zip({"pt": [...], "eta": [...], "phi": [...], "mass": [...]},
@@ -371,19 +371,31 @@ def __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, j
 
 def apply_variation(events, variation):
     if variation is None: return events
-    elif variation in ["jec_up", "jec_down"]:
+    elif variation in ["jec_up", "jec_down", "jer_up", "jer_down"]:
         # Calculate the varied jet kinematics
-        pt_var, eta_var, phi_var, energy_var, permutation = calc_jec_variation(
-            events.JetsAK8.pt,
-            events.JetsAK8.eta,
-            events.JetsAK8.phi,
-            events.JetsAK8.energy,
-            events.JetsAK8.jerFactor,
-            events.JetsAK8.jecUnc,
-            events.JetsAK8.origIndex,
-            events.JetsAK8JECup.o if "_up" in variation else events.JetsAK8JECdown.o,
-            events.JetsAK8JECup.j if "_up" in variation else events.JetsAK8JECdown.j,
-        )
+        if "jec" in variation:
+            pt_var, eta_var, phi_var, energy_var, permutation = calc_jec_variation(
+                events.JetsAK8.pt,
+                events.JetsAK8.eta,
+                events.JetsAK8.phi,
+                events.JetsAK8.energy,
+                events.JetsAK8.jerFactor,
+                events.JetsAK8.jecUnc,
+                events.JetsAK8.origIndex,
+                events.JetsAK8JECup.o if "_up" in variation else events.JetsAK8JECdown.o,
+                events.JetsAK8JECup.j if "_up" in variation else events.JetsAK8JECdown.j,
+            )
+        else:
+            pt_var, eta_var, phi_var, energy_var, permutation = calc_jer_variation(
+                events.JetsAK8.pt,
+                events.JetsAK8.eta,
+                events.JetsAK8.phi,
+                events.JetsAK8.energy,
+                events.JetsAK8.jerFactor,
+                events.JetsAK8.origIndex,
+                events.JetsAK8JERup.o if "_up" in variation else events.JetsAK8JERdown.o,
+                events.JetsAK8.jerFactorUp if "_up" in variation else events.JetsAK8.jerFactorDown,
+            )
 
         corrected_jets = make_pt_eta_phi_energy_lorentz_vector(
             pt=pt_var,
