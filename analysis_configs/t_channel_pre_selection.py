@@ -7,7 +7,7 @@ from analysis_configs.met_filters import met_filters_treemaker as met_filters
 from analysis_configs import sequences
 
 
-def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variation=None):
+def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variation=None, **kwargs):
     """SVJ t-channel pre-selection."""
 
     # If this config is changed, changes must be reflected in t_channel_lost_lepton_control_region.py
