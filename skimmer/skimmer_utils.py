@@ -2,11 +2,12 @@ import awkward as ak
 import numpy as np
 import numba as nb
 from coffea.nanoevents.methods import vector
+import uproot
 
 from utils.awkward_array_utilities import as_type
 from utils.tree_maker.triggers import trigger_table as trigger_table_treemaker
+from utils.systematics import calc_jec_variation, calc_jer_variation
 from utils.Logger import *
-import uproot
 
 # Needed so that ak.zip({"pt": [...], "eta": [...], "phi": [...], "mass": [...]},
 #                         with_name="PtEtaPhiMLorentzVector")
@@ -104,6 +105,27 @@ def make_pt_eta_phi_mass_lorentz_vector(pt, eta=None, phi=None, mass=None):
             "mass": mass,
         },
         with_name="PtEtaPhiMLorentzVector",
+    )
+
+    return vec
+
+def make_pt_eta_phi_energy_lorentz_vector(pt, eta=None, phi=None, energy=None):
+    """Take pt, eta, phi, mass awkward arrays and return the corresponding PtEtaPhiMLorentzVector.
+
+    eta and mass can be None, e.g. for the MET.
+    """
+
+    if eta is None:
+        eta = ak.zeros_like(pt)
+
+    vec = ak.zip(
+        {
+            "pt": pt,
+            "eta": eta,
+            "phi": phi,
+            "energy": energy,
+        },
+        with_name="PtEtaPhiELorentzVector",
     )
 
     return vec
@@ -346,3 +368,73 @@ def __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, j
                 builder.append(keep_event)
     return builder
 
+
+def apply_variation(events, variation):
+    if variation is None: return events
+    elif variation in ["jec_up", "jec_down", "jer_up", "jer_down"]:
+        # Calculate the varied jet kinematics
+        if "jec" in variation:
+            pt_var, eta_var, phi_var, energy_var, permutation = calc_jec_variation(
+                events.JetsAK8.pt,
+                events.JetsAK8.eta,
+                events.JetsAK8.phi,
+                events.JetsAK8.energy,
+                events.JetsAK8.jerFactor,
+                events.JetsAK8.jecUnc,
+                events.JetsAK8.origIndex,
+                events.JetsAK8JECup.o if "_up" in variation else events.JetsAK8JECdown.o,
+                events.JetsAK8JECup.j if "_up" in variation else events.JetsAK8JECdown.j,
+            )
+        else:
+            pt_var, eta_var, phi_var, energy_var, permutation = calc_jer_variation(
+                events.JetsAK8.pt,
+                events.JetsAK8.eta,
+                events.JetsAK8.phi,
+                events.JetsAK8.energy,
+                events.JetsAK8.jerFactor,
+                events.JetsAK8.origIndex,
+                events.JetsAK8JERup.o if "_up" in variation else events.JetsAK8JERdown.o,
+                events.JetsAK8.jerFactorUp if "_up" in variation else events.JetsAK8.jerFactorDown,
+            )
+
+        corrected_jets = make_pt_eta_phi_energy_lorentz_vector(
+            pt=pt_var,
+            eta=eta_var,
+            phi=phi_var,
+            energy=energy_var,
+        )
+
+        events["JetsAK8"] = ak.with_field(
+            events["JetsAK8"],
+            corrected_jets.pt,
+            "pt",
+        )
+        events["JetsAK8"] = ak.with_field(
+            events["JetsAK8"],
+            corrected_jets.eta,
+            "eta",
+        )
+        events["JetsAK8"] = ak.with_field(
+            events["JetsAK8"],
+            corrected_jets.phi,
+            "phi",
+        )
+        events["JetsAK8"] = ak.with_field(
+            events["JetsAK8"],
+            corrected_jets.energy,
+            "energy",
+        )
+        events["JetsAK8"] = ak.with_name(
+            events["JetsAK8"],
+            "PtEtaPhiELorentzVector",
+        )
+        for k in events["JetsAK8"].fields:
+            if k in ["pt", "eta", "phi", "energy"]: continue
+
+            events["JetsAK8"] = ak.with_field(
+                events["JetsAK8"],
+                events["JetsAK8"][k][permutation],
+                k,
+            )
+
+        return events

@@ -7,7 +7,7 @@ from analysis_configs.met_filters import met_filters_treemaker as met_filters
 from analysis_configs import sequences
 
 
-def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
+def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwargs):
     """SVJ t-channel lost lepton control region.
     
     Same selections as for preselection region, but requiring exactly 1 veto lepton.
