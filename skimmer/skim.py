@@ -145,6 +145,12 @@ def add_coffea_args(parser):
         type=int,
         default=8787,
     )
+    parser.add_argument(
+        "-var", "--variation",
+        help="What systematic variation to compute [jes_up, jes_down]",
+        type=str,
+        default=None,
+    )
 
 
 def __get_arguments():
@@ -200,6 +206,7 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
         year=year,
         primary_dataset=args.primary_dataset,
         pn_tagger=args.pn_tagger,
+        variation=args.variation
     )
 
     executor = get_executor(args.executor_name)

@@ -7,7 +7,7 @@ from analysis_configs.met_filters import met_filters_treemaker as met_filters
 from analysis_configs import sequences
 
 
-def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
+def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variation=None):
     """SVJ t-channel pre-selection."""
 
     # If this config is changed, changes must be reflected in t_channel_lost_lepton_control_region.py
@@ -15,6 +15,8 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False):
     if skimmer_utils.is_data(events):
         events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
         skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)
+
+    events = skimmer_utils.apply_variation(events, variation)
 
     # Trigger event selection
     triggers = getattr(trg, f"t_channel_{year}")
