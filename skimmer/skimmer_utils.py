@@ -371,7 +371,7 @@ def __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, j
 
 def apply_variation(events, variation):
     if variation is None: return events
-    elif variation in ["jes_up", "jes_down"]:
+    elif variation in ["jec_up", "jec_down"]:
         # Calculate the varied jet kinematics
         pt_var, eta_var, phi_var, energy_var, permutation = calc_jec_variation(
             events.JetsAK8.pt,
