@@ -147,8 +147,9 @@ def add_coffea_args(parser):
     )
     parser.add_argument(
         "-var", "--variation",
-        help="What systematic variation to compute [jes_up, jes_down]",
+        help="What systematic variation to compute (choice=%(choices)s)",
         type=str,
+        choices=["jes_up", "jes_down"],
         default=None,
     )
 
