@@ -8,6 +8,7 @@ from utils.awkward_array_utilities import as_type
 from utils.tree_maker.triggers import trigger_table as trigger_table_treemaker
 from utils.systematics import calc_jec_variation, calc_jer_variation
 from utils.Logger import *
+from analysis_configs import objects_definition as obj
 
 # Needed so that ak.zip({"pt": [...], "eta": [...], "phi": [...], "mass": [...]},
 #                         with_name="PtEtaPhiMLorentzVector")
@@ -212,23 +213,30 @@ def apply_hem_veto(events):
             "phi": events["Muon_phi"],
         })
 
+    jet_condition = obj.is_good_ak4_jet(jets)
+    electron_condition = obj.is_veto_electron(electrons)
+    muon_condition = obj.is_veto_muon(muons)
+    good_ak4_jets = jets[jet_condition]
+    veto_electrons = electrons[electron_condition]
+    veto_muons = muons[muon_condition]
+
     jet_hem_condition = (
-        (jets.eta > -3.05)
-        & (jets.eta < -1.35)
-        & (jets.phi > -1.62)
-        & (jets.phi < -0.82)
+        (good_ak4_jets.eta > -3.05)
+        & (good_ak4_jets.eta < -1.35)
+        & (good_ak4_jets.phi > -1.62)
+        & (good_ak4_jets.phi < -0.82)
     )
     electron_hem_condition = (
-        (electrons.eta > -3.05)
-        & (electrons.eta < -1.35)
-        & (electrons.phi > -1.62)
-        & (electrons.phi < -0.82)
+        (veto_electrons.eta > -3.05)
+        & (veto_electrons.eta < -1.35)
+        & (veto_electrons.phi > -1.62)
+        & (veto_electrons.phi < -0.82)
     )
     muon_hem_condition = (
-        (muons.eta > -3.05)
-        & (muons.eta < -1.35)
-        & (muons.phi > -1.62)
-        & (muons.phi < -0.82)
+        (veto_muons.eta > -3.05)
+        & (veto_muons.eta < -1.35)
+        & (veto_muons.phi > -1.62)
+        & (veto_muons.phi < -0.82)
     )
     veto = (
         ((ak.num(jets) > 0) & ak.any(jet_hem_condition, axis=1))
