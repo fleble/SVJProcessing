@@ -386,9 +386,20 @@ def __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, j
 
 
 def apply_variation(events, variation):
+    """Apply systematic uncertainty variations.
+
+    The following collections/branches are modified in place:
+        * AK8 jets
+        * MET
+        * HT
+    
+    Args:
+        events (ak.Array)
+        variation (str): choose from "jec_up", "jec_down", "jer_up", "jer_down".
+    """
+
     if variation is None: return events
     elif variation in ["jec_up", "jec_down", "jer_up", "jer_down"]:
-        # Calculate the varied jet kinematics
         if "jec" in variation:
             pt_var, eta_var, phi_var, energy_var, permutation = calc_jec_variation(
                 events.JetsAK8.pt,
@@ -401,6 +412,18 @@ def apply_variation(events, variation):
                 events.JetsAK8JECup.o if "_up" in variation else events.JetsAK8JECdown.o,
                 events.JetsAK8JECup.j if "_up" in variation else events.JetsAK8JECdown.j,
             )
+            met_variation_name = "METUp" if "_up" in variation else "METDown"
+            events = ak.with_field(
+                events,
+                events[met_variation_name][:, 1],
+                "MET",
+            )
+            ht_variation_name = "HTJECup" if "_up" in variation else "HTJECdown"
+            events = ak.with_field(
+                events,
+                events[ht_variation_name],
+                "HT",
+            )
         else:
             pt_var, eta_var, phi_var, energy_var, permutation = calc_jer_variation(
                 events.JetsAK8.pt,
@@ -411,6 +434,18 @@ def apply_variation(events, variation):
                 events.JetsAK8.origIndex,
                 events.JetsAK8JERup.o if "_up" in variation else events.JetsAK8JERdown.o,
                 events.JetsAK8.jerFactorUp if "_up" in variation else events.JetsAK8.jerFactorDown,
+            )
+            met_variation_name = "METUp" if "_up" in variation else "METDown"
+            events = ak.with_field(
+                events,
+                events[met_variation_name][:, 0],
+                "MET",
+            )
+            ht_variation_name = "HTJERup" if "_up" in variation else "HTJERdown"
+            events = ak.with_field(
+                events,
+                events[ht_variation_name],
+                "HT",
             )
 
         corrected_jets = make_pt_eta_phi_energy_lorentz_vector(
