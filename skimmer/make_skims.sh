@@ -27,8 +27,10 @@ selection_name=t_channel_pre_selection
 
 year=2018
 
+variation=nominal  # nominal jec_up jec_down jer_up jer_down
+
 # Output directory for nominal samples - no variation of the uncertainties
-output_directory=root://cmseos.fnal.gov//store/user/lpcdarkqcd/tchannel_UL/${year}/Full/PrivateSkims/nominal
+output_directory=root://cmseos.fnal.gov//store/user/lpcdarkqcd/tchannel_UL/${year}/Full/PrivateSkims/${variation}
 
 
 dataset_names=(
@@ -162,7 +164,12 @@ make_skims() {
                 local output_file_path=$(echo ${output_file} | cut -d/ -f 4-)
                 xrdfs ${output_redirector} ls ${output_file_path} > /dev/null 2>&1
                 if [ "$?" != "0" ] || [ "${FORCE_RECREATE}" == "1" ]; then
-                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -pd ${dataset_name} -y ${year} -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger
+	            if [ "${variation}" == "nominal" ]; then
+		        variation_flag=''
+		    else
+		        variation_flag="--variation ${variation}"
+		    fi
+                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -pd ${dataset_name} -y ${year} -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger ${variation_flag[@]}
                     xrdcp -f ${output_file_tmp} ${output_file}
                     echo ${output_file} has been saved.
                     rm ${output_file_tmp}
