@@ -84,6 +84,9 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variati
     events = events[events.MET > 200]
     skimmer_utils.update_cut_flow(cut_flow, "METGt200GeV", events)
 
+    # Phi spike filter
+    events = skimmer_utils.apply_phi_spike_filter(events, year, "skimmer/phi_spike_hot_spots_5p5sigmas.pkl", "t")
+    skimmer_utils.update_cut_flow(cut_flow, "PhiSpikeFilter", events)
 
     events = sequences.add_analysis_branches(events)
 
