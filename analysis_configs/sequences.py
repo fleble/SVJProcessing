@@ -21,7 +21,7 @@ def remove_primary_dataset_overlap(events, year, primary_dataset):
         primary_dataset_trigger_mask = np.zeros(len(events.TriggerPass[0]), dtype=int)
         primary_dataset_trigger_mask[trigger_indices] = 1
         primary_dataset_trigger_mask = np.tile(primary_dataset_trigger_mask, [len(events), 1])
-        return ak.any(events.TriggerPass * primary_dataset_trigger_mask, axis=1)
+        return ak.any(events.TriggerPass * primary_dataset_trigger_mask == 1, axis=1)
 
     pass_jetht_triggers = is_passing_primary_dataset_triggers(events, year, "JetHT")
     pass_met_triggers = is_passing_primary_dataset_triggers(events, year, "MET")
@@ -49,7 +49,7 @@ def remove_single_lepton_primary_dataset_overlap(events, year, primary_dataset):
         primary_dataset_trigger_mask = np.zeros(len(events.TriggerPass[0]), dtype=int)
         primary_dataset_trigger_mask[trigger_indices] = 1
         primary_dataset_trigger_mask = np.tile(primary_dataset_trigger_mask, [len(events), 1])
-        return ak.any(events.TriggerPass * primary_dataset_trigger_mask, axis=1)
+        return ak.any(events.TriggerPass * primary_dataset_trigger_mask == 1, axis=1)
 
     pass_single_muon_triggers = is_passing_primary_dataset_triggers(events, year, "SingleMuon")
     if year in ["2016", "2016APV", "2017"]:
