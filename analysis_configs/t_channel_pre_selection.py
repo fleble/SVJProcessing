@@ -12,6 +12,18 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variati
 
     # If this config is changed, changes must be reflected in t_channel_lost_lepton_control_region.py
 
+    # Calculate and store the weights an normalization factors for renormalization and factorization scales
+    events, sumw_nominal, sumw_up, sumw_down = skimmer_utils.apply_scale_variations(events)
+
+    # Write the sum of weights for the scale variation to the cutflow
+    skimmer_utils.add_variations_to_cutflow(
+        cut_flow,
+        "NormFactScale",
+        sumw_nominal,
+        sumw_up,
+        sumw_down,
+    )
+
     if skimmer_utils.is_data(events):
         events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
         skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)

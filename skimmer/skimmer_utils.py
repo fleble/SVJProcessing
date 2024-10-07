@@ -31,6 +31,22 @@ def update_cut_flow(cut_flow, cut_name, events):
         cut_flow[cut_name] = get_number_of_events(events)
 
 
+def add_variations_to_cutflow(cut_flow, var_name, nominal, up, down):
+    """Add normalization factors for nominal/up/down variations
+
+    Args:
+        cut_flow (dict[str, float])
+        var_name (str): the name of the cut to appear in the cut flow tree
+        nominal (float)
+        up (float)
+        down (float)
+    """
+
+    cut_flow[f"sumw_{var_name}_nominal"] = nominal
+    cut_flow[f"sumw_{var_name}_up"] = up
+    cut_flow[f"sumw_{var_name}_down"] = down
+
+
 def apply_trigger_cut(events, trigger_list):
     """Filter events using an or of all triggers.
 
@@ -438,3 +454,31 @@ def apply_variation(events, variation):
             )
 
         return events
+    
+
+def apply_scale_variations(events):
+    '''
+    # Get up/down variations envelope, following definition
+    # here: https://github.com/TreeMaker/TreeMaker/blob/7a81115566ed1f2206eb4d447c9c7ba0870d88d0/Utils/src/PDFWeightProducer.cc#L167
+    
+    # Adds "ScaleWeight_up" and "ScaleWeight_down" branches, plus stores the integrals
+    # for nominal and up/down variations in the cutflow
+    '''
+
+    envelope_up = ak.max(events.ScaleWeights[:,[i for i in range(9) if i not in (5, 7)]], axis=-1)
+    envelope_down = ak.min(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+
+    # Calculate central norm and variations
+    if is_tree_maker(events):
+        sum_w_nominal = ak.sum(events.Weight)
+        sum_w_up = ak.sum(events.Weight * envelope_up)
+        sum_w_down = ak.sum(events.Weight * envelope_down)
+    else:
+        sum_w_nominal = ak.sum(events.genWeight)
+        sum_w_up = ak.sum(events.genWeight * envelope_up)
+        sum_w_down = ak.sum(events.genWeight * envelope_down)
+
+    events["ScaleWeight_up"] = envelope_up
+    events["ScaleWeight_down"] = envelope_down
+
+    return events, sum_w_nominal, sum_w_up, sum_w_down
