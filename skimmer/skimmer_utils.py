@@ -386,7 +386,8 @@ def __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, j
 
 
 def apply_variation(events, variation):
-    """Apply systematic uncertainty variations.
+    """Apply systematic uncertainty variations for cases in which recalculation
+    of downstream quantities is needed e.g., JEC/JER variations.
 
     The following collections/branches are modified in place:
         * AK8 jets
@@ -493,11 +494,11 @@ def apply_variation(events, variation):
 
 def apply_scale_variations(events):
     '''
-    # Get up/down variations envelope, following definition
-    # here: https://github.com/TreeMaker/TreeMaker/blob/7a81115566ed1f2206eb4d447c9c7ba0870d88d0/Utils/src/PDFWeightProducer.cc#L167
+    Get up/down variations envelope, following definition
+    here: https://github.com/TreeMaker/TreeMaker/blob/7a81115566ed1f2206eb4d447c9c7ba0870d88d0/Utils/src/PDFWeightProducer.cc#L167
     
-    # Adds "ScaleWeight_up" and "ScaleWeight_down" branches, plus stores the integrals
-    # for nominal and up/down variations in the cutflow
+    Adds "ScaleWeight_up" and "ScaleWeight_down" branches, plus stores the integrals
+    for nominal and up/down variations in the cutflow
     '''
 
     envelope_up = ak.max(events.ScaleWeights[:,[i for i in range(9) if i not in (5, 7)]], axis=-1)
@@ -508,12 +509,15 @@ def apply_scale_variations(events):
         sum_w_nominal = ak.sum(events.Weight)
         sum_w_up = ak.sum(events.Weight * envelope_up)
         sum_w_down = ak.sum(events.Weight * envelope_down)
+
+        events["WeightScale_up"] = events.Weight * envelope_up
+        events["WeightScale_down"] = events.Weight * envelope_down
     else:
         sum_w_nominal = ak.sum(events.genWeight)
         sum_w_up = ak.sum(events.genWeight * envelope_up)
         sum_w_down = ak.sum(events.genWeight * envelope_down)
 
-    events["ScaleWeight_up"] = events.Weight * envelope_up
-    events["ScaleWeight_down"] = events.Weight * envelope_down
+        events["genWeightScale_up"] = events.genWeight * envelope_up
+        events["genWeightScale_down"] = events.genWeight * envelope_down
 
     return events, sum_w_nominal, sum_w_up, sum_w_down
