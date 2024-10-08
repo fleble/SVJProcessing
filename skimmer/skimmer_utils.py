@@ -510,14 +510,20 @@ def apply_scale_variations(events):
         sum_w_up = ak.sum(events.Weight * envelope_up)
         sum_w_down = ak.sum(events.Weight * envelope_down)
 
-        events["WeightScale_up"] = events.Weight * envelope_up
-        events["WeightScale_down"] = events.Weight * envelope_down
+        events["WeightScaleUp"] = events.Weight * envelope_up
+        events["WeightScaleDown"] = events.Weight * envelope_down
     else:
         sum_w_nominal = ak.sum(events.genWeight)
         sum_w_up = ak.sum(events.genWeight * envelope_up)
         sum_w_down = ak.sum(events.genWeight * envelope_down)
 
-        events["genWeightScale_up"] = events.genWeight * envelope_up
-        events["genWeightScale_down"] = events.genWeight * envelope_down
+        events["genWeightScaleUp"] = events.genWeight * envelope_up
+        events["genWeightScalDown"] = events.genWeight * envelope_down
 
     return events, sum_w_nominal, sum_w_up, sum_w_down
+
+
+def apply_pdf_variations(events):
+    '''
+    
+    '''
