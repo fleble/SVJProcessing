@@ -513,7 +513,7 @@ def apply_scale_variations(events):
         sum_w_up = ak.sum(events.genWeight * envelope_up)
         sum_w_down = ak.sum(events.genWeight * envelope_down)
 
-    events["ScaleWeight_up"] = envelope_up
-    events["ScaleWeight_down"] = envelope_down
+    events["ScaleWeight_up"] = events.Weight * envelope_up
+    events["ScaleWeight_down"] = events.Weight * envelope_down
 
     return events, sum_w_nominal, sum_w_up, sum_w_down
