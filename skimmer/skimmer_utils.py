@@ -397,6 +397,9 @@ def apply_variation(events, variation):
     Args:
         events (ak.Array)
         variation (str): choose from "jec_up", "jec_down", "jer_up", "jer_down".
+
+    Returns:
+        events (ak.Array)
     """
 
     if variation is None: return events
@@ -497,8 +500,15 @@ def apply_scale_variations(events):
     Get up/down variations envelope, following definition
     here: https://github.com/TreeMaker/TreeMaker/blob/7a81115566ed1f2206eb4d447c9c7ba0870d88d0/Utils/src/PDFWeightProducer.cc#L167
     
-    Adds "ScaleWeight_up" and "ScaleWeight_down" branches, plus stores the integrals
-    for nominal and up/down variations in the cutflow
+    The following collections/branches are added in place:
+        * WeightScaleUp (TreeMaker)/genWeightScaleUp (PFNanoAOD)
+        * WeightScaleDown (TreeMaker)/genWeightScaleDown (PFNanoAOD)
+
+    Args:
+        events (ak.Array)
+
+    Returns:
+        events (ak.Array), sum_w_nominal (float), sum_w_up (float), sum_w_down (float)
     '''
 
     envelope_up = ak.max(events.ScaleWeights[:,[i for i in range(9) if i not in (5, 7)]], axis=-1)
@@ -525,5 +535,43 @@ def apply_scale_variations(events):
 
 def apply_pdf_variations(events):
     '''
-    
+    Calculate the pdf variations, including normalization factors.
+    This should be done **before** any event selection is applied.
+
+    The following collections/branches are added in place:
+        * WeightPDFUp (TreeMaker)/genWeightPDFUp (PFNanoAOD)
+        * WeightPDFDown (TreeMaker)/genWeightPDFDown (PFNanoAOD)
+
+    Args:
+        events (ak.Array)
+
+    Returns:
+        events (ak.Array)
     '''
+
+    # Normalize the array of pdf weights by the first entry
+    if is_tree_maker(events):
+        pdf_variations = events.PDFweights
+        pdf_variations = pdf_variations / pdf_variations[:,0]
+    else:
+        raise NotImplementedError()
+
+    # Calculate the mean and standard deviation across replicas per event
+    mean = ak.mean(pdf_variations, axis=-1)
+    std = ak.std(pdf_variations, axis=-1)
+
+    # Calculate the up_down normalization factors across events
+    pdf_norm_up = ak.mean(mean + std)
+    pdf_norm_down = ak.mean(mean - std)
+
+    pdf_weight_up = (mean+std) / pdf_norm_up
+    pdf_weight_down = (mean-std) / pdf_norm_down
+
+    if is_tree_maker(events):
+        events["WeightPDFUp"] = events.Weight * pdf_weight_up
+        events["WeightPDFDown"] = events.Weight * pdf_weight_down
+    else:
+        events["genWeightPDFUp"] = events.genWeight * pdf_weight_up
+        events["genWeightPDFDown"] = events.genWeight * pdf_weight_down
+
+    return events
