@@ -13,19 +13,10 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variati
     # If this config is changed, changes must be reflected in t_channel_lost_lepton_control_region.py
 
     if skimmer_utils.is_mc(events):
-        # Calculate and store the weights an normalization factors for renormalization and factorization scales
-        events, sumw_nominal, sumw_up, sumw_down = skimmer_utils.apply_scale_variations(events)
-
-        # Write the sum of weights for the scale variation to the cutflow
-        skimmer_utils.add_variations_to_cutflow(
-            cut_flow,
-            "NormFactScale",
-            sumw_nominal,
-            sumw_up,
-            sumw_down,
-        )
-
-        # Calculate and store the weight variations for PDFs
+        # Calculate and store the weight variations for
+        # renormalization and factorization scale uncertainties
+        # and for PDFs uncertainties
+        events = skimmer_utils.apply_scale_variations(events)
         events = skimmer_utils.apply_pdf_variations(events)
 
     if skimmer_utils.is_data(events):
