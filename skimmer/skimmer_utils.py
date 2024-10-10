@@ -498,14 +498,17 @@ def apply_variation(events, variation):
 def __add_weight_variations(events, variation_up, variation_down, nominal, name):
     """Add the up/down weight branches to the events."""
 
+    weights_up = nominal * variation_up
+    weights_down = nominal * variation_down
+
     # Normalize the weights such that the sum of nominal weights
     # can be used to normalize the events for the variations
-    variation_up = variation_up / ak.mean(variation_up, axis=0)
-    variation_down = variation_down / ak.mean(variation_down, axis=0)
+    weights_up = weights_up * (ak.sum(nominal, axis=0)  / ak.sum(weights_up, axis=0))
+    weights_down = weights_down * (ak.sum(nominal, axis=0)  / ak.sum(weights_down, axis=0))
 
     # Create the new branches
-    events[f"{name}Up"] = nominal * variation_up
-    events[f"{name}Down"] = nominal * variation_down
+    events[f"{name}Up"] = weights_up
+    events[f"{name}Down"] = weights_down
 
     return events
 
