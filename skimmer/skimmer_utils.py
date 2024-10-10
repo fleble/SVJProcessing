@@ -493,62 +493,79 @@ def apply_variation(events, variation):
             )
 
         return events
-    
+
+
+def __add_weight_variations(events, variation_up, variation_down, nominal, name):
+    """Add the up/down weight branches to the events."""
+
+    weights_up = nominal * variation_up
+    weights_down = nominal * variation_down
+
+    # Normalize the weights such that the sum of nominal weights
+    # can be used to normalize the events for the variations
+    weights_up = weights_up * (ak.sum(nominal, axis=0)  / ak.sum(weights_up, axis=0))
+    weights_down = weights_down * (ak.sum(nominal, axis=0)  / ak.sum(weights_down, axis=0))
+
+    # Create the new branches
+    events[f"{name}Up"] = weights_up
+    events[f"{name}Down"] = weights_down
+
+    return events
+
 
 def apply_scale_variations(events):
-    '''
-    Get up/down variations envelope, following definition
-    here: https://github.com/TreeMaker/TreeMaker/blob/7a81115566ed1f2206eb4d447c9c7ba0870d88d0/Utils/src/PDFWeightProducer.cc#L167
+    """Calculate up/down renormalization and factorisation scale variation.
     
-    The following collections/branches are added in place:
-        * WeightScaleUp (TreeMaker)/genWeightScaleUp (PFNanoAOD)
-        * WeightScaleDown (TreeMaker)/genWeightScaleDown (PFNanoAOD)
-
-    Args:
-        events (ak.Array)
-
-    Returns:
-        events (ak.Array), sum_w_nominal (float), sum_w_up (float), sum_w_down (float)
-    '''
-
-    envelope_up = ak.max(events.ScaleWeights[:,[i for i in range(9) if i not in (5, 7)]], axis=-1)
-    envelope_down = ak.min(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
-
-    # Calculate central norm and variations
-    if is_tree_maker(events):
-        sum_w_nominal = ak.sum(events.Weight)
-        sum_w_up = ak.sum(events.Weight * envelope_up)
-        sum_w_down = ak.sum(events.Weight * envelope_down)
-
-        events["WeightScaleUp"] = events.Weight * envelope_up
-        events["WeightScaleDown"] = events.Weight * envelope_down
-    else:
-        sum_w_nominal = ak.sum(events.genWeight)
-        sum_w_up = ak.sum(events.genWeight * envelope_up)
-        sum_w_down = ak.sum(events.genWeight * envelope_down)
-
-        events["genWeightScaleUp"] = events.genWeight * envelope_up
-        events["genWeightScalDown"] = events.genWeight * envelope_down
-
-    return events, sum_w_nominal, sum_w_up, sum_w_down
-
-
-def apply_pdf_variations(events):
-    '''
-    Calculate the pdf variations, including normalization factors.
+    Following definition here: https://github.com/TreeMaker/TreeMaker/blob/7a81115566ed1f2206eb4d447c9c7ba0870d88d0/Utils/src/PDFWeightProducer.cc#L167
     This should be done **before** any event selection is applied.
 
     The following collections/branches are added in place:
-        * WeightPDFUp (TreeMaker)/genWeightPDFUp (PFNanoAOD)
-        * WeightPDFDown (TreeMaker)/genWeightPDFDown (PFNanoAOD)
+        * WeightScaleUp (TreeMaker) / genWeightScaleUp (PFNanoAOD)
+        * WeightScaleDown (TreeMaker) / genWeightScaleDown (PFNanoAOD)
+
+    The definition of the weights includes normalization factors, such that
+    the normalization to unit luminosity is the same for the variations and
+    the nominal weights.
 
     Args:
         events (ak.Array)
 
     Returns:
         events (ak.Array)
-    '''
+    """
 
+    # Calculate up/down variations
+    envelope_up = ak.max(events.ScaleWeights[:,[i for i in range(9) if i not in (5, 7)]], axis=-1)
+    envelope_down = ak.min(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+
+    # Add the weights for the variations
+    weight_name = "Weight" if is_tree_maker(events) else "genWeight"
+    nominal_weights = events[weight_name]
+    events = __add_weight_variations(events, envelope_up, envelope_down, nominal_weights, f"{weight_name}Scale")
+
+    return events
+
+
+def apply_pdf_variations(events):
+    """Calculate the PDF up/down variations.
+    
+    This should be done **before** any event selection is applied.
+
+    The following collections/branches are added in place:
+        * WeightPDFUp (TreeMaker) / genWeightPDFUp (PFNanoAOD)
+        * WeightPDFDown (TreeMaker) / genWeightPDFDown (PFNanoAOD)
+
+    The definition of the weights includes normalization factors, such that
+    the normalization to unit luminosity is the same for the variations and
+    the nominal weights.
+
+    Args:
+        events (ak.Array)
+
+    Returns:
+        events (ak.Array)
+    """
+    
     # Normalize the array of pdf weights by the first entry
     if is_tree_maker(events):
         pdf_variations = events.PDFweights
@@ -561,17 +578,12 @@ def apply_pdf_variations(events):
     std = ak.std(pdf_variations, axis=-1)
 
     # Calculate the up_down normalization factors across events
-    pdf_norm_up = ak.mean(mean + std)
-    pdf_norm_down = ak.mean(mean - std)
+    pdf_weight_up = mean + std
+    pdf_weight_down = mean - std
 
-    pdf_weight_up = (mean+std) / pdf_norm_up
-    pdf_weight_down = (mean-std) / pdf_norm_down
-
-    if is_tree_maker(events):
-        events["WeightPDFUp"] = events.Weight * pdf_weight_up
-        events["WeightPDFDown"] = events.Weight * pdf_weight_down
-    else:
-        events["genWeightPDFUp"] = events.genWeight * pdf_weight_up
-        events["genWeightPDFDown"] = events.genWeight * pdf_weight_down
+    # Add the weights for the variations
+    weight_name = "Weight" if is_tree_maker(events) else "genWeight"
+    nominal_weights = events[weight_name]
+    events = __add_weight_variations(events, pdf_weight_up, pdf_weight_down, nominal_weights, f"{weight_name}PDF")
 
     return events
