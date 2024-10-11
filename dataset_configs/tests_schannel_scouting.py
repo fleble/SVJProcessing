@@ -19,23 +19,25 @@
 ################################################################################
 
 
-years = ["2016", "2016APV", "2017", "2018"]
+years = ["2018"]
 
 datasets_info = {
     year: {} for year in years
 }
 
 signal_models = [
-    "t-channel_mMed-2000_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
+    "mMed-1500GeV_mDark-20GeV_rinv-0.3_alpha-peak_13TeV"
 ]
 
 for year in years:
     datasets_info[year].update({
         signal_model: [
             {
-                "redirector": "root://cmseos.fnal.gov/",
-                "path": f"/store/user/lpcdarkqcd/tchannel_UL/{year}/Full/PrivateSamples/SVJ_UL{year}_{signal_model}_13TeV-madgraphMLM-pythia8_n-1000",
-                "regex": "/[0-9]_RA2AnalysisTree.root",
+
+                "redirector": "root://storage01.lcg.cscs.ch:1096//",
+                "path": f"/pnfs/lcg.cscs.ch/cms/trivcat/store/user/cazzanig/darkshowers/samples/scouting/truth_study/SVJ_std2_UL2018_scouting_truth_study/SVJ_{signal_model}/",
+                "regex": f"PFNano_s-channel_{signal_model.replace('GeV','')}-pythia8_n-1000_part-[1-9].root",
+
             },
         ]
         for signal_model in signal_models

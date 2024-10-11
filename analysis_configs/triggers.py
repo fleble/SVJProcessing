@@ -113,3 +113,7 @@ jetht_2018 = [
     "HLT_PFHT1050",
 ]
 
+
+s_channel_scouting = [
+    "scouting_trig"
+]
