@@ -5,6 +5,70 @@ import utils.physics_utilities as phUtl
 
 NAN_VALUE = -1
 
+def calculate_generalized_angularity(constituents, jets, jet_radius, beta, kappa, nan_value=NAN_VALUE):
+    """Calculate generalized angularity.
+
+    Args:
+        constituents (awkward.Array or None):
+            2D ak array of constituents per jet, where axis 0 is the jet axis,
+            axis 1 is the constituents axis with fields pt, eta, phi, mass,
+            and with name PtEtaPhiMLorentzVector.
+            Can be None if kappa=0.
+        jets (awkward.Array or None):
+            1D ak array of jets, with fields pt, eta, phi and mass and with
+            name PtEtaPhiMLorentzVector.
+            Can be None if beta=0.
+        beta (float): Angular distance exponent.
+        kappa (float): Transverse momentum fraction exponent.
+        nan_value (float, optional):
+            Value to use when the angularity cannot be computed (should not
+            happen!)
+
+    Returns:
+        awkward.Array
+
+    Examples:
+        >>> from tests.utilities.variablesComputation.awkwardArray.docTestHelper import get_data
+        >>> from builtinUtilities import pretty_printer
+        >>> constituents, jets = get_data()
+        >>> pretty_printer(calculate_generalized_angularity(constituents, jets, 1, 0, 2))
+        [0.500, -1.000, 0.297]
+        >>> pretty_printer(calculate_generalized_angularity(constituents, jets, 1, 1, 1))
+        [0.071, -1.000, 0.168]
+    """
+
+    if beta == 0 and kappa == 0:
+        generalized_angularity = ak.num(constituents.pt, axis=1)
+
+    else:
+        if beta == 0:
+            angular_term = 1.
+        else:
+            jet_broadcasted = akUtl.broadcast(jets, constituents)[0]
+            delta_r = vecUtl.delta_r(constituents, jet_broadcasted)
+            angular_term = delta_r**beta
+    
+        if kappa == 0:
+            sum_constituents_pt = 1.
+            momentum_term = 1.
+        else:
+            sum_constituents_pt = ak.sum(constituents.pt, axis=1)
+            momentum_term = constituents.pt**kappa
+
+        numerator = ak.sum(momentum_term * angular_term, axis=1)
+        denominator = sum_constituents_pt**kappa * jet_radius**beta
+        generalized_angularity = akUtl.divide_ak_arrays(numerator, denominator, division_by_zero_value=nan_value)
+        generalized_angularity = ak.fill_none(generalized_angularity, nan_value)
+    
+    return generalized_angularity
+
+
+def calculate_multiplicity(constituents, nan_value=NAN_VALUE):
+    """Calculate number of constituents. See docstring of calculate_generalized_angularity."""
+
+    return calculate_generalized_angularity(constituents, None, 1., 0, 0, nan_value=nan_value)
+
+
 def calculate_delta_phi_with_met(jets, met):
     """Returns delta phi between jets and MET.
 
@@ -89,6 +153,7 @@ def calculate_HEF(charged, constituents, nan_value=NAN_VALUE):
     denominator = ak.sum(constituents.energy, axis=1)
     
     #energy_fraction = akUtl.divide_ak_arrays(numerator, denominator, division_by_zero_value=nan_value)
+    #energy_fraction = ak.fill_none(energy_fraction, nan_value)
     
     energy_fraction = numerator/denominator
     return energy_fraction
@@ -153,7 +218,8 @@ def calculate_energy_fraction(constituents, particle, nan_value=NAN_VALUE):
 
     numerator = ak.sum(selected_constituents.energy, axis=1)
     denominator = ak.sum(constituents.energy, axis=1)
-    energy_fraction = akUtl.divide_ak_arrays(numerator, denominator, division_by_zero_value=nan_value)
+    #energy_fraction = akUtl.divide_ak_arrays(numerator, denominator, division_by_zero_value=nan_value)
+    energy_fraction = numerator/denominator
 
     return energy_fraction
 

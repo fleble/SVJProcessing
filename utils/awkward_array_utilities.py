@@ -94,3 +94,16 @@ def is_in_list(ak_array, list_):
 
     return ak_bool
 
+
+def sort_array_with_fields(ak_array, field_name, ascending=False):
+    """Sort ak array of records using the values in one of its fields.
+
+    Args:
+        ak_array (ak.Array): Ak array of records
+        field_name (str): the field to use to sort the array
+        ascending (bool, optional, default=False): Set to False to sort objects
+            by pT like usually done in HEP (highest pT first)
+    """
+
+    sorted_indices = ak.argsort(ak_array[field_name], ascending=ascending)
+    return ak_array[sorted_indices]
