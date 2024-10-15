@@ -32,7 +32,7 @@ def __get_arguments():
     )
     parser.add_argument(
         '-nano_scout','--nano_aod_scouting',
-        help='Set True if input files are (PF)NanoAOD files', 
+        help='Set True if input files are (PF)NanoAOD Scouting files', 
         default=False, 
         action='store_true',
     )
@@ -94,7 +94,7 @@ def __list_files(dataset_info, nano_aod):
 
 
 def __get_number_of_events(file_name, tree_name):
-    print("fle_name: " , file_name)
+    
     file_ = uproot.open(file_name)
     events = file_[tree_name]
     f0 = events.keys()[0]
