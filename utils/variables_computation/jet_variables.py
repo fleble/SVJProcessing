@@ -1,9 +1,37 @@
 import numpy as np
 import awkward as ak
 import utils.awkward_array_utilities as akUtl
-import utils.physics_utilities as phUtl
+import numba as nb
+from utils.Logger import *
 
 NAN_VALUE = -1
+
+
+def delta_phi(obj1, obj2):
+    return obj1.delta_phi(obj2)
+
+def delta_rapidity(obj1, obj2):
+    return obj1.rapidity - obj2.rapidity
+
+def delta_r_rapidity(obj1, obj2):
+    
+    dy = delta_rapidity(obj1, obj2)
+    dphi = delta_phi(obj1, obj2)
+
+    return np.sqrt(dy**2 + dphi**2)
+
+def delta_r_pseudorapidity(obj1, obj2):
+    
+    return obj1.delta_r(obj2)
+
+
+def delta_r(obj1, obj2, use_rapidity=False):
+    if use_rapidity:
+        return delta_r_rapidity(obj1, obj2)
+    else:
+        return delta_r_pseudorapidity(obj1, obj2)
+
+
 
 def calculate_generalized_angularity(constituents, jets, jet_radius, beta, kappa, nan_value=NAN_VALUE):
     """Calculate generalized angularity.
@@ -45,7 +73,7 @@ def calculate_generalized_angularity(constituents, jets, jet_radius, beta, kappa
             angular_term = 1.
         else:
             jet_broadcasted = akUtl.broadcast(jets, constituents)[0]
-            delta_r = vecUtl.delta_r(constituents, jet_broadcasted)
+            delta_r = delta_r(constituents, jet_broadcasted)
             angular_term = delta_r**beta
     
         if kappa == 0:
@@ -142,7 +170,7 @@ def calculate_HEF(charged, constituents, nan_value=NAN_VALUE):
             axis 1 is the constituents axis with fields pdgId.
     """
 
-    hadrons_constituents = constituents[akUtl.is_in_list(constituents.pdgId, phUtl.pdg_id("hadrons"))]
+    hadrons_constituents = constituents[akUtl.is_in_list(constituents.pdgId, pdg_id("hadrons"))]
 
     if charged:
         selected_hadrons_constituents = hadrons_constituents[(hadrons_constituents.charge != 0)]
@@ -181,10 +209,10 @@ def calculate_chargedparticle_multiplicity(constituents, particle):
         particle (str): "electron", "muon"
     """
 
-    pdg_ids = phUtl.pdg_id(particle)
+    pdg_ids = pdg_id(particle)
     if not isinstance(pdg_ids, list): pdg_ids = [pdg_ids]
 
-    if pdg_ids == phUtl.pdg_id("hadrons"):
+    if pdg_ids == pdg_id("hadrons"):
         hadrons_constituents = constituents[akUtl.is_in_list(constituents.pdgId, pdg_ids)]
         selected_constituents = hadrons_constituents[(hadrons_constituents.charge != 0)]
     else:
@@ -212,13 +240,12 @@ def calculate_energy_fraction(constituents, particle, nan_value=NAN_VALUE):
         particle (str): "electron", "muon", "photon"
     """
 
-    pdg_ids = phUtl.pdg_id(particle)
+    pdg_ids = pdg_id(particle)
     if not isinstance(pdg_ids, list): pdg_ids = [pdg_ids]
     selected_constituents = constituents[akUtl.is_in_list(constituents.pdgId, pdg_ids)]
 
     numerator = ak.sum(selected_constituents.energy, axis=1)
     denominator = ak.sum(constituents.energy, axis=1)
-    #energy_fraction = akUtl.divide_ak_arrays(numerator, denominator, division_by_zero_value=nan_value)
     energy_fraction = numerator/denominator
 
     return energy_fraction
@@ -231,3 +258,111 @@ def calculate_muon_energy_fraction(constituents, nan_value=NAN_VALUE):
 
 def calculate_photon_energy_fraction(constituents, nan_value=NAN_VALUE):
     return calculate_energy_fraction(constituents, particle="photon", nan_value=nan_value)
+
+
+def pdg_id(particle):
+
+    pdg_id_dict = {
+	## Quarks
+	"d": 1,
+	"u": 2,
+	"s": 3,
+	"c": 4,
+	"b": 5,
+	"t": 6,
+
+	## Leptons
+	"e-"    : 11,
+	"e+"    : -11,
+	"mu-"   : 13,
+	"mu+"   : -13,
+	"tau-"  : 15,
+	"tau+"  : -15,
+	"nu_e"  : 12,
+	"nu_mu" : 14,
+	"nu_tau": 16,
+
+	## Gauge and Higgs bosons
+	"g"     : 21,
+	"photon": 22,
+	"Z"     : 23,
+	"W+"    : 24,
+	"W-"    : -24,
+	"H"     : 25,
+
+	## Light I=1 mesons
+	"pi0" : 111,
+	"pi+" : 211,
+	"pi-" : -211,
+	"rho0": 113,
+	"rho+": 213,
+	"rho-": -213,
+
+	## Strange mesons
+	"KL0": 130,
+    }
+
+    d = pdg_id_dict   # shorthand
+
+    pdg_id_dict["quarks"] = [d["d"], d["u"], d["s"], d["c"], d["b"], d["t"]]
+
+    pdg_id_dict["electron"] = [d["e-"], d["e+"]]
+    pdg_id_dict["muon"] = [d["mu-"], d["mu+"]]
+    pdg_id_dict["charged_leptons"] = [d["e-"], d["e+"], d["mu-"], d["mu+"], d["tau-"], d["tau+"]]
+    pdg_id_dict["neutral_leptons"] = [d["nu_e"], d["nu_mu"], d["nu_tau"]]
+    pdg_id_dict["leptons"] =  pdg_id_dict["charged_leptons"] + pdg_id_dict["neutral_leptons"]
+
+    pdg_id_dict["light_mesons"] = [d["pi0"], d["pi+"], d["pi-"], d["rho0"], d["rho+"], d["rho-"]]
+    pdg_id_dict["strange_mesons"] = [d["KL0"]]
+    pdg_id_dict["mesons"] = d["light_mesons"] + d["strange_mesons"]
+
+    pdg_id_dict["hadrons"] = d["mesons"]
+
+
+    return pdg_id_dict[particle]
+
+def count_constituents(jet_indices, n_jets):
+    """Count constituents per jet, with same jagged structure as the jet collection.
+
+    Args:
+        jet_indices (ak.Array): Jet constituents per event
+        n_jets (ak.Array): Number of jets per event
+    """
+
+    #@nb.jit
+    def __count_constituents(builder, jet_indices, n_jets):
+        for indices_this_event, n_jet in zip(jet_indices, n_jets):
+            builder.begin_list()
+            for i_jet in range(n_jet):
+                counter = 0
+                for index in indices_this_event:
+                    if index == i_jet:
+                        counter += 1
+                builder.append(counter)
+            builder.end_list()
+        return builder
+
+    builder = ak.ArrayBuilder()
+    return __count_constituents(builder, jet_indices, n_jets).snapshot()
+
+
+def make_constituents_per_jet(constituents_per_event, n_jets, jet_idx_field_name="jetIdx"):
+    """Make ak array of constituents per jet, from per event ak array.
+    
+    Args:
+        constituents_per_event (ak.Array): 2D ak array with fields of jet
+            constituents per event, with fields. The jet in which a given
+            constituent belongs is indicated via a jet index field.
+        n_jets (ak.Array): 1D ak array with number of jets per event.
+        jet_idx_field_name (str, optional, default="jetIdx"):
+            Jet index field name in the constituents_per_event ak array.
+    """
+
+    constituents_per_event = akUtl.sort_array_with_fields(constituents_per_event, jet_idx_field_name, ascending=True)
+    counts = count_constituents(constituents_per_event[jet_idx_field_name], n_jets)
+
+    flat_counts = ak.flatten(counts)
+    flat_constituents = ak.flatten(constituents_per_event)
+    constituents_per_jet = ak.unflatten(flat_constituents, flat_counts, axis=0)
+
+    return constituents_per_jet, counts

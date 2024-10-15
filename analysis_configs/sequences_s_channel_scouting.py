@@ -4,11 +4,10 @@ import awkward as ak
 from skimmer import skimmer_utils
 from utils.variables_computation import event_variables as event_vars
 from utils.variables_computation import jet_variables as jet_vars
-from utils.variables_computation import jet_variables_helper as jetVarsHelper
 from utils.data.triggers import primary_dataset_triggers
 from utils.tree_maker.triggers import trigger_table
 from utils.awkward_array_utilities import as_type
-import utils.physics_objects as physicsObj
+import analysis_configs.physics_objects_nano_aod as physicsObj
 from analysis_configs import objects_definition_s_channel_scouting as obj
 
 from utils.Logger import *
@@ -23,8 +22,6 @@ def __unflatten_to_event_level(jet_variable,n_jets):
         return arrays
 
 def apply_good_ak8_jet_filter(events):
-    #analysis_jets = events.FatJet[obj.is_analysis_ak8_jet(events.FatJet)]
-    #good_ak8_jets_filter = ak.all(obj.is_good_ak8_jet(analysis_jets), axis=1)
     events = add_branches_for_ak8_jet_id(events)
     events = add_jet_id_branch(events)
     ak8_jets = ak.zip(
@@ -51,7 +48,7 @@ def add_branches_for_ak8_jet_id(events):
         constituent_collection_name = "PFCands"
         jets = physicsObj.get_jets(events, jet_collection_name)
         jet_pf_cands = physicsObj.get_jet_pf_cands(events, jet_collection_name, constituent_collection_name)
-        jet_pf_cands_per_jet, constituents_counts = jetVarsHelper.make_constituents_per_jet(jet_pf_cands, n_jets=ak.count(events[jet_collection_name+"_pt"], axis=-1))
+        jet_pf_cands_per_jet, _ = jet_vars.make_constituents_per_jet(jet_pf_cands, n_jets=ak.count(events[jet_collection_name+"_pt"], axis=-1))
         flat_jets = ak.flatten(jets)
 
         variables_fractions = ["chHEF", "neHEF", "electron_energy_fraction", "muon_energy_fraction", "photon_energy_fraction"]
@@ -71,7 +68,6 @@ def add_branches_for_ak8_jet_id(events):
             events[branch_name] = __unflatten_to_event_level(variable, n_jets=ak.count(events[jet_collection_name+"_pt"], axis=-1))
 
         #total PFCands multiplicity per jet
-  
         function = getattr(jet_vars, "calculate_multiplicity")
         variable = function(jet_pf_cands_per_jet)
         branch_name = f"{jet_collection_name}_multiplicity"
