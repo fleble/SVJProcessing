@@ -6,33 +6,6 @@ from utils.Logger import *
 
 NAN_VALUE = -1
 
-
-def delta_phi(obj1, obj2):
-    return obj1.delta_phi(obj2)
-
-def delta_rapidity(obj1, obj2):
-    return obj1.rapidity - obj2.rapidity
-
-def delta_r_rapidity(obj1, obj2):
-    
-    dy = delta_rapidity(obj1, obj2)
-    dphi = delta_phi(obj1, obj2)
-
-    return np.sqrt(dy**2 + dphi**2)
-
-def delta_r_pseudorapidity(obj1, obj2):
-    
-    return obj1.delta_r(obj2)
-
-
-def delta_r(obj1, obj2, use_rapidity=False):
-    if use_rapidity:
-        return delta_r_rapidity(obj1, obj2)
-    else:
-        return delta_r_pseudorapidity(obj1, obj2)
-
-
-
 def calculate_generalized_angularity(constituents, jets, jet_radius, beta, kappa, nan_value=NAN_VALUE):
     """Calculate generalized angularity.
 
@@ -73,7 +46,7 @@ def calculate_generalized_angularity(constituents, jets, jet_radius, beta, kappa
             angular_term = 1.
         else:
             jet_broadcasted = akUtl.broadcast(jets, constituents)[0]
-            delta_r = delta_r(constituents, jet_broadcasted)
+            delta_r = constituents.delta_r(jet_broadcasted)
             angular_term = delta_r**beta
     
         if kappa == 0:
@@ -179,9 +152,7 @@ def calculate_HEF(charged, constituents, nan_value=NAN_VALUE):
 
     numerator = ak.sum(selected_hadrons_constituents.energy, axis=1)
     denominator = ak.sum(constituents.energy, axis=1)
-    
-    #energy_fraction = akUtl.divide_ak_arrays(numerator, denominator, division_by_zero_value=nan_value)
-    #energy_fraction = ak.fill_none(energy_fraction, nan_value)
+
     
     energy_fraction = numerator/denominator
     return energy_fraction
