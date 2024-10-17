@@ -90,7 +90,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
     # Phi spike filter
-    events = skimmer_utils.apply_phi_spike_filter(events, year)
+    events = skimmer_utils.apply_phi_spike_filter(events, year, "skimmer/schannel_hot_spots.pkl", "s")
     skimmer_utils.update_cut_flow(cut_flow, "PhiSpikeFilter", events)
 
     # apply HEM issue filter - to be applied only on 2018 data
