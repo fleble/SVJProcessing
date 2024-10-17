@@ -112,9 +112,6 @@ def __write_dataset_info(
     ):
     
     files_list = __list_files(dataset_info, nano_aod)
-
-    print("files_list: ", files_list)
-
     output_directory_ = f"{output_directory}/files_list/{year}"
     Path(output_directory_).mkdir(parents=True, exist_ok=True)
 
