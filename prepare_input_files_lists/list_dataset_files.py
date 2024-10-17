@@ -31,6 +31,12 @@ def __get_arguments():
         action='store_true',
     )
     parser.add_argument(
+        '-nano_scout','--nano_aod_scouting',
+        help='Set True if input files are (PF)NanoAOD Scouting files', 
+        default=False, 
+        action='store_true',
+    )
+    parser.add_argument(
         "-c", "--config",
         help="Config file describing the location of the datasets",
         required=True,
@@ -58,6 +64,7 @@ def __list_files(dataset_info, nano_aod):
             redirector=info_dict["redirector"],
             regex=info_dict["regex"],
         )
+
 
         # TODO: Do something more clever should be done insteead of relying of the file name
         try:
@@ -87,6 +94,7 @@ def __list_files(dataset_info, nano_aod):
 
 
 def __get_number_of_events(file_name, tree_name):
+    
     file_ = uproot.open(file_name)
     events = file_[tree_name]
     f0 = events.keys()[0]
@@ -100,15 +108,17 @@ def __write_dataset_info(
         output_directory,
         n_workers,
         nano_aod=False,
+        nano_aod_scout=False,
     ):
     
     files_list = __list_files(dataset_info, nano_aod)
-
     output_directory_ = f"{output_directory}/files_list/{year}"
     Path(output_directory_).mkdir(parents=True, exist_ok=True)
 
     if nano_aod:
         tree_name = "Events"
+    elif nano_aod_scout:
+        tree_name = "mmtree/Events"
     else:
         tree_name = "TreeMaker2/PreSelection"
 
@@ -136,6 +146,8 @@ def main ():
     datasets_info = import_module(args.config).datasets_info
     datasets = args.datasets
 
+    print("datasets: ", datasets)
+
     for dataset in datasets:
         __write_dataset_info(
             dataset,
@@ -144,6 +156,7 @@ def main ():
             args.output,
             args.n_workers,
             args.nano_aod,
+            args.nano_aod_scouting,
         )
 
 

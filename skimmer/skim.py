@@ -128,6 +128,12 @@ def add_coffea_args(parser):
         action='store_true',
     )
     parser.add_argument(
+        '-nano_scout', '--nano_aod_scouting',
+        help='Set True if input files are (PF)NanoAOD files for scouting', 
+        default=False, 
+        action='store_true',
+    )
+    parser.add_argument(
         '-xsec', '--cross_section',
         help='If cross-section not in file, adding it', 
         type=float,
@@ -211,7 +217,7 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
     )
 
     executor = get_executor(args.executor_name)
-    if args.nano_aod:
+    if args.nano_aod or args.nano_aod_scouting:
         executor_args = {
             "schema": BaseSchema,
         }
@@ -233,6 +239,8 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
 
     if args.skim_source or args.nano_aod:
         treename = "Events"
+    elif args.nano_aod_scouting:
+        treename = "mmtree/Events"
     else:
         treename = "TreeMaker2/PreSelection"
 
@@ -294,7 +302,7 @@ def main():
         # But also in the same way as TreeMaker, which is better
         events["CrossSection"] = ak.Array([args.cross_section for i in range(len(events))])
  
-    if args.nano_aod:
+    if args.nano_aod or args.nano_aod_scouting:
         uproot_utl.write_nano_aod_root_file(
             output_file_name=args.output_file_name,
             events=events,
