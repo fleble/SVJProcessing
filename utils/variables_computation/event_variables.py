@@ -130,6 +130,47 @@ def calculate_delta_phi(
     return delta_phi
 
 
+def delta_phi_dark_quark(phi1, phi2):
+    """
+    Calculate delta phi between two physics objects. 
+    This function can handle both single values and arrays.
+    Used to calculate delta phi between a dark quark and all jets. 
+    (not sure if possible with existing delta phi function)
+    
+    Args:
+        phi1, phi2 (array-like or float): 
+            The two angles for which delta phi is to be calculated.
+            Can be single values or arrays of the same shape.
+    Returns:
+        array-like or float
+    """
+    
+    dphi = phi1 - phi2
+    dphi = np.where(dphi > np.pi, dphi - 2 * np.pi, dphi)
+    dphi = np.where(dphi < -np.pi, dphi + 2 * np.pi, dphi)
+    return abs(dphi)
+
+
+def delta_r_dark_quark(eta1, phi1, eta2, phi2):
+    """
+    Calculate delta R between two physics objects. 
+    Used to calculate delta R between a dark quark and all jets.
+    (not sure if possible with existing function)
+    
+    Args:
+        eta, phi (array-like or float): 
+            eta and phi values of the two objects for which delta R is to be calculated
+            Can be single values or arrays of the same shape.
+    Returns:
+        array-like or float
+    """
+    
+    delta_phi = delta_phi_dark_quark(phi1, phi2)
+    delta_eta = abs(eta1 - eta2)
+    delta_R = np.sqrt(delta_eta**2 + delta_phi**2)
+    return delta_R
+
+
 def calculate_delta_r(
         physics_objects,
         indices=(0, 1),

@@ -150,6 +150,40 @@ def add_analysis_branches(events):
     
     return events
 
+def add_dark_quark_matching(events):
+    #performs delta R matching between AK8 jets and dark quarks and saves the indices of the matched jets in a new branch
+    #(uses new functions for now, should check if it also works with the old ones)
+
+    jet_eta = events.FatJet_eta
+    jet_phi = events.FatJet_phi
+
+    dark_quark_eta = events.MatrixElementGenParticle_eta
+    dark_quark_phi = events.MatrixElementGenParticle_phi
+
+    # matching with the first dark quark
+    dR1 = event_vars.delta_r_dark_quark(dark_quark_eta[:,0], dark_quark_phi[:,0], jet_eta[:,:], jet_phi[:,:]) <= 0.8
+    dR1 = ak.values_astype(dR1, int)
+    matched_index1 = ak.argmax(dR1, axis=1)
+    matched_index1 = ak.where(ak.any(dR1, axis=1), matched_index1, -1)
+
+    #matching with the second dark quark 
+    dR2 = event_vars.delta_r_dark_quark(dark_quark_eta[:,1], dark_quark_phi[:,1], jet_eta[:,:], jet_phi[:,:]) <= 0.8
+    dR2 = ak.values_astype(dR2, int)
+    matched_index2 = ak.argmax(dR2, axis=1)
+    matched_index2 = ak.where(ak.any(dR2, axis=1), matched_index2, -1)
+
+    #create a combined list of matched indices
+    matched_indices = ak.concatenate([matched_index1[:, None], matched_index2[:, None]], axis=1)
+    matched_indices = ak.sort(matched_indices, axis=1)
+    matched_indices = matched_indices[matched_indices >= 0]
+
+    #add new branch to the events 
+    events["FatJet_matchedIdx"] = matched_indices
+
+    return events
+
+
+
 
 def remove_collections(events):
     #remove branch called genModel, hltResultName
