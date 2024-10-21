@@ -53,6 +53,8 @@ def test_execution():
         run_particle_net = True
     elif "t3ui" in os.environ["HOSTNAME"]:
         run_particle_net = False
+    else:
+        run_particle_net = False
 
     output_path = helper.get_temporary_directory()
     if not os.path.exists(output_path):
