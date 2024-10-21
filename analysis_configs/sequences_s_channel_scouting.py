@@ -150,24 +150,34 @@ def add_analysis_branches(events):
     
     return events
 
+
 def add_dark_quark_matching(events):
-    #performs delta R matching between AK8 jets and dark quarks and saves the indices of the matched jets in a new branch
-    #(uses new functions for now, should check if it also works with the old ones)
+    """
+    performs delta R matching between AK8 jets and dark quarks and saves the indices of the matched jets in a new branch
+    """
 
-    jet_eta = events.FatJet_eta
-    jet_phi = events.FatJet_phi
+    jets = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
+        pt=events.FatJet_pt,
+        eta=events.FatJet_eta,
+        phi=events.FatJet_phi,
+        mass=events.FatJet_mass,
+    )
 
-    dark_quark_eta = events.MatrixElementGenParticle_eta
-    dark_quark_phi = events.MatrixElementGenParticle_phi
+    dark_quarks =  skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
+        pt=events.MatrixElementGenParticle_pt,
+        eta=events.MatrixElementGenParticle_eta,
+        phi=events.MatrixElementGenParticle_phi,
+        mass=events.MatrixElementGenParticle_mass,
+    )
 
     # matching with the first dark quark
-    dR1 = event_vars.delta_r_dark_quark(dark_quark_eta[:,0], dark_quark_phi[:,0], jet_eta[:,:], jet_phi[:,:]) <= 0.8
+    dR1 = jets.delta_r(dark_quarks[:,0]) <= 0.8
     dR1 = ak.values_astype(dR1, int)
     matched_index1 = ak.argmax(dR1, axis=1)
     matched_index1 = ak.where(ak.any(dR1, axis=1), matched_index1, -1)
 
     #matching with the second dark quark 
-    dR2 = event_vars.delta_r_dark_quark(dark_quark_eta[:,1], dark_quark_phi[:,1], jet_eta[:,:], jet_phi[:,:]) <= 0.8
+    dR2 = jets.delta_r(dark_quarks[:,1]) <= 0.8
     dR2 = ak.values_astype(dR2, int)
     matched_index2 = ak.argmax(dR2, axis=1)
     matched_index2 = ak.where(ak.any(dR2, axis=1), matched_index2, -1)
@@ -178,11 +188,9 @@ def add_dark_quark_matching(events):
     matched_indices = matched_indices[matched_indices >= 0]
 
     #add new branch to the events 
-    events["FatJet_matchedIdx"] = matched_indices
+    events["FatJetDarkQuarkJetIdx"] = matched_indices
 
     return events
-
-
 
 
 def remove_collections(events):
