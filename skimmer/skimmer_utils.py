@@ -16,20 +16,27 @@ from utils.Logger import *
 ak.behavior.update(vector.behavior)
 
 
-def update_cut_flow(cut_flow, cut_name, events):
+def update_cut_flow(cut_flow, cut_name, events=None, sumw=None):
     """Update cut flow table in a coffea accumulator.
 
     Args:
         cut_flow (dict[str, float])
         cut_name (str): the name of the cut to appear in the cut flow tree
-        events (EventsFromAkArray)
-        use_raw_events (bool)
+        events (ak.Array): the events array from which to compute the number of events. 
+            None only if `sumw` is not None.
+        sumw (float): The sum of weights to add to the cut flow. 
+            None if `events` is not None.
     """
 
-    if cut_name in cut_flow.keys():
-        cut_flow[cut_name] += get_number_of_events(events)
+    if sumw is not None:
+        n_events = sumw
     else:
-        cut_flow[cut_name] = get_number_of_events(events)
+        n_events = get_number_of_events(events)
+
+    if cut_name in cut_flow.keys():
+        cut_flow[cut_name] += n_events
+    else:
+        cut_flow[cut_name] = n_events
 
 
 def add_variations_to_cutflow(cut_flow, var_name, nominal, up, down):
@@ -433,22 +440,34 @@ def apply_variation(events, variation):
         return events
 
 
-def __add_weight_variations(events, variation_up, variation_down, nominal, name):
-    """Add the up/down weight branches to the events."""
+def __add_weight_variations(events, variation_up, variation_down, variation_name):
+    """Add the up/down weight branches to the events.
+    
+    Args:
+        events (ak.Array): the events erray to which to add the up/down weights variations
+        variation_up (ak.Array): the up variations from the nominal weights
+        variation_down (ak.Array): the down variations from the nominal weights
+        variation_name (str): the name of the variation
 
-    weights_up = nominal * variation_up
-    weights_down = nominal * variation_down
+    Returns:
+        ak.Array, float, float: events, sumw up, and sumw down
+    """
 
-    # Normalize the weights such that the sum of nominal weights
-    # can be used to normalize the events for the variations
-    weights_up = weights_up * (ak.sum(nominal, axis=0)  / ak.sum(weights_up, axis=0))
-    weights_down = weights_down * (ak.sum(nominal, axis=0)  / ak.sum(weights_down, axis=0))
+    weight_name = "Weight" if is_tree_maker(events) else "genWeight"
+    nominal_weights = events[weight_name]
+
+    weights_up = nominal_weights * variation_up
+    weights_down = nominal_weights * variation_down
 
     # Create the new branches
-    events[f"{name}Up"] = weights_up
-    events[f"{name}Down"] = weights_down
+    events[f"{weight_name}{variation_name}Up"] = weights_up
+    events[f"{weight_name}{variation_name}Down"] = weights_down
 
-    return events
+    # Compute the sum of weights for the variations
+    sumw_up = ak.sum(weights_up)
+    sumw_down = ak.sum(weights_down)
+
+    return events, sumw_up, sumw_down
 
 
 def apply_scale_variations(events):
@@ -469,19 +488,14 @@ def apply_scale_variations(events):
         events (ak.Array)
 
     Returns:
-        events (ak.Array)
+        ak.Array, float, float: events, sumw up, and sumw down
     """
 
     # Calculate up/down variations
-    envelope_up = ak.max(events.ScaleWeights[:,[i for i in range(9) if i not in (5, 7)]], axis=-1)
-    envelope_down = ak.min(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+    variation_up = ak.max(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+    variation_down = ak.min(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
 
-    # Add the weights for the variations
-    weight_name = "Weight" if is_tree_maker(events) else "genWeight"
-    nominal_weights = events[weight_name]
-    events = __add_weight_variations(events, envelope_up, envelope_down, nominal_weights, f"{weight_name}Scale")
-
-    return events
+    return __add_weight_variations(events, variation_up, variation_down, "Scale")
 
 
 def apply_pdf_variations(events):
@@ -501,7 +515,7 @@ def apply_pdf_variations(events):
         events (ak.Array)
 
     Returns:
-        events (ak.Array)
+        ak.Array, float, float: events, sumw up, and sumw down
     """
     
     # Normalize the array of pdf weights by the first entry
@@ -512,16 +526,12 @@ def apply_pdf_variations(events):
         raise NotImplementedError()
 
     # Calculate the mean and standard deviation across replicas per event
-    mean = ak.mean(pdf_variations, axis=-1)
-    std = ak.std(pdf_variations, axis=-1)
+    mean = np.mean(pdf_variations, axis=1)
+    std = np.std(pdf_variations, axis=1)
 
-    # Calculate the up_down normalization factors across events
-    pdf_weight_up = mean + std
-    pdf_weight_down = mean - std
+    # Calculate the up/down variations across events
+    variation_up = mean + std
+    variation_down = mean - std
 
-    # Add the weights for the variations
-    weight_name = "Weight" if is_tree_maker(events) else "genWeight"
-    nominal_weights = events[weight_name]
-    events = __add_weight_variations(events, pdf_weight_up, pdf_weight_down, nominal_weights, f"{weight_name}PDF")
+    return __add_weight_variations(events, variation_up, variation_down, "PDF")
 
-    return events

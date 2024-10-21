@@ -13,18 +13,9 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variati
 
     # If this config is changed, changes must be reflected in t_channel_lost_lepton_control_region.py
 
-    if skimmer_utils.is_mc(events):
-        # Calculate and store the weight variations for
-        # renormalization and factorization scale uncertainties
-        # and for PDFs uncertainties
-        events = skimmer_utils.apply_scale_variations(events)
-        events = skimmer_utils.apply_pdf_variations(events)
-
     if skimmer_utils.is_data(events):
         events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
         skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)
-
-    events = skimmer_utils.apply_variation(events, variation)
 
     # Trigger event selection
     triggers = getattr(trg, f"t_channel_{year}")

@@ -169,7 +169,7 @@ make_skims() {
 		    else
 		        variation_flag="--variation ${variation}"
 		    fi
-                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -pd ${dataset_name} -y ${year} -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger ${variation_flag[@]}
+                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -pd ${dataset_name} -y ${year} -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger ${variation_flag[@]} --weight_variation scale pdf
                     xrdcp -f ${output_file_tmp} ${output_file}
                     echo ${output_file} has been saved.
                     rm ${output_file_tmp}
