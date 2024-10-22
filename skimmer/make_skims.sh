@@ -30,7 +30,7 @@ year=2018
 variation=nominal  # nominal jec_up jec_down jer_up jer_down
 
 # Output directory for nominal samples - no variation of the uncertainties
-output_directory=root://cmseos.fnal.gov//store/user/lpcdarkqcd/tchannel_UL/${year}/Full/PrivateSkims/${variation}
+output_directory=root://cmseos.fnal.gov//store/user/lpcdarkqcd/tchannel_UL/signal_production_2Dscans/skims
 
 
 dataset_names=(
@@ -135,9 +135,8 @@ make_skims() {
     local output_directory=$6
 
     # Path automatically built when preparing input files lists
-    local suffix_dir=${year}/${selection_name}/${dataset_name}
-    local files_list_directory=${dataset_directory}/skim_input_files_list/${suffix_dir}
-    local output_directory=${output_directory}/${suffix_dir}
+    local files_list_directory=${dataset_directory}/skim_input_files_list/${year}/${selection_name}/${dataset_name}
+    local output_directory=${output_directory}/${year}/${selection_name}/${variation}/${dataset_name}
 
     local output_redirector=$(echo ${output_directory} | cut -d/ -f 1-4)
     local output_dir=$(echo ${output_directory} | cut -d/ -f 4-)
