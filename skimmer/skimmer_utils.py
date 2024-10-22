@@ -520,8 +520,10 @@ def apply_pdf_variations(events):
     
     # Normalize the array of pdf weights by the first entry
     if is_tree_maker(events):
-        pdf_variations = events.PDFweights
-        pdf_variations = pdf_variations / pdf_variations[:,0]
+        pdf_variations = events.PDFweights.to_numpy()
+        max_value = np.max(pdf_variations, where=pdf_variations<20, initial=1)
+        pdf_variations = np.clip(pdf_variations, a_min=None, a_max=max_value)
+        pdf_variations = pdf_variations / pdf_variations[:, :1]
     else:
         raise NotImplementedError()
 
