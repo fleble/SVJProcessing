@@ -151,6 +151,10 @@ def add_analysis_branches(events):
     return events
 
 
+def has_dark_quark_info(events):
+    return "MatrixElementGenParticle_pt" in events.fields
+
+
 def add_dark_quark_matching(events):
     """
     performs delta R matching between AK8 jets and dark quarks and saves the indices of the matched jets in a new branch
