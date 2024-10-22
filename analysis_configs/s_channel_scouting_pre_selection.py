@@ -116,7 +116,8 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     skimmer_utils.update_cut_flow(cut_flow, "DeltaPhiMin selection", events)
     
     events = sequences.add_analysis_branches(events)
-    events = sequences.add_dark_quark_matching(events)
+    if sequences.has_dark_quark_info(events):
+        events = sequences.add_dark_quark_matching(events)
     events = sequences.remove_collections(events)
 
     return events, cut_flow
