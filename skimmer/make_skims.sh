@@ -9,7 +9,7 @@ EXECUTOR=dask/lpccondor   # HTCondor at LPC
 #EXECUTOR=futures     # local job
 FORCE_RECREATE=0   # 1 to recreate output file if it exists, 0 else
 FIRST_FILE=0
-LAST_FILE=6  # Use -1 to skim all input files
+LAST_FILE=-1  # Use -1 to skim all input files, or a positive integer
 
 dataset_directory=${HOME}/nobackup/SVJ/store/datasets
 
