@@ -4,6 +4,7 @@ from skimmer import skimmer_utils
 from utils.awkward_array_utilities import as_type
 import analysis_configs.triggers as trg
 from analysis_configs.met_filters import met_filters_treemaker as met_filters
+from analysis_configs import objects_definition as obj
 from analysis_configs import sequences
 
 
@@ -28,13 +29,36 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variati
     events = events[st > 1300]
     skimmer_utils.update_cut_flow(cut_flow, "STGt1300GeV", events)
 
-    # MET filter event selection
-    events = skimmer_utils.apply_met_filters_cut(events, met_filters)
-    skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
-
     # HEM veto
     if year == "2018" and skimmer_utils.is_data(events):
-        events = skimmer_utils.apply_hem_veto(events)
+        if skimmer_utils.is_tree_maker(events):
+            ak4_jets = events.Jets
+            electrons = events.Electrons
+            muons = events.Muons
+
+        else:
+            ak4_jets = ak.zip({
+                "pt": events["Jet_pt"],
+                "eta": events["Jet_eta"],
+                "phi": events["Jet_phi"],
+            })
+            electrons = ak.zip({
+                "pt":  events["Electron_pt"],
+                "eta": events["Electron_eta"],
+                "phi": events["Electron_phi"],
+            })
+            muons = ak.zip({
+                "pt":  events["Muon_pt"],
+                "eta": events["Muon_eta"],
+                "phi": events["Muon_phi"],
+            })
+        jet_condition = obj.is_good_ak4_jet(ak4_jets)
+        electron_condition = obj.is_veto_electron(electrons)
+        muon_condition = obj.is_veto_muon(muons)
+        good_ak4_jets = ak4_jets[jet_condition]
+        veto_electrons = electrons[electron_condition]
+        veto_muons = muons[muon_condition]
+        events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, veto_electrons, veto_muons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
 
     # Good jet filters
@@ -84,8 +108,12 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variati
     events = events[events.MET > 200]
     skimmer_utils.update_cut_flow(cut_flow, "METGt200GeV", events)
 
+    # MET filter event selection
+    events = skimmer_utils.apply_met_filters_cut(events, met_filters)
+    skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
+
     # Phi spike filter
-    events = skimmer_utils.apply_phi_spike_filter(events, year, "skimmer/phi_spike_hot_spots_5p5sigmas.pkl", "t")
+    events = skimmer_utils.apply_phi_spike_filter(events, year, "skimmer/tchannel_phi_spike_hot_spots.pkl", n_jets=4)
     skimmer_utils.update_cut_flow(cut_flow, "PhiSpikeFilter", events)
 
     events = sequences.add_analysis_branches(events)
