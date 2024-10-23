@@ -50,7 +50,16 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
 
     # HEM veto
     if year == "2018":
-        events = skimmer_utils.apply_hem_veto(events)
+        ak4_jets = events.Jets
+        electrons = events.Electrons
+        muons = events.Muons
+        jet_condition = obj.is_good_ak4_jet(ak4_jets)
+        electron_condition = obj.is_veto_electron(electrons)
+        muon_condition = obj.is_veto_muon(muons)
+        good_ak4_jets = ak4_jets[jet_condition]
+        veto_electrons = electrons[electron_condition]
+        veto_muons = muons[muon_condition]
+        events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, veto_electrons, veto_muons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
 
     # Define as training jets the AK8 jets with angular separation

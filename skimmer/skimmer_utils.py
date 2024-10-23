@@ -3,6 +3,7 @@ import numpy as np
 import numba as nb
 from coffea.nanoevents.methods import vector
 import uproot
+import pickle  
 
 from utils.awkward_array_utilities import as_type
 from utils.tree_maker.triggers import trigger_table as trigger_table_treemaker
@@ -162,77 +163,40 @@ def is_data(events):
     return not is_mc(events)
 
 
-def apply_phi_spike_filter(events, year, jet_eta_branch_name="Jet_eta", jet_phi_branch_name="Jet_phi", reverse=False):
-    rad = 0.028816 # half the length of the diagonal of the eta-phi rectangular cell
-    rad *= 0.35 # the factor of 0.35 was optimized from the signal vs. background sensitivity study
+def __jet_var_i(var,i,pad_value=np.Inf):
+    padded_var = ak.fill_none(ak.pad_none(var,i+1),pad_value)
+    return padded_var[:,i]
 
-    eta_lead = None
-    eta_sub = None
-    phi_lead = None
-    phi_sub = None
-    if year == "2016":
-        eta_lead = [0.048,0.24,1.488,1.584,-1.008]
-        phi_lead = [-0.35,-0.35,-0.77,-0.77,-1.61]
-        eta_sub = [-1.2,-0.912,-0.912,-0.816,-0.72,-0.72,-0.528,-0.432,-0.336,-0.24,-0.24,-0.144,-0.144,-0.048,0.144,0.912,0.912,1.008,1.296,-1.584,-0.816,-0.72,-0.144,-0.048,-0.048,0.048,1.104,1.488]
-        phi_sub = [-1.19,2.03,3.01,-1.75,-2.17,-0.77,2.73,2.73,0.21,0.07,0.21,-2.59,0.77,0.91,1.75,1.75,2.87,0.63,-0.49,0.63,1.47,-2.31,0.07,-2.59,0.77,0.91,-3.15,2.73]
-    elif year == "2017":
-        eta_lead = [0.144,1.488,1.488,1.584,-0.624]
-        phi_lead = [-0.35,-0.77,-0.63,-0.77,0.91]
-        eta_sub = [-0.912,-0.912,-0.816,-0.72,-0.528,-0.336,-0.24,-0.24,-0.144,-0.144,-0.048,0.144,0.912,0.912,1.008,-1.2,-0.72,-0.72,-0.432,0.336,0.624,1.104,1.296]
-        phi_sub = [2.03,3.01,-1.75,-0.77,2.73,0.21,0.07,0.21,-2.59,0.77,0.91,1.75,1.75,2.87,0.63,-1.19,-2.31,-2.17,2.73,-0.77,-0.77,-3.15,-0.49]
-    elif year == "2018":
-        eta_lead = [1.488,1.488,1.584]
-        phi_lead = [-0.77,-0.63,-0.77]
-        eta_sub = [-1.584,-1.2,-0.912,-0.912,-0.816,-0.816,-0.72,-0.72,-0.528,-0.432,-0.336,-0.24,-0.24,-0.144,-0.144,-0.144,-0.048,-0.048,0.144,0.912,0.912,1.008,1.296,-0.72,1.104,1.488,1.776]
-        phi_sub = [0.63,-1.19,2.03,3.01,-1.75,-0.77,-2.17,-0.77,2.73,2.73,0.21,0.07,0.21,-2.59,0.07,0.77,0.77,0.91,1.75,1.75,2.87,0.63,-0.49,-2.31,-3.15,-0.21,0.77]
-    else:
-        raise ValueError("Invalid year")
 
-    eta_lead = nb.typed.List(eta_lead)
-    eta_sub = nb.typed.List(eta_sub)
-    phi_lead = nb.typed.List(phi_lead)
-    phi_sub = nb.typed.List(phi_sub)
+def __get_phi_spike_filter(hot_spots_dict,var_name,j_eta_i,j_phi_i,rad):
+    hot_etas_i, hot_phis_i = hot_spots_dict[var_name]
+    hot_etas_i_reshaped = np.reshape(hot_etas_i,(len(hot_etas_i),1))
+    hot_phis_i_reshaped = np.reshape(hot_phis_i,(len(hot_phis_i),1))
+    j_eta_i_reshaped = np.broadcast_to(list(j_eta_i),(len(hot_etas_i),len(j_eta_i)))
+    j_phi_i_reshaped = np.broadcast_to(list(j_phi_i),(len(hot_phis_i),len(j_phi_i)))
+    return np.prod((j_eta_i_reshaped - hot_etas_i_reshaped)**2 + (j_phi_i_reshaped - hot_phis_i_reshaped)**2 > rad, axis=0, dtype=bool)
 
+
+def apply_phi_spike_filter(events, year, hot_spots_pkl, n_jets, jet_eta_branch_name="Jet_eta", jet_phi_branch_name="Jet_phi"):
+    with open(hot_spots_pkl,"rb") as infile:
+        phi_spike_hot_spots = pickle.load(infile)
+    rad = 0.028816*0.35 # the factor of 0.35 was optimized from the signal vs. background sensitivity study for s-channel
+    hot_spots_dict = phi_spike_hot_spots[year]
     jets_eta = getattr(events, jet_eta_branch_name)
     jets_phi = getattr(events, jet_phi_branch_name)
-
-    builder = ak.ArrayBuilder()
-    phi_spike_filter = __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, jets_eta, jets_phi, reverse=reverse).snapshot()
-
-    events = events[phi_spike_filter]
-
+    conditions = np.ones(len(events), dtype=bool)
+    for i in range(n_jets):
+        conditions &= __get_phi_spike_filter(hot_spots_dict,f"j{i+1}Phivsj{i+1}Eta",__jet_var_i(jets_eta,i),__jet_var_i(jets_phi,i),rad)
+    events = events[conditions]
     return events
 
 
-def apply_hem_veto(events):
-
-    if is_tree_maker(events):
-        jets = events.Jets
-        electrons = events.Electrons
-        muons = events.Muons
-
-    else:
-        jets = ak.zip({
-            "pt": events["Jet_pt"],
-            "eta": events["Jet_eta"],
-            "phi": events["Jet_phi"],
-        })
-        electrons = ak.zip({
-            "pt":  events["Electron_pt"],
-            "eta": events["Electron_eta"],
-            "phi": events["Electron_phi"],
-        })
-        muons = ak.zip({
-            "pt":  events["Muon_pt"],
-            "eta": events["Muon_eta"],
-            "phi": events["Muon_phi"],
-        })
-
+def apply_hem_veto(events, ak4_jets, electrons, muons):
     jet_hem_condition = (
-        (jets.eta > -3.05)
-        & (jets.eta < -1.35)
-        & (jets.phi > -1.62)
-        & (jets.phi < -0.82)
+        (ak4_jets.eta > -3.05)
+        & (ak4_jets.eta < -1.35)
+        & (ak4_jets.phi > -1.62)
+        & (ak4_jets.phi < -0.82)
     )
     electron_hem_condition = (
         (electrons.eta > -3.05)
@@ -246,11 +210,7 @@ def apply_hem_veto(events):
         & (muons.phi > -1.62)
         & (muons.phi < -0.82)
     )
-    veto = (
-        ((ak.num(jets) > 0) & ak.any(jet_hem_condition, axis=1))
-        | ((ak.num(muons) > 0) & ak.any(muon_hem_condition, axis=1))
-        | ((ak.num(electrons) > 0) & ak.any(electron_hem_condition, axis=1))
-    )
+    veto = ak.any(jet_hem_condition, axis=1) | ak.any(electron_hem_condition, axis=1) | ak.any(muon_hem_condition, axis=1)
     hem_filter = ~veto
 
     if is_mc(events):
@@ -361,28 +321,6 @@ def get_cut_flow_from_skims(input_file, cut_flow_tree):
     f = uproot.open(input_file)
     cut_flow = f["CutFlow"].arrays(cut_flow_tree.keys(),  library="pd")
     return cut_flow.to_dict("list")
-
-
-@nb.jit
-def __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, jets_eta, jets_phi, reverse):
-    for jet_eta, jet_phi in zip(jets_eta, jets_phi):
-        if len(jet_eta) < 2:
-            builder.append(True)
-        else:
-            keep_event = True
-            for iep in range(len(eta_lead)):
-                if (eta_lead[iep] - jet_eta[0])**2 + (phi_lead[iep] - jet_phi[0])**2 < rad:
-                    keep_event = False
-                    break
-            for iep in range(len(eta_sub)):
-                if (eta_sub[iep] - jet_eta[1])**2 + (phi_sub[iep] - jet_phi[1])**2 < rad:
-                    keep_event = False
-                    break
-            if reverse:
-                builder.append(not keep_event)
-            else:
-                builder.append(keep_event)
-    return builder
 
 
 def apply_variation(events, variation):
