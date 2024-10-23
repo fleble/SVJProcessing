@@ -9,7 +9,6 @@ from utils.awkward_array_utilities import as_type
 from utils.tree_maker.triggers import trigger_table as trigger_table_treemaker
 from utils.systematics import calc_jec_variation, calc_jer_variation
 from utils.Logger import *
-from analysis_configs import objects_definition as obj
 
 # Needed so that ak.zip({"pt": [...], "eta": [...], "phi": [...], "mass": [...]},
 #                         with_name="PtEtaPhiMLorentzVector")
@@ -148,12 +147,12 @@ def is_data(events):
     return not is_mc(events)
 
 
-def jet_var_i(var,i,pad_value=np.Inf):
+def __jet_var_i(var,i,pad_value=np.Inf):
     padded_var = ak.fill_none(ak.pad_none(var,i+1),pad_value)
     return padded_var[:,i]
 
 
-def get_phi_spike_filter(hot_spots_dict,var_name,j_eta_i,j_phi_i,rad):
+def __get_phi_spike_filter(hot_spots_dict,var_name,j_eta_i,j_phi_i,rad):
     hot_etas_i, hot_phis_i = hot_spots_dict[var_name]
     hot_etas_i_reshaped = np.reshape(hot_etas_i,(len(hot_etas_i),1))
     hot_phis_i_reshaped = np.reshape(hot_phis_i,(len(hot_phis_i),1))
@@ -162,78 +161,43 @@ def get_phi_spike_filter(hot_spots_dict,var_name,j_eta_i,j_phi_i,rad):
     return np.prod((j_eta_i_reshaped - hot_etas_i_reshaped)**2 + (j_phi_i_reshaped - hot_phis_i_reshaped)**2 > rad, axis=0, dtype=bool)
 
 
-def apply_phi_spike_filter(events, year, hot_spots_pkl, channel="t", jet_eta_branch_name="Jet_eta", jet_phi_branch_name="Jet_phi"):
+def apply_phi_spike_filter(events, year, hot_spots_pkl, n_jets, jet_eta_branch_name="Jet_eta", jet_phi_branch_name="Jet_phi"):
     with open(hot_spots_pkl,"rb") as infile:
         phi_spike_hot_spots = pickle.load(infile)
     rad = 0.028816*0.35 # the factor of 0.35 was optimized from the signal vs. background sensitivity study for s-channel
     hot_spots_dict = phi_spike_hot_spots[year]
     jets_eta = getattr(events, jet_eta_branch_name)
     jets_phi = getattr(events, jet_phi_branch_name)
-    if channel == "t":
-        pass1 = get_phi_spike_filter(hot_spots_dict,"j1Phivsj1Eta",jetVar_i(jets_eta,0),jetVar_i(jets_phi,0),rad)
-        pass2 = get_phi_spike_filter(hot_spots_dict,"j2Phivsj2Eta",jetVar_i(jets_eta,1),jetVar_i(jets_phi,1),rad)
-        pass3 = get_phi_spike_filter(hot_spots_dict,"j3Phivsj3Eta",jetVar_i(jets_eta,2),jetVar_i(jets_phi,2),rad)
-        pass4 = get_phi_spike_filter(hot_spots_dict,"j4Phivsj4Eta",jetVar_i(jets_eta,3),jetVar_i(jets_phi,3),rad)
-    elif channel == "s":
-        pass1 = get_phi_spike_filter(hot_spots_dict,"j1Phivsj1Eta",jetVar_i(jets_eta,0),jetVar_i(jets_phi,0),rad)
-        pass2 = get_phi_spike_filter(hot_spots_dict,"j2Phivsj2Eta",jetVar_i(jets_eta,1),jetVar_i(jets_phi,1),rad)
-    events = events[pass1 & pass2 & pass3 & pass4]
+    conditions = np.ones(len(events), dtype=bool)
+    for i in range(n_jets):
+        conditions &= __get_phi_spike_filter(hot_spots_dict,f"j{i+1}Phivsj{i+1}Eta",__jet_var_i(jets_eta,i),__jet_var_i(jets_phi,i),rad)
+    events = events[conditions]
     return events
 
 
-def apply_hem_veto(events):
-
-    if is_tree_maker(events):
-        jets = events.Jets
-        electrons = events.Electrons
-        muons = events.Muons
-
-    else:
-        jets = ak.zip({
-            "pt": events["Jet_pt"],
-            "eta": events["Jet_eta"],
-            "phi": events["Jet_phi"],
-        })
-        electrons = ak.zip({
-            "pt":  events["Electron_pt"],
-            "eta": events["Electron_eta"],
-            "phi": events["Electron_phi"],
-        })
-        muons = ak.zip({
-            "pt":  events["Muon_pt"],
-            "eta": events["Muon_eta"],
-            "phi": events["Muon_phi"],
-        })
-
-    jet_condition = obj.is_good_ak4_jet(jets)
-    electron_condition = obj.is_veto_electron(electrons)
-    muon_condition = obj.is_veto_muon(muons)
-    good_ak4_jets = jets[jet_condition]
-    veto_electrons = electrons[electron_condition]
-    veto_muons = muons[muon_condition]
-
+def apply_hem_veto(events, ak4_jets, electrons, muons):
     jet_hem_condition = (
-        (good_ak4_jets.eta > -3.05)
-        & (good_ak4_jets.eta < -1.35)
-        & (good_ak4_jets.phi > -1.62)
-        & (good_ak4_jets.phi < -0.82)
+        (ak4_jets.eta > -3.05)
+        & (ak4_jets.eta < -1.35)
+        & (ak4_jets.phi > -1.62)
+        & (ak4_jets.phi < -0.82)
     )
     electron_hem_condition = (
-        (veto_electrons.eta > -3.05)
-        & (veto_electrons.eta < -1.35)
-        & (veto_electrons.phi > -1.62)
-        & (veto_electrons.phi < -0.82)
+        (electrons.eta > -3.05)
+        & (electrons.eta < -1.35)
+        & (electrons.phi > -1.62)
+        & (electrons.phi < -0.82)
     )
     muon_hem_condition = (
-        (veto_muons.eta > -3.05)
-        & (veto_muons.eta < -1.35)
-        & (veto_muons.phi > -1.62)
-        & (veto_muons.phi < -0.82)
+        (muons.eta > -3.05)
+        & (muons.eta < -1.35)
+        & (muons.phi > -1.62)
+        & (muons.phi < -0.82)
     )
     veto = (
-        ((ak.num(jets) > 0) & ak.any(jet_hem_condition, axis=1))
-        | ((ak.num(muons) > 0) & ak.any(muon_hem_condition, axis=1))
-        | ((ak.num(electrons) > 0) & ak.any(electron_hem_condition, axis=1))
+        ((ak.num(ak4_jets) > 0) & ak.any(jet_hem_condition, axis=1))
+        | ((ak.num(electrons) > 0) & ak.any(muon_hem_condition, axis=1))
+        | ((ak.num(muons) > 0) & ak.any(electron_hem_condition, axis=1))
     )
     hem_filter = ~veto
 
