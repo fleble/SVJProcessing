@@ -194,11 +194,7 @@ def apply_hem_veto(events, ak4_jets, electrons, muons):
         & (muons.phi > -1.62)
         & (muons.phi < -0.82)
     )
-    veto = (
-        ((ak.num(ak4_jets) > 0) & ak.any(jet_hem_condition, axis=1))
-        | ((ak.num(electrons) > 0) & ak.any(muon_hem_condition, axis=1))
-        | ((ak.num(muons) > 0) & ak.any(electron_hem_condition, axis=1))
-    )
+    veto = ak.any(jet_hem_condition, axis=1) | ak.any(electron_hem_condition, axis=1) | ak.any(muon_hem_condition, axis=1)
     hem_filter = ~veto
 
     if is_mc(events):
