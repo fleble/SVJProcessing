@@ -50,27 +50,9 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
 
     # HEM veto
     if year == "2018":
-        if skimmer_utils.is_tree_maker(events):
-            ak4_jets = events.Jets
-            electrons = events.Electrons
-            muons = events.Muons
-
-        else:
-            ak4_jets = ak.zip({
-                "pt": events["Jet_pt"],
-                "eta": events["Jet_eta"],
-                "phi": events["Jet_phi"],
-            })
-            electrons = ak.zip({
-                "pt":  events["Electron_pt"],
-                "eta": events["Electron_eta"],
-                "phi": events["Electron_phi"],
-            })
-            muons = ak.zip({
-                "pt":  events["Muon_pt"],
-                "eta": events["Muon_eta"],
-                "phi": events["Muon_phi"],
-            })
+        ak4_jets = events.Jets
+        electrons = events.Electrons
+        muons = events.Muons
         jet_condition = obj.is_good_ak4_jet(ak4_jets)
         electron_condition = obj.is_veto_electron(electrons)
         muon_condition = obj.is_veto_muon(muons)

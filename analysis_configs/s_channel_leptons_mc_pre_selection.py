@@ -95,27 +95,21 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
 
     # apply HEM issue filter - to be applied only on 2018 data
     if year == "2018" and skimmer_utils.is_data(events):
-        if skimmer_utils.is_tree_maker(events):
-            ak4_jets = events.Jets
-            electrons = events.Electrons
-            muons = events.Muons
-
-        else:
-            ak4_jets = ak.zip({
-                "pt": events["Jet_pt"],
-                "eta": events["Jet_eta"],
-                "phi": events["Jet_phi"],
-            })
-            electrons = ak.zip({
-                "pt":  events["Electron_pt"],
-                "eta": events["Electron_eta"],
-                "phi": events["Electron_phi"],
-            })
-            muons = ak.zip({
-                "pt":  events["Muon_pt"],
-                "eta": events["Muon_eta"],
-                "phi": events["Muon_phi"],
-            })
+        ak4_jets = ak.zip({
+            "pt": events["Jet_pt"],
+            "eta": events["Jet_eta"],
+            "phi": events["Jet_phi"],
+        })
+        electrons = ak.zip({
+            "pt":  events["Electron_pt"],
+            "eta": events["Electron_eta"],
+            "phi": events["Electron_phi"],
+        })
+        muons = ak.zip({
+            "pt":  events["Muon_pt"],
+            "eta": events["Muon_eta"],
+            "phi": events["Muon_phi"],
+        })
         events = skimmer_utils.apply_hem_veto(events, ak4_jets, electrons, muons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMIssueFilter", events)
 
