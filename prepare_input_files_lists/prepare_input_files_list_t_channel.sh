@@ -15,7 +15,12 @@ selection_name=t_channel_pre_selection
 #module=analysis_configs.t_channel_lost_lepton_control_region
 #selection_name=t_channel_lost_lepton_control_region
 
-year=2018
+years=(
+    2016
+    2016APV
+    2017
+    2018
+)
 
 dataset_names=(
     #
@@ -123,12 +128,15 @@ prepare_input_files_list() {
     python list_dataset_files.py -d ${dataset_name} -y ${year} -c ${dataset_config} -o ${dataset_directory} 
     python compute_unweighted_selection_efficiency.py -d ${dataset_name} -y ${year} -p ${module} -s ${selection_name} -i ${dataset_directory} -o ${dataset_directory} -n 6 -e futures -c 10000
     python prepare_input_files_list.py -d ${dataset_name} -y ${year} -s ${selection_name} -i ${dataset_directory} -o ${dataset_directory} -m 50000
+    # Use -m 5000 for data if you want to keep using 4GB of memory per worker
 }
 
 
 for dataset_name in ${dataset_names[@]}; do
+  for year in ${years[@]}; do
 
     prepare_input_files_list ${dataset_config} ${dataset_directory} ${module} ${selection_name} ${year} ${dataset_name}
 
+  done
 done
 
