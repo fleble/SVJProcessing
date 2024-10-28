@@ -184,16 +184,28 @@ def __get_phi_spike_filter(hot_spots_dict,var_name,j_eta_i,j_phi_i,rad):
     return np.prod((j_eta_i_reshaped - hot_etas_i_reshaped)**2 + (j_phi_i_reshaped - hot_phis_i_reshaped)**2 > rad, axis=0, dtype=bool)
 
 
-def apply_phi_spike_filter(events, year, hot_spots_pkl, n_jets, jet_eta_branch_name="Jet_eta", jet_phi_branch_name="Jet_phi"):
+def apply_phi_spike_filter(
+        events,
+        year,
+        hot_spots_pkl,
+        n_jets,
+        jets_eta,
+        jets_phi,
+    ):
+
     with open(hot_spots_pkl,"rb") as infile:
         phi_spike_hot_spots = pickle.load(infile)
     rad = 0.028816*0.35 # the factor of 0.35 was optimized from the signal vs. background sensitivity study for s-channel
     hot_spots_dict = phi_spike_hot_spots[year]
-    jets_eta = getattr(events, jet_eta_branch_name)
-    jets_phi = getattr(events, jet_phi_branch_name)
     conditions = np.ones(len(events), dtype=bool)
     for i in range(n_jets):
-        conditions &= __get_phi_spike_filter(hot_spots_dict,f"j{i+1}Phivsj{i+1}Eta",__jet_var_i(jets_eta,i),__jet_var_i(jets_phi,i),rad)
+        conditions &= __get_phi_spike_filter(
+            hot_spots_dict,
+            f"j{i+1}Phivsj{i+1}Eta",
+            __jet_var_i(jets_eta, i),
+            __jet_var_i(jets_phi, i),
+            rad,
+        )
     events = events[conditions]
     return events
 

@@ -95,7 +95,14 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
     # Phi spike filter
-    events = skimmer_utils.apply_phi_spike_filter(events, year, "skimmer/tchannel_phi_spike_hot_spots.pkl", n_jets=4)
+    events = skimmer_utils.apply_phi_spike_filter(
+        events,
+        year,
+        "tchannel_phi_spike_hot_spots.pkl",
+        n_jets=4,
+        jets_eta=events.Jets.eta,
+        jets_phi=events.Jets.phi,
+    )
     skimmer_utils.update_cut_flow(cut_flow, "PhiSpikeFilter", events)
 
     events = sequences.add_analysis_branches(events)
