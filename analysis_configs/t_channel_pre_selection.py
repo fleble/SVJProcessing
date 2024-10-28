@@ -20,6 +20,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
 
     # Add new branches at the start so that the defined branches can be used thereafter
     events = sequences.add_good_ak8_jet_branch(events)
+    events = sequences.add_good_ak4_jet_branch(events)
     events = sequences.add_analysis_branches(events)
 
     # Trigger event selection
@@ -72,8 +73,8 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
         year,
         f"{os.environ['SVJ_PROCESSING_ROOT']}/skimmer/tchannel_phi_spike_hot_spots.pkl",
         n_jets=4,
-        jets_eta=events.Jets.eta,
-        jets_phi=events.Jets.phi,
+        jets_eta=events.Jets[events.Jets.isGood].eta,
+        jets_phi=events.Jets[events.Jets.isGood].phi,
     )
     skimmer_utils.update_cut_flow(cut_flow, "PhiSpikeFilter", events)
 

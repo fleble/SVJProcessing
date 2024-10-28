@@ -88,6 +88,15 @@ def add_good_ak8_jet_branch(events):
     return events
 
 
+def add_good_ak4_jet_branch(events):
+    events["Jets"] = ak.with_field(
+        events["Jets"],
+        obj.is_good_ak4_jet(events["Jets"]),
+        "isGood",
+    )
+    return events
+
+
 def __get_number_of_veto_leptons(
         events,
         electron_extra_condition=None,
