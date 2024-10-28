@@ -161,6 +161,11 @@ def require_n_veto_leptons(events, n):
     return events
 
 
+def add_st(events):
+    events["ST"] = events.MET + events.HT
+    return events
+
+
 def add_analysis_branches(events):
 
     # Jets AK8 variables
@@ -281,8 +286,8 @@ def add_analysis_branches(events):
             events[f"DijetMass{index_0}{index_1}GoodJetsAK8"] = dijet_mass
             events[f"LundJetPlaneZ{index_0}{index_1}GoodJetsAK8"] = lund_jet_plane_z
    
+    events = add_st(events)
     events["DeltaPhiMinGoodJetsAK8"] = ak.min(abs(good_jets_ak8.deltaPhiMET), axis=1)
-    events["ST"] = events.MET + events.HT
     events["ATLASDeltaPhiMinMax"] = event_variables.calculate_atlas_delta_phi_max_min(
         jets=good_jets_ak8_lv,
         met=met_lv,

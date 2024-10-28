@@ -18,14 +18,17 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
         events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)
         skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)
 
+    # Add new branches at the start so that the defined branches can be used thereafter
+    events = sequences.add_good_ak8_jet_branch(events)
+    events = sequences.add_analysis_branches(events)
+
     # Trigger event selection
     triggers = getattr(trg, f"t_channel_{year}")
     events = skimmer_utils.apply_trigger_cut(events, triggers)
     skimmer_utils.update_cut_flow(cut_flow, "Trigger", events)
 
     # ST cut for triggers to be fully efficient
-    st = events.MET + events.HT
-    events = events[st > 1300]
+    events = events[events.ST > 1300]
     skimmer_utils.update_cut_flow(cut_flow, "STGt1300GeV", events)
 
     # HEM veto
@@ -40,10 +43,6 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     events = sequences.apply_good_ak8_jet_filter(events)
     skimmer_utils.update_cut_flow(cut_flow, "GoodJetsAK8", events)
 
-    # Adding JetsAK8_isGood branch already so that it can be used
-    # in the rest of the pre-selection
-    events = sequences.add_good_ak8_jet_branch(events)
-
     # Requiring at least 2 good FatJets
     filter = ak.count(events.JetsAK8.pt[events.JetsAK8.isGood], axis=1) >= 2
     events = events[filter]
@@ -55,29 +54,9 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     skimmer_utils.update_cut_flow(cut_flow, "NVetoLeptonsGt1", events)
 
     # Delta phi min cut
-    if len(events) != 0:
-        # If needed because the selection crashes due to the special ak type
-        met = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
-            pt=events.MET,
-            phi=events.METPhi,
-        )
-        good_jets_ak8 = events.JetsAK8[events.JetsAK8.isGood]
-        jets = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
-            pt=good_jets_ak8.pt,
-            eta=good_jets_ak8.eta,
-            phi=good_jets_ak8.phi,
-            mass=good_jets_ak8.mass,
-        )
-
-        met = ak.broadcast_arrays(met, jets)[0]
-        delta_phi_min = ak.min(abs(jets.delta_phi(met)), axis=1)
-        filter = delta_phi_min < 1.5
-        # Needed otherwise type is not defined and skim cannot be written
-        filter = as_type(filter, bool)
-        events = events[filter]
-        
-        delta_phi_min = delta_phi_min[filter]
-
+    # as_type needed otherwise type is not defined and skim cannot be written
+    filter = as_type(events.DeltaPhiMinGoodJetsAK8 < 1.5, bool)
+    events = events[filter]
     skimmer_utils.update_cut_flow(cut_flow, "DeltaPhiMinLt1p5", events)
 
     # MET cut
@@ -98,8 +77,6 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
         jets_phi=events.Jets.phi,
     )
     skimmer_utils.update_cut_flow(cut_flow, "PhiSpikeFilter", events)
-
-    events = sequences.add_analysis_branches(events)
 
     if pn_tagger:
         events = sequences.add_particle_net_tagger(events)

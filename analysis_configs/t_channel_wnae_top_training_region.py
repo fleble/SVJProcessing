@@ -19,11 +19,10 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     triggers = getattr(trg, f"single_lepton_{year}")
     events = skimmer_utils.apply_trigger_cut(events, triggers)
     skimmer_utils.update_cut_flow(cut_flow, "Trigger", events)
-
     
     # ST cut for the training phase space to closer to the preselection phase space
-    st = events.MET + events.HT
-    events = events[st > 600]
+    events = sequences.add_st(events)
+    events = events[events.ST > 600]
     skimmer_utils.update_cut_flow(cut_flow, "STGt600GeV", events)
 
 
