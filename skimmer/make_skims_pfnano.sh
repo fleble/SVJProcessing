@@ -100,4 +100,4 @@ for ((i=0; i<$n_datasets; i++)); do
     dataset_name=${dataset_names[i]}
     cross_section=${cross_sections[i]}
     make_skims ${dataset_directory} ${module} ${selection_name} ${year} ${dataset_name} ${output_directory} ${cross_section}
-
+done
