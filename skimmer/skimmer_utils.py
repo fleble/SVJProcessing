@@ -193,6 +193,7 @@ def apply_phi_spike_filter(
         jets_phi,
     ):
 
+    if year == "2016APV": year = "2016"
     with open(hot_spots_pkl,"rb") as infile:
         phi_spike_hot_spots = pickle.load(infile)
     rad = 0.028816*0.35 # the factor of 0.35 was optimized from the signal vs. background sensitivity study for s-channel

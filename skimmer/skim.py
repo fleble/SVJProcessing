@@ -233,12 +233,11 @@ def __prepare_cut_flow_tree(cut_flow_dict):
 
 def __prepare_uproot_job_kwargs_from_coffea_args(args):
 
-    year = args.year.replace("APV", "")
     process_module = import_module(args.process_module_name)
     process_function = lambda x, y: process_module.process(
         x,
         y,
-        year=year,
+        year=args.year,
         primary_dataset=args.primary_dataset,
         pn_tagger=args.pn_tagger,
     )

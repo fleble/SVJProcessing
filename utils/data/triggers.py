@@ -164,3 +164,6 @@ primary_dataset_triggers = {
     },
 }
 
+for dataset in primary_dataset_triggers.keys():
+    if "2016" in primary_dataset_triggers[dataset]:
+        primary_dataset_triggers[dataset]["2016APV"] = primary_dataset_triggers[dataset]["2016"]
