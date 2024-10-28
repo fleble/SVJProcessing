@@ -94,7 +94,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     events = skimmer_utils.apply_phi_spike_filter(
         events,
         year,
-        f"{os.environ['SVJ_PROCESSING_ROOT']}/schannel_hot_spots.pkl",
+        f"{os.environ['SVJ_PROCESSING_ROOT']}/analysis_configs/schannel_hot_spots.pkl",
         n_jets=2,
         jets_eta=events.Jet_eta,
         jets_phi=events.Jet_phi,
