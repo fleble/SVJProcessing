@@ -21,6 +21,8 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     # Add new branches at the start so that the defined branches can be used thereafter
     events = sequences.add_good_ak8_jet_branch(events)
     events = sequences.add_good_ak4_jet_branch(events)
+    events = sequences.add_is_veto_electron_branch(events)
+    events = sequences.add_is_veto_muon_branch(events)
     events = sequences.add_analysis_branches(events)
 
     # Trigger event selection
@@ -34,9 +36,9 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
 
     # HEM veto
     if year == "2018" and skimmer_utils.is_data(events):
-        good_ak4_jets = events.Jets[obj.is_good_ak4_jet(events.Jets)]
-        veto_electrons = events.Electrons[obj.is_veto_electron(events.Electrons)]
-        veto_muons = events.Muons[obj.is_veto_muon(events.Muons)]
+        good_ak4_jets = events.Jets[events.Jets.isGood]
+        veto_electrons = events.Electrons[events.Electrons.isVeto]
+        veto_muons = events.Muons[events.Muons.isVeto]
         events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, veto_electrons, veto_muons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
 

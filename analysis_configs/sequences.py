@@ -74,7 +74,6 @@ def apply_good_ak8_jet_filter(events):
     events = events[good_ak8_jets_filter]
     return events
 
-
 def add_good_ak8_jet_branch(events):
     is_good_analysis_ak8_jet = (
         obj.is_analysis_ak8_jet(events.JetsAK8)
@@ -93,6 +92,24 @@ def add_good_ak4_jet_branch(events):
         events["Jets"],
         obj.is_good_ak4_jet(events["Jets"]),
         "isGood",
+    )
+    return events
+
+
+def add_is_veto_electron_branch(events):
+    events["Electrons"] = ak.with_field(
+        events["Electrons"],
+        obj.is_veto_electron(events["Electrons"]),
+        "isVeto",
+    )
+    return events
+
+
+def add_is_veto_muon_branch(events):
+    events["Muons"] = ak.with_field(
+        events["Muons"],
+        obj.is_veto_muon(events["Muons"]),
+        "isVeto",
     )
     return events
 
