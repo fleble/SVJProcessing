@@ -8,7 +8,7 @@ from analysis_configs import objects_definition as obj
 from analysis_configs import sequences
 
 
-def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwargs):
+def process(events, cut_flow, year, **kwargs):
     """SVJ t-channel WNAE QCD training region targetting gamma + jets events."""
 
     # Trigger event selection

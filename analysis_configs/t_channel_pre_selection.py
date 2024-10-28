@@ -9,7 +9,7 @@ from analysis_configs import objects_definition as obj
 from analysis_configs import sequences
 
 
-def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variation=None, **kwargs):
+def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwargs):
     """SVJ t-channel pre-selection."""
 
     # If this config is changed, changes must be reflected in t_channel_lost_lepton_control_region.py

@@ -7,7 +7,7 @@ from analysis_configs import objects_definition as obj
 from analysis_configs import sequences
 
 
-def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwargs):
+def process(events, cut_flow, year, primary_dataset="", **kwargs):
     """SVJ t-channel WNAE top training region targetting semi-leptonic ttbar events."""
 
     if not skimmer_utils.is_mc(events):
