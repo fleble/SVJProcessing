@@ -35,12 +35,15 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     skimmer_utils.update_cut_flow(cut_flow, "STGt1300GeV", events)
 
     # HEM veto
+    good_ak4_jets = events.Jets[events.Jets.isGood]
+    veto_electrons = events.Electrons[events.Electrons.isVeto]
+    veto_muons = events.Muons[events.Muons.isVeto]
     if year == "2018" and skimmer_utils.is_data(events):
-        good_ak4_jets = events.Jets[events.Jets.isGood]
-        veto_electrons = events.Electrons[events.Electrons.isVeto]
-        veto_muons = events.Muons[events.Muons.isVeto]
         events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, veto_electrons, veto_muons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
+    if year == "2018" and skimmer_utils.is_mc(events):
+        filter = skimmer_utils.get_hem_veto_filter(good_ak4_jets, veto_electrons, veto_muons)
+        events["HEMVeto"] = filter
 
     # Good jet filters
     events = sequences.apply_good_ak8_jet_filter(events)

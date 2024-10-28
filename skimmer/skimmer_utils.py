@@ -211,7 +211,7 @@ def apply_phi_spike_filter(
     return events
 
 
-def apply_hem_veto(events, ak4_jets, electrons, muons):
+def get_hem_veto_filter(ak4_jets, electrons, muons):
     jet_hem_condition = (
         (ak4_jets.eta > -3.05)
         & (ak4_jets.eta < -1.35)
@@ -232,6 +232,12 @@ def apply_hem_veto(events, ak4_jets, electrons, muons):
     )
     veto = ak.any(jet_hem_condition, axis=1) | ak.any(electron_hem_condition, axis=1) | ak.any(muon_hem_condition, axis=1)
     hem_filter = ~veto
+
+    return hem_filter
+
+
+def apply_hem_veto(events, ak4_jets, electrons, muons):
+    hem_filter = get_hem_veto_filter(ak4_jets, electrons, muons)
 
     if is_mc(events):
         events = events[hem_filter]
