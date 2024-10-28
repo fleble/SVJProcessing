@@ -32,22 +32,22 @@ def test_execution():
             [f"root://cmseos.fnal.gov//store/user/lpcdarkqcd/tchannel_UL/signal_production_2Dscans/NTUPLE/Private2DUL18/SVJ_t-channel_mMed-2000_mDark-20_rinv-0p3_alpha-peak_yukawa-1_13TeV-madgraphMLM-pythia8/0_RA2AnalysisTree.root"],
             "-y 2018 -p analysis_configs.t_channel_pre_selection -pd dummy --weight_variation scale pdf",
         ),
-#        (
-#            ["root://cmseos.fnal.gov//store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018A-UL2018-v1/JetHT/0_RA2AnalysisTree.root"],
-#            "-y 2018 -p analysis_configs.t_channel_pre_selection -pd JetHT",
-#        ),
-#        (
-#            ["root://cmseos.fnal.gov//store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018A-UL2018-v1/EGamma/0_RA2AnalysisTree.root"],
-#            "-y 2018 -p analysis_configs.t_channel_wnae_qcd_training_region -pd EGamma",
-#        ),
-#        (
-#            ["root://cmseos.fnal.gov//store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018A-UL2018-v3/SingleMuon/4_RA2AnalysisTree.root"],
-#            "-y 2018 -p analysis_configs.t_channel_wnae_top_training_region -pd SingleMuon",
-#        ),
-#        (
-#            ["root://cmseos.fnal.gov//store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL18/TTJets_TuneCP5_13TeV-madgraphMLM-pythia8/0_RA2AnalysisTree.root"],
-#            "-y 2018 -p analysis_configs.t_channel_lost_lepton_control_region -pd dummy",
-#        ),
+        (
+            ["root://cmseos.fnal.gov//store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018A-UL2018-v1/JetHT/0_RA2AnalysisTree.root"],
+            "-y 2018 -p analysis_configs.t_channel_pre_selection -pd JetHT",
+        ),
+        (
+            ["root://cmseos.fnal.gov//store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018A-UL2018-v1/EGamma/0_RA2AnalysisTree.root"],
+            "-y 2018 -p analysis_configs.t_channel_wnae_qcd_training_region -pd EGamma",
+        ),
+        (
+            ["root://cmseos.fnal.gov//store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2018A-UL2018-v3/SingleMuon/4_RA2AnalysisTree.root"],
+            "-y 2018 -p analysis_configs.t_channel_wnae_top_training_region -pd SingleMuon",
+        ),
+        (
+            ["root://cmseos.fnal.gov//store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Summer20UL18/TTJets_TuneCP5_13TeV-madgraphMLM-pythia8/0_RA2AnalysisTree.root"],
+            "-y 2018 -p analysis_configs.t_channel_lost_lepton_control_region -pd dummy",
+        ),
     ]
 
     if "cmslpc" in os.environ["HOSTNAME"]:
