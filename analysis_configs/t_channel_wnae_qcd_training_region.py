@@ -50,15 +50,9 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
 
     # HEM veto
     if year == "2018":
-        ak4_jets = events.Jets
-        electrons = events.Electrons
-        muons = events.Muons
-        jet_condition = obj.is_good_ak4_jet(ak4_jets)
-        electron_condition = obj.is_veto_electron(electrons)
-        muon_condition = obj.is_veto_muon(muons)
-        good_ak4_jets = ak4_jets[jet_condition]
-        veto_electrons = electrons[electron_condition]
-        veto_muons = muons[muon_condition]
+        good_ak4_jets = events.Jets[obj.is_good_ak4_jet(events.Jets)]
+        veto_electrons = events.Electrons[obj.is_veto_electron(events.Electrons)]
+        veto_muons = events.Muons[obj.is_veto_muon(events.Muons)]
         events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, veto_electrons, veto_muons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
 
