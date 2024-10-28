@@ -7,9 +7,7 @@ CORES=2
 CHUNK_SIZE=1000
 N_WORKERS=150
 #EXECUTOR=dask/lpccondor    # HTCondor at LPC
-EXECUTOR=dask/slurm     # local job
-#EXECUTOR=futures     # local job
-#N_WORKERS=6
+EXECUTOR=dask/slurm         # slurm at PSI
 FORCE_RECREATE=0   # 1 to recreate output file if it exists, 0 else
 FIRST_FILE=0
 LAST_FILE=-1  # Use -1 to skim all input files
@@ -95,9 +93,11 @@ make_skims() {
 }
 
 
-for dataset_name in ${dataset_names[@]}; do
-    make_skims ${dataset_directory} ${module} ${selection_name} ${year} ${dataset_name} ${output_directory} ${cross_sections[${i}]}
-    ((i++))
+n_datasets=${#dataset_names[@]}
 
-done
+for ((i=0; i<$n_datasets; i++)); do
+
+    dataset_name=${dataset_names[i]}
+    cross_section=${cross_sections[i]}
+    make_skims ${dataset_directory} ${module} ${selection_name} ${year} ${dataset_name} ${output_directory} ${cross_section}
 
