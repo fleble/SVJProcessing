@@ -1,3 +1,4 @@
+import os
 import awkward as ak
 
 from skimmer import skimmer_utils
@@ -69,7 +70,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, variati
     events = skimmer_utils.apply_phi_spike_filter(
         events,
         year,
-        "tchannel_phi_spike_hot_spots.pkl",
+        f"{os.environ['SVJ_PROCESSING_ROOT']}/skimmer/tchannel_phi_spike_hot_spots.pkl",
         n_jets=4,
         jets_eta=events.Jets.eta,
         jets_phi=events.Jets.phi,
