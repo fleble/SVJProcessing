@@ -114,6 +114,15 @@ def add_is_veto_muon_branch(events):
     return events
 
 
+def add_good_photon_branch(events):
+    events["Photons"] = ak.with_field(
+        events["Photons"],
+        obj.is_good_photon(events.Photons),
+        "isGood",
+    )
+    return events
+
+
 def __get_number_of_veto_leptons(
         events,
         electron_extra_condition=None,

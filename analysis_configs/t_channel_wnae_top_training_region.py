@@ -14,6 +14,11 @@ def process(events, cut_flow, year, primary_dataset="", **kwargs):
         events = sequences.remove_single_lepton_primary_dataset_overlap(events, year, primary_dataset)
         skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)
 
+    # Adding branches already so that it can be used in the rest of the selection
+    events = sequences.add_good_ak8_jet_branch(events)
+    events = sequences.add_good_ak4_jet_branch(events)
+    events = sequences.add_is_veto_electron_branch(events)
+    events = sequences.add_is_veto_muon_branch(events)
 
     # Trigger event selection
     triggers = getattr(trg, f"single_lepton_{year}")
@@ -32,12 +37,15 @@ def process(events, cut_flow, year, primary_dataset="", **kwargs):
 
 
     # HEM veto
-    if year == "2018":
-        good_ak4_jets = events.Jets[obj.is_good_ak4_jet(events.Jets)]
-        veto_electrons = events.Electrons[obj.is_veto_electron(events.Electrons)]
-        veto_muons = events.Muons[obj.is_veto_muon(events.Muons)]
+    good_ak4_jets = events.Jets[events.Jets.isGood]
+    veto_electrons = events.Electrons[events.Electrons.isVeto]
+    veto_muons = events.Muons[events.Muons.isVeto]
+    if year == "2018" and skimmer_utils.is_data(events):
         events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, veto_electrons, veto_muons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
+    if year == "2018" and skimmer_utils.is_mc(events):
+        filter = skimmer_utils.get_hem_veto_filter(good_ak4_jets, veto_electrons, veto_muons)
+        events["HEMVeto"] = filter
 
 
     # Require exactly 1 "tag lepton" (medium ID, tight mini-iso electron or muon)
@@ -59,14 +67,7 @@ def process(events, cut_flow, year, primary_dataset="", **kwargs):
     skimmer_utils.update_cut_flow(cut_flow, "LeptonVeto", events)
 
 
-    # Define good clean AK4 and AK8 jets
-    events = sequences.add_good_ak8_jet_branch(events)
-    events["Jets"] = ak.with_field(
-        events["Jets"],
-        obj.is_good_ak4_jet(events.Jets),
-        "isGood",
-    )
-
+    # Define clean AK4 and AK8 jets
     cleaning_electrons = events.Electrons[obj.is_cleaning_electron(events.Electrons)]
     cleaning_muons = events.Muons[obj.is_cleaning_muon(events.Muons)]
     cleaning_electrons = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(
