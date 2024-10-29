@@ -211,33 +211,30 @@ def apply_phi_spike_filter(
     return events
 
 
-def get_hem_veto_filter(ak4_jets, electrons, muons):
-    jet_hem_condition = (
-        (ak4_jets.eta > -3.05)
-        & (ak4_jets.eta < -1.35)
-        & (ak4_jets.phi > -1.62)
-        & (ak4_jets.phi < -0.82)
-    )
-    electron_hem_condition = (
-        (electrons.eta > -3.05)
-        & (electrons.eta < -1.35)
-        & (electrons.phi > -1.62)
-        & (electrons.phi < -0.82)
-    )
-    muon_hem_condition = (
-        (muons.eta > -3.05)
-        & (muons.eta < -1.35)
-        & (muons.phi > -1.62)
-        & (muons.phi < -0.82)
-    )
-    veto = ak.any(jet_hem_condition, axis=1) | ak.any(electron_hem_condition, axis=1) | ak.any(muon_hem_condition, axis=1)
+def get_hem_veto_filter(*objects_list):
+
+    eta_min = -3.05
+    eta_max = -1.35
+    phi_min = -1.62
+    phi_max = -0.82
+
+    veto = ak.ones_like(range(len(objects_list[0])), dtype=bool)
+    for objects in objects_list:
+        hem_veto = (
+            (objects.eta > eta_min)
+            & (objects.eta < eta_max)
+            & (objects.phi > phi_min)
+            & (objects.phi < phi_max)
+        )
+        veto = veto | ak.any(hem_veto, axis=1)
+
     hem_filter = ~veto
 
     return hem_filter
 
 
-def apply_hem_veto(events, ak4_jets, electrons, muons):
-    hem_filter = get_hem_veto_filter(ak4_jets, electrons, muons)
+def apply_hem_veto(events, *objects_list):
+    hem_filter = get_hem_veto_filter(*objects_list)
 
     if is_mc(events):
         events = events[hem_filter]
