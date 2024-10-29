@@ -7,23 +7,27 @@ from analysis_configs import objects_definition as obj
 from analysis_configs import sequences
 
 
-def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwargs):
+def process(events, cut_flow, year, primary_dataset="", **kwargs):
     """SVJ t-channel WNAE top training region targetting semi-leptonic ttbar events."""
 
     if not skimmer_utils.is_mc(events):
         events = sequences.remove_single_lepton_primary_dataset_overlap(events, year, primary_dataset)
         skimmer_utils.update_cut_flow(cut_flow, "PrimaryDatasetOvelap", events)
 
+    # Adding branches already so that it can be used in the rest of the selection
+    events = sequences.add_good_ak8_jet_branch(events)
+    events = sequences.add_good_ak4_jet_branch(events)
+    events = sequences.add_is_veto_electron_branch(events)
+    events = sequences.add_is_veto_muon_branch(events)
 
     # Trigger event selection
     triggers = getattr(trg, f"single_lepton_{year}")
     events = skimmer_utils.apply_trigger_cut(events, triggers)
     skimmer_utils.update_cut_flow(cut_flow, "Trigger", events)
-
     
     # ST cut for the training phase space to closer to the preselection phase space
-    st = events.MET + events.HT
-    events = events[st > 600]
+    events = sequences.add_st(events)
+    events = events[events.ST > 600]
     skimmer_utils.update_cut_flow(cut_flow, "STGt600GeV", events)
 
 
@@ -33,18 +37,15 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
 
 
     # HEM veto
-    if year == "2018":
-        ak4_jets = events.Jets
-        electrons = events.Electrons
-        muons = events.Muons
-        jet_condition = obj.is_good_ak4_jet(ak4_jets)
-        electron_condition = obj.is_veto_electron(electrons)
-        muon_condition = obj.is_veto_muon(muons)
-        good_ak4_jets = ak4_jets[jet_condition]
-        veto_electrons = electrons[electron_condition]
-        veto_muons = muons[muon_condition]
+    good_ak4_jets = events.Jets[events.Jets.isGood]
+    veto_electrons = events.Electrons[events.Electrons.isVeto]
+    veto_muons = events.Muons[events.Muons.isVeto]
+    if year == "2018" and skimmer_utils.is_data(events):
         events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, veto_electrons, veto_muons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
+    if year == "2018" and skimmer_utils.is_mc(events):
+        filter = skimmer_utils.get_hem_veto_filter(good_ak4_jets, veto_electrons, veto_muons)
+        events["HEMVeto"] = filter
 
 
     # Require exactly 1 "tag lepton" (medium ID, tight mini-iso electron or muon)
@@ -66,14 +67,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     skimmer_utils.update_cut_flow(cut_flow, "LeptonVeto", events)
 
 
-    # Define good clean AK4 and AK8 jets
-    events = sequences.add_good_ak8_jet_branch(events)
-    events["Jets"] = ak.with_field(
-        events["Jets"],
-        obj.is_good_ak4_jet(events.Jets),
-        "isGood",
-    )
-
+    # Define clean AK4 and AK8 jets
     cleaning_electrons = events.Electrons[obj.is_cleaning_electron(events.Electrons)]
     cleaning_muons = events.Muons[obj.is_cleaning_muon(events.Muons)]
     cleaning_electrons = skimmer_utils.make_pt_eta_phi_mass_lorentz_vector(

@@ -74,7 +74,6 @@ def apply_good_ak8_jet_filter(events):
     events = events[good_ak8_jets_filter]
     return events
 
-
 def add_good_ak8_jet_branch(events):
     is_good_analysis_ak8_jet = (
         obj.is_analysis_ak8_jet(events.JetsAK8)
@@ -83,6 +82,42 @@ def add_good_ak8_jet_branch(events):
     events["JetsAK8"] = ak.with_field(
         events["JetsAK8"],
         is_good_analysis_ak8_jet,
+        "isGood",
+    )
+    return events
+
+
+def add_good_ak4_jet_branch(events):
+    events["Jets"] = ak.with_field(
+        events["Jets"],
+        obj.is_good_ak4_jet(events["Jets"]),
+        "isGood",
+    )
+    return events
+
+
+def add_is_veto_electron_branch(events):
+    events["Electrons"] = ak.with_field(
+        events["Electrons"],
+        obj.is_veto_electron(events["Electrons"]),
+        "isVeto",
+    )
+    return events
+
+
+def add_is_veto_muon_branch(events):
+    events["Muons"] = ak.with_field(
+        events["Muons"],
+        obj.is_veto_muon(events["Muons"]),
+        "isVeto",
+    )
+    return events
+
+
+def add_good_photon_branch(events):
+    events["Photons"] = ak.with_field(
+        events["Photons"],
+        obj.is_good_photon(events.Photons),
         "isGood",
     )
     return events
@@ -158,6 +193,11 @@ def require_n_veto_leptons(events, n):
     n_veto_muons = ak.count(veto_muons.pt, axis=1)
     n_veto_leptons = n_veto_electrons + n_veto_muons
     events = events[n_veto_leptons == n]
+    return events
+
+
+def add_st(events):
+    events["ST"] = events.MET + events.HT
     return events
 
 
@@ -281,8 +321,8 @@ def add_analysis_branches(events):
             events[f"DijetMass{index_0}{index_1}GoodJetsAK8"] = dijet_mass
             events[f"LundJetPlaneZ{index_0}{index_1}GoodJetsAK8"] = lund_jet_plane_z
    
+    events = add_st(events)
     events["DeltaPhiMinGoodJetsAK8"] = ak.min(abs(good_jets_ak8.deltaPhiMET), axis=1)
-    events["ST"] = events.MET + events.HT
     events["ATLASDeltaPhiMinMax"] = event_variables.calculate_atlas_delta_phi_max_min(
         jets=good_jets_ak8_lv,
         met=met_lv,

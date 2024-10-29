@@ -11,6 +11,8 @@ t_channel_2016 = [
     "PFMETNoMu110_PFMHTNoMu110_IDTight"
 ]
 
+t_channel_2016APV = t_channel_2016
+
 t_channel_2017 = [
     "AK8PFJet500",
     "AK8PFJet550",
@@ -61,6 +63,8 @@ photon_2016 = [
     "Photon165_HE10",
 ]
 
+photon_2016APV = photon_2016
+
 photon_2017 = [
     "Photon200",
 ]
@@ -76,6 +80,8 @@ single_muon_2016 = [
     "Mu50",
 ]
 
+single_muon_2016APV = single_muon_2016
+
 single_muon_2017 = [
     "IsoMu24",
     "IsoMu27",
@@ -87,12 +93,14 @@ single_muon_2018 = [
     "Mu50",
 ]
 
+
 single_electron_2016 = [
     "Ele23_Ele12_CaloIdL_TrackIdL_IsoVL",
     "Ele25_eta2p1_WPTight_Gsf",
     "Ele27_WPTight_Gsf",
 ]
 
+single_electron_2016APV = single_electron_2016
 
 single_electron_2017 = [
     "Ele23_Ele12_CaloIdL_TrackIdL_IsoVL",
@@ -106,6 +114,7 @@ single_electron_2018 = [
 
 
 single_lepton_2016 = single_muon_2016 + single_electron_2016
+single_lepton_2016APV = single_muon_2016APV + single_electron_2016APV
 single_lepton_2017 = single_muon_2017 + single_electron_2017
 single_lepton_2018 = single_muon_2018 + single_electron_2018
 
