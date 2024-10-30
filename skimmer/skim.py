@@ -104,12 +104,12 @@ def add_coffea_args(parser):
         default="4GB",
     )
     parser.add_argument(
-        "-walltime", "--walltime",
+        "-t", "--walltime",
         help="Time requested for HTCondor or SLURM (default=%(default)s)",
         default="00:30:00",
     )
     parser.add_argument(
-        "-queue", "--queue",
+        "-q", "--queue",
         help="Queue for HTCondor or SLURM (default=%(default)s)",
         default="00:30:00",
     )
