@@ -59,9 +59,10 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     skimmer_utils.update_cut_flow(cut_flow, "LeptonVeto", events)
 
     # Delta phi min cut
-    # as_type needed otherwise type is not defined and skim cannot be written
-    filter = as_type(events.DeltaPhiMinGoodJetsAK8 < 1.5, bool)
-    events = events[filter]
+    if len(events) > 0:
+        # as_type needed otherwise type is not defined and skim cannot be written
+        filter = as_type(events.DeltaPhiMinGoodJetsAK8 < 1.5, bool)
+        events = events[filter]
     skimmer_utils.update_cut_flow(cut_flow, "DeltaPhiMinLt1p5", events)
 
     # MET cut
