@@ -13,6 +13,7 @@ module_nano=analysis_configs.s_channel_leptons_mc_pre_selection
 
 output_file=test.root
 
+
 # Example to run locally with iterative processor (one thread) on TreeMaker NTuples
 python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e iterative
 
@@ -20,10 +21,11 @@ python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e itera
 python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e futures
 
 # Example to run with LPC HTCondor at LPC on TreeMaker NTuples
-python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e dask/lpccondor -n 2
+python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e dask/lpccondor -n 2 -mem 4GB
 
 # Example to run with SLURM, e.g. at PSI T3 on TreeMaker NTuples
-python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e dask/slurm -n 2
+python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e dask/slurm -n 2 -mem 4GB -t 20:00 -q short
 
-# Example to run locally on (PF)NanoAOD NTuples - will 
+# Example to run locally on (PF)NanoAOD NTuples
 python skim.py -i ${input_files_nano} -o ${output_file} -p ${module_nano} -y 2018 -e futures -nano  # -xsec <x> to add the cross section, replace <x> by the cross section value
+
