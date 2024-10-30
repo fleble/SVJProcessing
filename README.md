@@ -8,7 +8,7 @@ Input files to process are configurable, see for instance [dataset_configs/t_cha
 The event-selection and branch addition are configurable, see for instance [analysis_configs/t_channel_pre_selection.py](https://github.com/fleble/SVJProcessing/blob/main/analysis_configs/t_channel_pre_selection.py).    
 The number of input files to merge is automatically determined depending on the selection efficiency and the target maximum number of events in the output skim.
 
-For the moment only TreeMaker NTuples are supported, but only minimal changes are required to process any nanoAOD-like NTuples format.
+For the moment only TreeMaker and NanoAOD NTuples are supported, as well as job submission with HTCondor at LPC, and with SLURM.
 
 
 ## Installation and environment setup
@@ -42,8 +42,41 @@ cd tests/
 
 ## Preparing list of input files to skim
 
-Fill in the dataset config, see instructions in [analysis_configs/t_channel_pre_selection.py](https://github.com/fleble/SVJProcessing/blob/main/analysis_configs/t_channel_pre_selection.py). Each process / "datatet" must only list files with same cross-section! E.g. different QCD bins are treated as different datasets.    
-Prepare the skim preparation config, see e.g. [analysis_configs/t_channel_pre_selection.py](https://github.com/fleble/SVJProcessing/blob/main/analysis_configs/t_channel_pre_selection.py)
+#### Creating dataset config
+
+Fill in the dataset config, see example in [analysis_configs/t_channel_pre_selection.py](https://github.com/fleble/SVJProcessing/blob/main/analysis_configs/t_channel_pre_selection.py). Each process / "datatet" must only list files with same cross section! E.g. different QCD bins are treated as different datasets. 
+
+Example to decribe the location of 2016 JetHT data, stored as TreeMaker NTuples at FNAL:
+```python
+datasets_info["2016"] = {   # First key is the year
+    "JetHT": [  # Seco<nd key if the name of the dataset
+        {
+            # Specify the location on the GRID or use None if files are available locally
+            "redirector": "root://cmseos.fnal.gov/",
+            # Path to the files
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016-v2/JetHT/", 
+            # Can use a regular expression here to select only some files within that directory, e.g. useful o all your signal samples are together in the same directory
+            "regex": "",
+        },
+        # Can add different locations adding as many of this dictionary to the list
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016G-UL2016-v2/JetHT/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016H-UL2016-v2/JetHT/",
+            "regex": "",
+        },
+    ]
+}
+```
+
+#### Creating skim config
+
+Prepare the skim config, defining the selections to apply to produce the skims, see e.g. [analysis_configs/t_channel_pre_selection.py](https://github.com/fleble/SVJProcessing/blob/main/analysis_configs/t_channel_pre_selection.py).
+To first test your config, you can use the following example script: [skimmer/examples.sh](https://github.com/fleble/SVJProcessing/blob/main/skimmer/example.sh). See instructions in the [next section](#making-skims).
 
 The preparation on the input files proceeds in 3 steps:     
 1- Fetching the number of events in each input file    
@@ -54,9 +87,18 @@ The goal is that:
 1- the number of skim files is reduced compared to the number of initial input files to reduce I/O operations     
 2- all output skim files have the same size and can be processed with similar memory request
 
-If the cut efficiency is very low, it can take time to estimate the selection efficiency.
+If the cut efficiency is very low, it can take time to estimate the selection efficiency. In that case, you can just create the efficiency file by hand, located at `<dataset_directory>/selections/<year>/<selection_name>/<dataset_names>.txt` (replace the terms enclosed in `<>` by the relevant values), and write `1e-9` inside.
 
-An example bash script to perform these steps is provided in [prepare_input_files_lists/prepare_input_files_list.sh](https://github.com/fleble/SVJProcessing/blob/main/prepare_input_files_lists/prepare_input_files_list.sh).
+If the maximum number of events per output file is too high (`-m/--max_events` flag), then you will need to request a large amount of memory for the diferent chunks to be aggregated at the end of the jobs. A typical good number is:
+* 50k for MC (tested on TreeMaker samples with PF candidates)
+* 5k for data (tested on TreeMaker samples with PF candidates)
+
+An example bash script to perform these steps is provided in [prepare_input_files_lists/prepare_input_files_list_t_channel.sh](https://github.com/fleble/SVJProcessing/blob/main/prepare_input_files_lists/prepare_input_files_list_t_channel.sh).    
+It shows how to run the following scripts:
+* list_dataset_files.py
+* compute_unweighted_selection_efficiency.py
+* prepare_input_files_list.py
+For the usage of these scripts, do `python <script.py> -h`.
 
 #### Important note when running on data
 When running on data, in order to handle the overlap between the different primary datasets, the primary dataset name must be provided to the selection config. This is done by naming the subdirectory holding the list of files just as the primary dataset.
@@ -64,7 +106,22 @@ When running on data, in order to handle the overlap between the different prima
 
 ## Making skims
 
-An example bash script to produce skims is provided in [skimmer/make_skims.sh](https://github.com/fleble/SVJProcessing/blob/main/skimmer/make_skims.sh).
+An example bash script to produce skims is provided in [skimmer/examples.sh](https://github.com/fleble/SVJProcessing/blob/main/skimmer/example.sh).
+
+To see the full usage of `skimmer/skim.py`, do:
+```python
+cd skimmer
+python skim.py -h
+```
+
+Some explanation of the flags relative to the job submission:
+* -e/--executor_name: Where to run the job, use futures to run locally, dask/slurm to send jobs with SLURM, and dask/lpccondor to send jobs with HTCondor at LPC.
+* -n/--n_workers: Number of threads used locally, or number of jobs if running on a batch system.
+* -c/--chunk_size: Number of events processed in each chunk. If you set the memory request too low or the chunksize too large, then you will run out of memory while processing.
+* -nc/--cores: Number of cores requested per job.
+* -mem/--memory: Memory requested per job.
+* -t/--walltime: The maximum time of the job (for SLURM only).
+* -q/--queue: The parition name for SLURM jobs.
 
 You can run locally on the interactive nodes where you are logged in, or distributed, using the LPCConderCluster (only at LPC!) or the SLURMCluster at any site with a SLURM batch submission system:    
 * If you run locally, you need to adjust the number of workers to not use too many and bother other users on that login node!
