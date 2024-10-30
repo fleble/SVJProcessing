@@ -14,7 +14,10 @@ def get_files_list(path, redirector=None, regex=".*"):
     if redirector is not None:
         bash_command = f"xrdfs {redirector} {bash_command}"
     files_list = run_bash_command(bash_command).split("\n")
-    files_list = [f"{redirector}{file_name}" for file_name in files_list]
+    if redirector is not None:
+        files_list = [f"{redirector}{file_name}" for file_name in files_list]
+    else:
+        files_list = [f"{path}/{file_name}" for file_name in files_list]
 
     return files_list
 
