@@ -19,3 +19,6 @@ python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e dask/
 # Example to run with SLURM, e.g. at PSI T3
 python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e dask/slurm -n 2
 
+# Example to run with ETP HTCondor at KIT
+python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e dask/ETPCondor -n 2
+
