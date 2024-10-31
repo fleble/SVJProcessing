@@ -3,6 +3,7 @@ import numpy as np
 import numba as nb
 from coffea.nanoevents.methods import vector
 import uproot
+import pickle  
 
 from utils.awkward_array_utilities import as_type
 from utils.tree_maker.triggers import trigger_table as trigger_table_treemaker
@@ -15,20 +16,27 @@ from utils.Logger import *
 ak.behavior.update(vector.behavior)
 
 
-def update_cut_flow(cut_flow, cut_name, events):
+def update_cut_flow(cut_flow, cut_name, events=None, sumw=None):
     """Update cut flow table in a coffea accumulator.
 
     Args:
         cut_flow (dict[str, float])
         cut_name (str): the name of the cut to appear in the cut flow tree
-        events (EventsFromAkArray)
-        use_raw_events (bool)
+        events (ak.Array): the events array from which to compute the number of events. 
+            None only if `sumw` is not None.
+        sumw (float): The sum of weights to add to the cut flow. 
+            None if `events` is not None.
     """
 
-    if cut_name in cut_flow.keys():
-        cut_flow[cut_name] += get_number_of_events(events)
+    if sumw is not None:
+        n_events = sumw
     else:
-        cut_flow[cut_name] = get_number_of_events(events)
+        n_events = get_number_of_events(events)
+
+    if cut_name in cut_flow.keys():
+        cut_flow[cut_name] += n_events
+    else:
+        cut_flow[cut_name] = n_events
 
 
 def add_variations_to_cutflow(cut_flow, var_name, nominal, up, down):
@@ -162,96 +170,71 @@ def is_data(events):
     return not is_mc(events)
 
 
-def apply_phi_spike_filter(events, year, jet_eta_branch_name="Jet_eta", jet_phi_branch_name="Jet_phi", reverse=False):
-    rad = 0.028816 # half the length of the diagonal of the eta-phi rectangular cell
-    rad *= 0.35 # the factor of 0.35 was optimized from the signal vs. background sensitivity study
+def __jet_var_i(var,i,pad_value=np.Inf):
+    padded_var = ak.fill_none(ak.pad_none(var,i+1),pad_value)
+    return padded_var[:,i]
 
-    eta_lead = None
-    eta_sub = None
-    phi_lead = None
-    phi_sub = None
-    if year == "2016":
-        eta_lead = [0.048,0.24,1.488,1.584,-1.008]
-        phi_lead = [-0.35,-0.35,-0.77,-0.77,-1.61]
-        eta_sub = [-1.2,-0.912,-0.912,-0.816,-0.72,-0.72,-0.528,-0.432,-0.336,-0.24,-0.24,-0.144,-0.144,-0.048,0.144,0.912,0.912,1.008,1.296,-1.584,-0.816,-0.72,-0.144,-0.048,-0.048,0.048,1.104,1.488]
-        phi_sub = [-1.19,2.03,3.01,-1.75,-2.17,-0.77,2.73,2.73,0.21,0.07,0.21,-2.59,0.77,0.91,1.75,1.75,2.87,0.63,-0.49,0.63,1.47,-2.31,0.07,-2.59,0.77,0.91,-3.15,2.73]
-    elif year == "2017":
-        eta_lead = [0.144,1.488,1.488,1.584,-0.624]
-        phi_lead = [-0.35,-0.77,-0.63,-0.77,0.91]
-        eta_sub = [-0.912,-0.912,-0.816,-0.72,-0.528,-0.336,-0.24,-0.24,-0.144,-0.144,-0.048,0.144,0.912,0.912,1.008,-1.2,-0.72,-0.72,-0.432,0.336,0.624,1.104,1.296]
-        phi_sub = [2.03,3.01,-1.75,-0.77,2.73,0.21,0.07,0.21,-2.59,0.77,0.91,1.75,1.75,2.87,0.63,-1.19,-2.31,-2.17,2.73,-0.77,-0.77,-3.15,-0.49]
-    elif year == "2018":
-        eta_lead = [1.488,1.488,1.584]
-        phi_lead = [-0.77,-0.63,-0.77]
-        eta_sub = [-1.584,-1.2,-0.912,-0.912,-0.816,-0.816,-0.72,-0.72,-0.528,-0.432,-0.336,-0.24,-0.24,-0.144,-0.144,-0.144,-0.048,-0.048,0.144,0.912,0.912,1.008,1.296,-0.72,1.104,1.488,1.776]
-        phi_sub = [0.63,-1.19,2.03,3.01,-1.75,-0.77,-2.17,-0.77,2.73,2.73,0.21,0.07,0.21,-2.59,0.07,0.77,0.77,0.91,1.75,1.75,2.87,0.63,-0.49,-2.31,-3.15,-0.21,0.77]
-    else:
-        raise ValueError("Invalid year")
 
-    eta_lead = nb.typed.List(eta_lead)
-    eta_sub = nb.typed.List(eta_sub)
-    phi_lead = nb.typed.List(phi_lead)
-    phi_sub = nb.typed.List(phi_sub)
+def __get_phi_spike_filter(hot_spots_dict,var_name,j_eta_i,j_phi_i,rad):
+    hot_etas_i, hot_phis_i = hot_spots_dict[var_name]
+    hot_etas_i_reshaped = np.reshape(hot_etas_i,(len(hot_etas_i),1))
+    hot_phis_i_reshaped = np.reshape(hot_phis_i,(len(hot_phis_i),1))
+    j_eta_i_reshaped = np.broadcast_to(list(j_eta_i),(len(hot_etas_i),len(j_eta_i)))
+    j_phi_i_reshaped = np.broadcast_to(list(j_phi_i),(len(hot_phis_i),len(j_phi_i)))
+    return np.prod((j_eta_i_reshaped - hot_etas_i_reshaped)**2 + (j_phi_i_reshaped - hot_phis_i_reshaped)**2 > rad, axis=0, dtype=bool)
 
-    jets_eta = getattr(events, jet_eta_branch_name)
-    jets_phi = getattr(events, jet_phi_branch_name)
 
-    builder = ak.ArrayBuilder()
-    phi_spike_filter = __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, jets_eta, jets_phi, reverse=reverse).snapshot()
+def apply_phi_spike_filter(
+        events,
+        year,
+        hot_spots_pkl,
+        n_jets,
+        jets_eta,
+        jets_phi,
+    ):
 
-    events = events[phi_spike_filter]
-
+    if year == "2016APV": year = "2016"
+    with open(hot_spots_pkl,"rb") as infile:
+        phi_spike_hot_spots = pickle.load(infile)
+    rad = 0.028816*0.35 # the factor of 0.35 was optimized from the signal vs. background sensitivity study for s-channel
+    hot_spots_dict = phi_spike_hot_spots[year]
+    conditions = np.ones(len(events), dtype=bool)
+    for i in range(n_jets):
+        conditions &= __get_phi_spike_filter(
+            hot_spots_dict,
+            f"j{i+1}Phivsj{i+1}Eta",
+            __jet_var_i(jets_eta, i),
+            __jet_var_i(jets_phi, i),
+            rad,
+        )
+    events = events[conditions]
     return events
 
 
-def apply_hem_veto(events):
+def get_hem_veto_filter(*objects_list):
 
-    if is_tree_maker(events):
-        jets = events.Jets
-        electrons = events.Electrons
-        muons = events.Muons
+    eta_min = -3.05
+    eta_max = -1.35
+    phi_min = -1.62
+    phi_max = -0.82
 
-    else:
-        jets = ak.zip({
-            "pt": events["Jet_pt"],
-            "eta": events["Jet_eta"],
-            "phi": events["Jet_phi"],
-        })
-        electrons = ak.zip({
-            "pt":  events["Electron_pt"],
-            "eta": events["Electron_eta"],
-            "phi": events["Electron_phi"],
-        })
-        muons = ak.zip({
-            "pt":  events["Muon_pt"],
-            "eta": events["Muon_eta"],
-            "phi": events["Muon_phi"],
-        })
+    veto = ak.ones_like(range(len(objects_list[0])), dtype=bool)
+    for objects in objects_list:
+        hem_veto = (
+            (objects.eta > eta_min)
+            & (objects.eta < eta_max)
+            & (objects.phi > phi_min)
+            & (objects.phi < phi_max)
+        )
+        veto = veto | ak.any(hem_veto, axis=1)
 
-    jet_hem_condition = (
-        (jets.eta > -3.05)
-        & (jets.eta < -1.35)
-        & (jets.phi > -1.62)
-        & (jets.phi < -0.82)
-    )
-    electron_hem_condition = (
-        (electrons.eta > -3.05)
-        & (electrons.eta < -1.35)
-        & (electrons.phi > -1.62)
-        & (electrons.phi < -0.82)
-    )
-    muon_hem_condition = (
-        (muons.eta > -3.05)
-        & (muons.eta < -1.35)
-        & (muons.phi > -1.62)
-        & (muons.phi < -0.82)
-    )
-    veto = (
-        ((ak.num(jets) > 0) & ak.any(jet_hem_condition, axis=1))
-        | ((ak.num(muons) > 0) & ak.any(muon_hem_condition, axis=1))
-        | ((ak.num(electrons) > 0) & ak.any(electron_hem_condition, axis=1))
-    )
     hem_filter = ~veto
+
+    return hem_filter
+
+
+def apply_hem_veto(events, *objects_list):
+    hem_filter = get_hem_veto_filter(*objects_list)
 
     if is_mc(events):
         events = events[hem_filter]
@@ -361,28 +344,6 @@ def get_cut_flow_from_skims(input_file, cut_flow_tree):
     f = uproot.open(input_file)
     cut_flow = f["CutFlow"].arrays(cut_flow_tree.keys(),  library="pd")
     return cut_flow.to_dict("list")
-
-
-@nb.jit
-def __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, jets_eta, jets_phi, reverse):
-    for jet_eta, jet_phi in zip(jets_eta, jets_phi):
-        if len(jet_eta) < 2:
-            builder.append(True)
-        else:
-            keep_event = True
-            for iep in range(len(eta_lead)):
-                if (eta_lead[iep] - jet_eta[0])**2 + (phi_lead[iep] - jet_phi[0])**2 < rad:
-                    keep_event = False
-                    break
-            for iep in range(len(eta_sub)):
-                if (eta_sub[iep] - jet_eta[1])**2 + (phi_sub[iep] - jet_phi[1])**2 < rad:
-                    keep_event = False
-                    break
-            if reverse:
-                builder.append(not keep_event)
-            else:
-                builder.append(keep_event)
-    return builder
 
 
 def apply_variation(events, variation):
@@ -495,22 +456,34 @@ def apply_variation(events, variation):
         return events
 
 
-def __add_weight_variations(events, variation_up, variation_down, nominal, name):
-    """Add the up/down weight branches to the events."""
+def __add_weight_variations(events, variation_up, variation_down, variation_name):
+    """Add the up/down weight branches to the events.
+    
+    Args:
+        events (ak.Array): the events erray to which to add the up/down weights variations
+        variation_up (ak.Array): the up variations from the nominal weights
+        variation_down (ak.Array): the down variations from the nominal weights
+        variation_name (str): the name of the variation
 
-    weights_up = nominal * variation_up
-    weights_down = nominal * variation_down
+    Returns:
+        ak.Array, float, float: events, sumw up, and sumw down
+    """
 
-    # Normalize the weights such that the sum of nominal weights
-    # can be used to normalize the events for the variations
-    weights_up = weights_up * (ak.sum(nominal, axis=0)  / ak.sum(weights_up, axis=0))
-    weights_down = weights_down * (ak.sum(nominal, axis=0)  / ak.sum(weights_down, axis=0))
+    weight_name = "Weight" if is_tree_maker(events) else "genWeight"
+    nominal_weights = events[weight_name]
+
+    weights_up = nominal_weights * variation_up
+    weights_down = nominal_weights * variation_down
 
     # Create the new branches
-    events[f"{name}Up"] = weights_up
-    events[f"{name}Down"] = weights_down
+    events[f"{weight_name}{variation_name}Up"] = weights_up
+    events[f"{weight_name}{variation_name}Down"] = weights_down
 
-    return events
+    # Compute the sum of weights for the variations
+    sumw_up = ak.sum(weights_up)
+    sumw_down = ak.sum(weights_down)
+
+    return events, sumw_up, sumw_down
 
 
 def apply_scale_variations(events):
@@ -531,19 +504,14 @@ def apply_scale_variations(events):
         events (ak.Array)
 
     Returns:
-        events (ak.Array)
+        ak.Array, float, float: events, sumw up, and sumw down
     """
 
     # Calculate up/down variations
-    envelope_up = ak.max(events.ScaleWeights[:,[i for i in range(9) if i not in (5, 7)]], axis=-1)
-    envelope_down = ak.min(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+    variation_up = ak.max(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+    variation_down = ak.min(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
 
-    # Add the weights for the variations
-    weight_name = "Weight" if is_tree_maker(events) else "genWeight"
-    nominal_weights = events[weight_name]
-    events = __add_weight_variations(events, envelope_up, envelope_down, nominal_weights, f"{weight_name}Scale")
-
-    return events
+    return __add_weight_variations(events, variation_up, variation_down, "Scale")
 
 
 def apply_pdf_variations(events):
@@ -563,27 +531,25 @@ def apply_pdf_variations(events):
         events (ak.Array)
 
     Returns:
-        events (ak.Array)
+        ak.Array, float, float: events, sumw up, and sumw down
     """
     
     # Normalize the array of pdf weights by the first entry
     if is_tree_maker(events):
-        pdf_variations = events.PDFweights
-        pdf_variations = pdf_variations / pdf_variations[:,0]
+        pdf_variations = events.PDFweights.to_numpy()
+        max_value = np.max(pdf_variations, where=pdf_variations<20, initial=1)
+        pdf_variations = np.clip(pdf_variations, a_min=None, a_max=max_value)
+        pdf_variations = pdf_variations / pdf_variations[:, :1]
     else:
         raise NotImplementedError()
 
     # Calculate the mean and standard deviation across replicas per event
-    mean = ak.mean(pdf_variations, axis=-1)
-    std = ak.std(pdf_variations, axis=-1)
+    mean = np.mean(pdf_variations, axis=1)
+    std = np.std(pdf_variations, axis=1)
 
-    # Calculate the up_down normalization factors across events
-    pdf_weight_up = mean + std
-    pdf_weight_down = mean - std
+    # Calculate the up/down variations across events
+    variation_up = mean + std
+    variation_down = mean - std
 
-    # Add the weights for the variations
-    weight_name = "Weight" if is_tree_maker(events) else "genWeight"
-    nominal_weights = events[weight_name]
-    events = __add_weight_variations(events, pdf_weight_up, pdf_weight_down, nominal_weights, f"{weight_name}PDF")
+    return __add_weight_variations(events, variation_up, variation_down, "PDF")
 
-    return events

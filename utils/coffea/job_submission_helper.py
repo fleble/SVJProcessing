@@ -22,6 +22,7 @@ def __get_client(executor_name, n_workers, cores, memory, disk, time, partition,
 
     job_script_prologue = [
         f'export X509_USER_PROXY={os.environ["X509_USER_PROXY"]}',
+        f'export SVJ_PROCESSING_ROOT=./',
     ]
 
     if "slurm" in executor_name:

@@ -16,14 +16,33 @@ from utils.Logger import *
 
 class Skimmer(processor.ProcessorABC):
 
-    def __init__(self, process_function):
+    def __init__(
+            self,
+            process_function,
+            variation=None,
+            weight_variations=[],
+        ):
         self.process_function = process_function
+        self.variation = variation
+        self.weight_variations = weight_variations
 
-        
     def process(self, events):
 
         cut_flow = {}
         skimmer_utils.update_cut_flow(cut_flow, "Initial", events)
+
+        if skimmer_utils.is_mc(events):
+            # Calculate and store the weight variations
+            if "scale" in self.weight_variations:
+                events, sumw_scale_up, sumw_scale_down = skimmer_utils.apply_scale_variations(events)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialScaleUp", sumw=sumw_scale_up)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialScaleDown", sumw=sumw_scale_down)
+            if "pdf" in self.weight_variations:
+                events, sumw_pdf_up, sumw_pdf_down = skimmer_utils.apply_pdf_variations(events)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialPDFUp", sumw=sumw_pdf_up)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialPDFDown", sumw=sumw_pdf_down)
+
+        events = skimmer_utils.apply_variation(events, self.variation)
 
         events, cut_flow = self.process_function(events, cut_flow)
         skimmer_utils.update_cut_flow(cut_flow, "Final", events)
@@ -85,12 +104,12 @@ def add_coffea_args(parser):
         default="4GB",
     )
     parser.add_argument(
-        "-walltime", "--walltime",
+        "-t", "--walltime",
         help="Time requested for HTCondor or SLURM (default=%(default)s)",
         default="00:30:00",
     )
     parser.add_argument(
-        "-queue", "--queue",
+        "-q", "--queue",
         help="Queue for HTCondor or SLURM (default=%(default)s)",
         default="00:30:00",
     )
@@ -159,6 +178,15 @@ def add_coffea_args(parser):
         choices=["jec_up", "jec_down", "jer_up", "jer_down"],
         default=None,
     )
+    parser.add_argument(
+        "-wvar", "--weight_variations",
+        help="What systematic weight variations to compute (choice=%(choices)s). "
+             "Can choose several weights variations.",
+        type=str,
+        nargs="*",
+        choices=["scale", "pdf"],
+        default=[],
+    )
 
 
 def __get_arguments():
@@ -206,15 +234,13 @@ def __prepare_cut_flow_tree(cut_flow_dict):
 
 def __prepare_uproot_job_kwargs_from_coffea_args(args):
 
-    year = args.year.replace("APV", "")
     process_module = import_module(args.process_module_name)
     process_function = lambda x, y: process_module.process(
         x,
         y,
-        year=year,
+        year=args.year,
         primary_dataset=args.primary_dataset,
         pn_tagger=args.pn_tagger,
-        variation=args.variation
     )
 
     executor = get_executor(args.executor_name)
@@ -247,7 +273,11 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
 
     uproot_job_kwargs = {
         "treename": treename,
-        "processor_instance": Skimmer(process_function),
+        "processor_instance": Skimmer(
+            process_function,
+            args.variation,
+            args.weight_variations,
+        ),
         "executor": executor,
         "executor_args": executor_args,
         "chunksize": args.chunk_size,

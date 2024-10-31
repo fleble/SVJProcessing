@@ -30,13 +30,7 @@ signal_models = [
     "t-channel_mMed-800_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
     "t-channel_mMed-1000_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
     "t-channel_mMed-1500_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
-    "t-channel_mMed-2000_mDark-1_rinv-0p3_alpha-peak_yukawa-1",
-    "t-channel_mMed-2000_mDark-50_rinv-0p3_alpha-peak_yukawa-1",
-    "t-channel_mMed-2000_mDark-100_rinv-0p3_alpha-peak_yukawa-1",
-    "t-channel_mMed-2000_mDark-20_rinv-0p1_alpha-peak_yukawa-1",
     "t-channel_mMed-2000_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
-    "t-channel_mMed-2000_mDark-20_rinv-0p5_alpha-peak_yukawa-1",
-    "t-channel_mMed-2000_mDark-20_rinv-0p7_alpha-peak_yukawa-1",
     "t-channel_mMed-3000_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
     "t-channel_mMed-4000_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
 ]
@@ -127,7 +121,7 @@ for year in years:
         signal_model: [
             {
                 "redirector": "root://cmseos.fnal.gov/",
-                "path": f"/store/user/lpcdarkqcd/tchannel_UL/{year}/Full/PrivateSamples/SVJ_UL{year}_{signal_model}_13TeV-madgraphMLM-pythia8_n-1000",
+                "path": f"/store/user/lpcdarkqcd/tchannel_UL/signal_production_2Dscans/NTUPLE/Private2DUL{year[2:]}/SVJ_{signal_model}_13TeV-madgraphMLM-pythia8",
                 "regex": "",
             },
         ]

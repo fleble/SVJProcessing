@@ -8,7 +8,7 @@ from analysis_configs import objects_definition as obj
 from analysis_configs import sequences
 
 
-def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwargs):
+def process(events, cut_flow, year, **kwargs):
     """SVJ t-channel WNAE QCD training region targetting gamma + jets events."""
 
     # Trigger event selection
@@ -17,14 +17,12 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     skimmer_utils.update_cut_flow(cut_flow, "Trigger", events)
 
     # Adding branches already so that it can be used in the rest of the selection
-    # JetsAK8_isGood
+    events = sequences.add_st(events)
     events = sequences.add_good_ak8_jet_branch(events)
-    # Photons_isGood
-    events["Photons"] = ak.with_field(
-        events["Photons"],
-        obj.is_good_photon(events.Photons),
-        "isGood",
-    )
+    events = sequences.add_good_ak4_jet_branch(events)
+    events = sequences.add_is_veto_electron_branch(events)
+    events = sequences.add_is_veto_muon_branch(events)
+    events = sequences.add_good_photon_branch(events)
 
     # Require at least 1 photon
     filter = ak.count(events.Photons.pt[events.Photons.isGood], axis=1) >= 1
@@ -40,8 +38,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     events = events[filter]
     skimmer_utils.update_cut_flow(cut_flow, f"LeadingPhotonPtGt{min_photon_pt}GeV", events)
 
-    st = events.MET + events.HT
-    events = events[st > 800]
+    events = events[events.ST > 800]
     skimmer_utils.update_cut_flow(cut_flow, "STGt800GeV", events)
 
     # MET filter event selection
@@ -49,9 +46,16 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
     # HEM veto
-    if year == "2018":
-        events = skimmer_utils.apply_hem_veto(events)
+    good_ak4_jets = events.Jets[events.Jets.isGood]
+    veto_electrons = events.Electrons[events.Electrons.isVeto]
+    veto_muons = events.Muons[events.Muons.isVeto]
+    good_photons = events.Photons[events.Photons.isGood]
+    if year == "2018" and skimmer_utils.is_data(events):
+        events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, veto_electrons, veto_muons, good_photons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
+    if year == "2018" and skimmer_utils.is_mc(events):
+        filter = skimmer_utils.get_hem_veto_filter(good_ak4_jets, veto_electrons, veto_muons, good_photons)
+        events["HEMVeto"] = filter
 
     # Define as training jets the AK8 jets with angular separation
     # with the tag photon greater than 0.8
