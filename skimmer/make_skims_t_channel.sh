@@ -155,6 +155,7 @@ make_skims() {
             xrdfs ${output_redirector} mkdir -p ${output_dir}
         fi
     else
+        local output_redirector="none"
         if [ ! -d ${output_directory} ]; then
             mkdir -p ${output_directory}
         fi
@@ -174,9 +175,12 @@ make_skims() {
                 echo ""
                 echo "Making skim file ${output_file}"
 
-                local output_redirector=$(echo ${output_file} | cut -d/ -f 1-4)
-                local output_file_path=$(echo ${output_file} | cut -d/ -f 4-)
-                xrdfs ${output_redirector} ls ${output_file_path} > /dev/null 2>&1
+                if [ "${output_redirector}" == "none" ]; then
+                    ls ${output_file} > /dev/null 2>&1
+                else
+                    local output_file_path=$(echo ${output_file} | cut -d/ -f 4-)
+                    xrdfs ${output_redirector} ls ${output_file_path} > /dev/null 2>&1
+                fi
                 if [ "$?" != "0" ] || [ "${FORCE_RECREATE}" == "1" ]; then
 	            if [ "${variation}" == "nominal" ]; then
 		        variation_flag=''
