@@ -130,7 +130,7 @@ def add_coffea_args(parser):
             "futures",
             "dask/slurm",
             "dask/lpccondor",
-            "dask/ETPCondor",
+            "dask/etpcondor",
         ],
         default="futures",
         help="The type of executor to use (default=%(default)s)"
