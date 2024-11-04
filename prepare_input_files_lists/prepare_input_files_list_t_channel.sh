@@ -126,9 +126,13 @@ prepare_input_files_list() {
     echo "Preparing input files for dataset ${dataset_name} year ${year} and selection ${selection_name}"
 
     python list_dataset_files.py -d ${dataset_name} -y ${year} -c ${dataset_config} -o ${dataset_directory} 
-    python compute_unweighted_selection_efficiency.py -d ${dataset_name} -y ${year} -p ${module} -s ${selection_name} -i ${dataset_directory} -o ${dataset_directory} -n 6 -e futures -c 10000
+    python compute_unweighted_selection_efficiency.py -d ${dataset_name} -y ${year} -p ${module} -s ${selection_name} -i ${dataset_directory} -o ${dataset_directory} -n 4 -e futures -c 10000
     python prepare_input_files_list.py -d ${dataset_name} -y ${year} -s ${selection_name} -i ${dataset_directory} -o ${dataset_directory} -m 50000
     # Use -m 5000 for data if you want to keep using 4GB of memory per worker
+
+    # Use the --all flag to skim all the input files into 1 output skim file
+    # Useful if the selection efficiency is very low and the compute_unweighted_selection_efficiency.py step can be skipped
+    #python prepare_input_files_list.py -d ${dataset_name} -y ${year} -s ${selection_name} -i ${dataset_directory} -o ${dataset_directory} -m 50000 --all
 }
 
 

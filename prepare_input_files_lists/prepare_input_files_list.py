@@ -42,6 +42,12 @@ def __get_arguments():
         default=50000,
         type=int,
     )
+    parser.add_argument(
+        "-a", "--all",
+        help="Do not use selection efficiency and write all input files to the "
+             "list of input files to skim.",
+        action="store_true",
+    )
     
     return parser.parse_args()
 
@@ -53,6 +59,7 @@ def __prepare_input_files_list(
         max_events,
         input_directory,
         output_directory,
+        all_files,
     ):
 
     input_files_list = f"{input_directory}/files_list/{year}/{dataset}.csv"
@@ -60,34 +67,43 @@ def __prepare_input_files_list(
         log.critical(f"Input files list {input_files_list} does not exist!")
         exit(1)
 
-    selection_efficiency_file = f"{input_directory}/selections/{year}/{selection}/{dataset}.txt"
-    if not os.path.exists(selection_efficiency_file):
-        log.critical(f"Input selection file {selection_efficiency_file} does not exist!")
-        exit(1)
-    with open(selection_efficiency_file) as file:
-        lines = file.readlines()
-        selection_efficiency = float(lines[0][:-1])
- 
-    output_files_list = []
-    with open(input_files_list) as f:
-        csv_reader = csv.reader(f)
-        sum = 0
-        output_files_list.append([])
-        next(csv_reader)
-        for line in csv_reader:
-            file_name = line[0]
-            n_events = int(line[1])
-            n_selected_events = n_events * selection_efficiency
-            if sum + n_selected_events <= max_events:
-                output_files_list[-1].append(file_name)
-            else:
-                output_files_list.append([file_name])
-                sum = 0
-            sum += n_selected_events
-        
+    if all_files:
+        output_files_list = [[]]
+        with open(input_files_list) as f:
+            csv_reader = csv.reader(f)
+            next(csv_reader)
+            for line in csv_reader:
+                output_files_list[0].append(line[0])
+
+    else:
+        selection_efficiency_file = f"{input_directory}/selections/{year}/{selection}/{dataset}.txt"
+        if not os.path.exists(selection_efficiency_file):
+            log.critical(f"Input selection file {selection_efficiency_file} does not exist!")
+            exit(1)
+        with open(selection_efficiency_file) as file:
+            lines = file.readlines()
+            selection_efficiency = float(lines[0][:-1])
+     
+        output_files_list = []
+        with open(input_files_list) as f:
+            csv_reader = csv.reader(f)
+            sum = 0
+            output_files_list.append([])
+            next(csv_reader)
+            for line in csv_reader:
+                file_name = line[0]
+                n_events = int(line[1])
+                n_selected_events = n_events * selection_efficiency
+                if sum + n_selected_events <= max_events:
+                    output_files_list[-1].append(file_name)
+                else:
+                    output_files_list.append([file_name])
+                    sum = 0
+                sum += n_selected_events
+            
     output_directory_ = f"{output_directory}/skim_input_files_list/{year}/{selection}/{dataset}"
     Path(output_directory_).mkdir(parents=True, exist_ok=True)
-    
+        
     n_input_files = 0
     for x in output_files_list: n_input_files += len(x)
     n_output_files = len(output_files_list)
@@ -106,7 +122,7 @@ def main ():
 
     args = __get_arguments()
     datasets = args.datasets
-
+   
     for dataset in datasets:
         args.primary_dataset = dataset
         __prepare_input_files_list(
@@ -116,6 +132,7 @@ def main ():
             args.max_events,
             args.input,
             args.output,
+            args.all,
         )
 
 
