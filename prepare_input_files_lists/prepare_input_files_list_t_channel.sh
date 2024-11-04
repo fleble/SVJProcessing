@@ -96,10 +96,10 @@ dataset_names=(
     #
     # Diboson
     #
-    ZZTo2Q2Nu
-    WZTo2Q2Nu
-    WZTo1L1Nu2Q
-    WWTo1L1Nu2Q
+    # ZZTo2Q2Nu
+    # WZTo2Q2Nu
+    # WZTo1L1Nu2Q
+    # WWTo1L1Nu2Q
     #
     ##################################
     # DATA
