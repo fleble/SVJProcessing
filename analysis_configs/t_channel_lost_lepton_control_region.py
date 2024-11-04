@@ -5,7 +5,6 @@ from skimmer import skimmer_utils
 from utils.awkward_array_utilities import as_type
 import analysis_configs.triggers as trg
 from analysis_configs.met_filters import met_filters_treemaker as met_filters
-from analysis_configs import objects_definition as obj
 from analysis_configs import sequences
 
 
@@ -14,6 +13,8 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     
     Same selections as for preselection region, but requiring exactly 1 veto lepton.
     """
+
+    # If this config is changed, changes must be reflected in t_channel_pre_selection.py
 
     if skimmer_utils.is_data(events):
         events = sequences.remove_primary_dataset_overlap(events, year, primary_dataset)

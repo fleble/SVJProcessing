@@ -111,7 +111,6 @@ def __compute_efficiency(
                 n_events_target = efficiency * (1 - efficiency) / (uncertainty_target ** 2)
         
                 n_events = 0
-                current_n_input_files = n_input_files
                 for i_input_files in range(len(input_files_names)):
                     n_events += number_of_events[i_input_files]
                     if n_events > n_events_target:

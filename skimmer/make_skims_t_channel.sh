@@ -3,7 +3,7 @@
 MEMORY=4GB
 CORES=2
 CHUNK_SIZE=10000
-N_WORKERS=50
+N_WORKERS=100
 EXECUTOR=dask/lpccondor   # HTCondor at LPC
 #N_WORKERS=6
 #EXECUTOR=futures     # local job
@@ -35,10 +35,11 @@ years=(
 
 variations=(
     nominal
-    jec_up
-    jec_down
-    jer_up
-    jer_down
+#    # JEC/JER variations only for signal!
+#    jec_up
+#    jec_down
+#    jer_up
+#    jer_down
 )
 
 dataset_names=(
@@ -115,10 +116,10 @@ dataset_names=(
     #
     # Diboson
     #
-    ZZTo2Q2Nu
-    WZTo2Q2Nu
-    WZTo1L1Nu2Q
-    WWTo1L1Nu2Q
+    # ZZTo2Q2Nu
+    # WZTo2Q2Nu
+    # WZTo1L1Nu2Q
+    # WWTo1L1Nu2Q
     #
     ##################################
     # DATA
@@ -155,6 +156,7 @@ make_skims() {
             xrdfs ${output_redirector} mkdir -p ${output_dir}
         fi
     else
+        local output_redirector="none"
         if [ ! -d ${output_directory} ]; then
             mkdir -p ${output_directory}
         fi
@@ -174,16 +176,24 @@ make_skims() {
                 echo ""
                 echo "Making skim file ${output_file}"
 
-                local output_redirector=$(echo ${output_file} | cut -d/ -f 1-4)
-                local output_file_path=$(echo ${output_file} | cut -d/ -f 4-)
-                xrdfs ${output_redirector} ls ${output_file_path} > /dev/null 2>&1
+                if [ "${output_redirector}" == "none" ]; then
+                    ls ${output_file} > /dev/null 2>&1
+                else
+                    local output_file_path=$(echo ${output_file} | cut -d/ -f 4-)
+                    xrdfs ${output_redirector} ls ${output_file_path} > /dev/null 2>&1
+                fi
                 if [ "$?" != "0" ] || [ "${FORCE_RECREATE}" == "1" ]; then
-	            if [ "${variation}" == "nominal" ]; then
-		        variation_flag=''
-		    else
-		        variation_flag="--variation ${variation}"
-		    fi
-                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -pd ${dataset_name} -y ${year} -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger ${variation_flag[@]} --weight_variation scale pdf
+                    if [ "${variation}" == "nominal" ]; then
+                        variation_flag=""
+                    else
+                        variation_flag="--variation ${variation}"
+                    fi
+                    if [[ ${dataset_name} == t-channel* ]]; then
+                        weight_variation_flag="--weight_variation scale pdf"
+                    else
+                        weight_variation_flag=""
+                    fi
+                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -pd ${dataset_name} -y ${year} -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger ${variation_flag} ${weight_variation_flag}
                     xrdcp -f ${output_file_tmp} ${output_file}
                     echo ${output_file} has been saved.
                     rm ${output_file_tmp}
