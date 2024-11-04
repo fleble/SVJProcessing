@@ -4,7 +4,8 @@ MEMORY=4GB
 CORES=1
 CHUNK_SIZE=10000
 N_WORKERS=20
-EXECUTOR=dask/ETPCondor   # HTCondor at KIT ETP
+EXECUTOR=dask/etpcondor   # HTCondor at KIT ETP
+PORT=3719 # port for dask scheduler, needs to be opened by admins
 #N_WORKERS=6
 #EXECUTOR=futures     # local job
 FORCE_RECREATE=0   # 1 to recreate output file if it exists, 0 else
@@ -102,7 +103,7 @@ make_skims() {
 		    else
 		        variation_flag="--variation ${variation}"
 		    fi
-                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -pd ${dataset_name} -y ${year} -nano_scout -e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger ${variation_flag[@]}
+                    python skim.py -i ${input_files} -o ${output_file_tmp} -p ${module} -pd ${dataset_name} -y ${year} -nano_scout -e ${EXECUTOR} -port ${PORT} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} -pn_tagger ${variation_flag[@]}
                     xrdcp -f ${output_file_tmp} ${output_file}
                     echo ${output_file} has been saved.
                     rm ${output_file_tmp}

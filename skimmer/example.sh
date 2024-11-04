@@ -29,6 +29,6 @@ python skim.py -i ${input_files} -o ${output_file} -p ${module} -y 2018 -e dask/
 # Example to run locally on (PF)NanoAOD NTuples
 python skim.py -i ${input_files_nano} -o ${output_file} -p ${module_nano} -y 2018 -e futures -nano  # -xsec <x> to add the cross section, replace <x> by the cross section value
 
-# Example to run on (PF)NanoAOD NTuples with ETP HTCondor at KIT
-python skim.py -i ${input_files_nano} -o ${output_file} -p ${module_nano} -y 2018 -e dask/ETPCondor -n 2 -mem 4GB -nano # -xsec <x> to add the cross section, replace <x> by the cross section value
+# Example to run on (PF)NanoAOD NTuples with ETP HTCondor at KIT (check with admins if the port is open)
+python skim.py -i ${input_files_nano} -o ${output_file} -p ${module_nano} -y 2018 -e dask/etpcondor -port 3719 -n 2 -mem 4GB -nano # -xsec <x> to add the cross section, replace <x> by the cross section value
 

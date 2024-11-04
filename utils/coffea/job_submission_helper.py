@@ -57,13 +57,12 @@ def __get_client(executor_name, n_workers, cores, memory, disk, time, partition,
             job_script_prologue=job_script_prologue,
         )
 
-    elif "ETP" in executor_name:
+    elif "etpcondor" in executor_name:
         repo_directory = os.environ["SVJ_PROCESSING_ROOT"]
         
         cluster = HTCondorCluster(
             scheduler_options={
-                "port": "3719",
-                #"dashboard_address": f"3719",
+                "port": f"{port}",
             },
             cores=cores,
             memory=memory,
@@ -98,7 +97,7 @@ def get_executor(executor_name):
            futures
            dask/slurm
            dask/condor
-           dask/ETPCondor
+           dask/etpcondor
 
     Returns:
         coffea.processor
@@ -136,7 +135,7 @@ def get_executor_args(
            futures
            dask/slurm
            dask/lpccondor
-           dask/ETPCondor
+           dask/etpcondor
         schema_name (str): e.g. BaseSchema
         n_workers (int)
         skip_bad_files (bool)
