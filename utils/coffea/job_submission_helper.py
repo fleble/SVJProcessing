@@ -1,7 +1,7 @@
 import os
 
 from coffea import processor, nanoevents
-from dask_jobqueue import SLURMCluster
+from dask_jobqueue import SLURMCluster, HTCondorCluster
 from distributed import Client
 
 
@@ -57,6 +57,29 @@ def __get_client(executor_name, n_workers, cores, memory, disk, time, partition,
             job_script_prologue=job_script_prologue,
         )
 
+    elif "etpcondor" in executor_name:
+        repo_directory = os.environ["SVJ_PROCESSING_ROOT"]
+        
+        cluster = HTCondorCluster(
+            scheduler_options={
+                "port": f"{port}",
+            },
+            cores=cores,
+            memory=memory,
+            disk=disk,
+            log_directory=f"{repo_directory}/logs",
+            death_timeout=180,
+            job_script_prologue=job_script_prologue,
+            job_extra_directives = {
+                "Universe":"docker", 
+                "docker_image":"mschnepf/slc7-condocker", 
+                "docker_network_type":"host", 
+                "transfer_input_files": f"{repo_directory}/utils,{repo_directory}/skimmer,{repo_directory}/analysis_configs",
+                "accounting_group":"cms.higgs"
+            }
+        )
+
+        
     cluster.scale(jobs=n_workers)
     #cluster.adapt(minimum=6, maximum=250)
     client = Client(cluster)
@@ -74,6 +97,7 @@ def get_executor(executor_name):
            futures
            dask/slurm
            dask/condor
+           dask/etpcondor
 
     Returns:
         coffea.processor
@@ -111,6 +135,7 @@ def get_executor_args(
            futures
            dask/slurm
            dask/lpccondor
+           dask/etpcondor
         schema_name (str): e.g. BaseSchema
         n_workers (int)
         skip_bad_files (bool)
