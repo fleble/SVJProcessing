@@ -200,9 +200,26 @@ def __make_nano_aod_event_tree(ak_array, sort_by_name=True):
     # Book dictionaries for arrays to zip together and that does not not have to be zipped
     branches_to_zip = {collection: {} for collection in collections}
     single_branches = {}
-
+    
+    branch_to_skip = []
+    
+    for field in ak_array.fields:
+        for n_branch in ["n" + field.split("_")[0], "n" + field[0]]:
+            if n_branch in ak_array.fields:
+                branch_to_skip.append(n_branch)
     # Fill in those dictionaries
     for field in ak_array.fields:
+        type_ = akUtl.get_type(ak_array[field])
+        if field in branch_to_skip:
+            log.warning(f"Skipping branch {field} because it is a counter branch.")
+            continue
+        if type_ in ["str", "string"]:
+            log.warning(f"Skipping branch {field} because it is of type {type_}.")
+            continue
+        if ak.count(ak.fill_none(ak_array[field], 0), axis=None) == 0:
+            log.warning(f"Skipping branch {field} because it is empty")
+            continue
+        
         is_collection_variable = False
         
         collection_candidate, variable = __get_collection_and_variable_names(field)

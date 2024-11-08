@@ -107,3 +107,6 @@ def sort_array_with_fields(ak_array, field_name, ascending=False):
 
     sorted_indices = ak.argsort(ak_array[field_name], ascending=ascending)
     return ak_array[sorted_indices]
+
+def get_type(ak_array):
+    return str(ak.type(ak_array)).split("*")[-1].replace("?", "").replace(" ", "")
