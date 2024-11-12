@@ -17,8 +17,8 @@ def process(events, cut_flow, year, primary_dataset="", **kwargs):
     # Adding branches already so that it can be used in the rest of the selection
     events = sequences.add_good_ak8_jet_branch(events)
     events = sequences.add_good_ak4_jet_branch(events)
-    events = sequences.add_is_veto_electron_branch(events)
-    events = sequences.add_is_veto_muon_branch(events)
+    events = sequences.add_is_tag_electron_branch(events)
+    events = sequences.add_is_tag_muon_branch(events)
 
     # Trigger event selection
     triggers = getattr(trg, f"single_lepton_{year}")
@@ -38,21 +38,19 @@ def process(events, cut_flow, year, primary_dataset="", **kwargs):
 
     # HEM veto
     good_ak4_jets = events.Jets[events.Jets.isGood]
-    veto_electrons = events.Electrons[events.Electrons.isVeto]
-    veto_muons = events.Muons[events.Muons.isVeto]
+    tag_electrons = events.Electrons[events.Electrons.isTag]
+    tag_muons = events.Muons[events.Muons.isTag]
     if year == "2018" and skimmer_utils.is_data(events):
-        events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, veto_electrons, veto_muons)
+        events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, tag_electrons, tag_muons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
     if year == "2018" and skimmer_utils.is_mc(events):
-        filter = skimmer_utils.get_hem_veto_filter(good_ak4_jets, veto_electrons, veto_muons)
+        filter = skimmer_utils.get_hem_veto_filter(good_ak4_jets, tag_electrons, tag_muons)
         events["HEMVeto"] = filter
 
 
     # Require exactly 1 "tag lepton" (medium ID, tight mini-iso electron or muon)
-    tag_electrons = events.Electrons[obj.is_tag_electron(events.Electrons)]
-    tag_muons = events.Muons[obj.is_tag_muon(events.Muons)]
-    n_tag_electrons = ak.count(tag_electrons.pt, axis=1)
-    n_tag_muons = ak.count(tag_muons.pt, axis=1)
+    n_tag_electrons = ak.sum(events.Electrons.isTag, axis=1)
+    n_tag_muons = ak.sum(events.Muons.isTag, axis=1)
     n_tag_leptons = n_tag_electrons + n_tag_muons
     events = events[n_tag_leptons == 1]
     skimmer_utils.update_cut_flow(cut_flow, f"nTagLeptonEq1", events)
@@ -61,8 +59,8 @@ def process(events, cut_flow, year, primary_dataset="", **kwargs):
     # Veto events with additional veto leptons
     events = sequences.apply_lepton_veto(
         events,
-        electron_extra_condition=~obj.is_tag_electron(events.Electrons),
-        muon_extra_condition=~obj.is_tag_muon(events.Muons),
+        electron_extra_condition=~events.Electrons.isTag,
+        muon_extra_condition=~events.Muons.isTag,
     )
     skimmer_utils.update_cut_flow(cut_flow, "LeptonVeto", events)
 
@@ -171,15 +169,6 @@ def process(events, cut_flow, year, primary_dataset="", **kwargs):
     skimmer_utils.update_cut_flow(cut_flow, "nTrainingJetsAK8Gt1", events)
 
 
-    # Remove branches added for convenience
-    branch_names = ["isGood", "isClean", "isBTagged"]
-    for branch_name in branch_names:
-        events["Jets"] = events["Jets"][[x for x in events["Jets"].fields if x != branch_name]]
-    branch_names = ["isClean"]
-    for branch_name in branch_names:
-        events["JetsAK8"] = events["JetsAK8"][[x for x in events["JetsAK8"].fields if x != branch_name]]
-
-    
     events = sequences.remove_collections(events)
 
 
