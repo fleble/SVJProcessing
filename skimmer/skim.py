@@ -19,12 +19,20 @@ class Skimmer(processor.ProcessorABC):
     def __init__(
             self,
             process_function,
+            year,
+            is_mc=False,
             variation=None,
             weight_variations=[],
+            nano_aod=False,
+            pfnano_corr_file=None,
         ):
         self.process_function = process_function
         self.variation = variation
         self.weight_variations = weight_variations
+        self.nano_aod = nano_aod
+        self.pfnano_corr_file = pfnano_corr_file
+        self.is_mc = "mc" if is_mc else "data"
+        self.year = year
 
     def process(self, events):
 
@@ -34,15 +42,20 @@ class Skimmer(processor.ProcessorABC):
         if skimmer_utils.is_mc(events):
             # Calculate and store the weight variations
             if "scale" in self.weight_variations:
-                events, sumw_scale_up, sumw_scale_down = skimmer_utils.apply_scale_variations(events)
+                events, sumw_scale_up, sumw_scale_down = skimmer_utils.apply_scale_variations(events,is_nano=self.nano_aod)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialScaleUp", sumw=sumw_scale_up)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialScaleDown", sumw=sumw_scale_down)
+            
+            
             if "pdf" in self.weight_variations:
-                events, sumw_pdf_up, sumw_pdf_down = skimmer_utils.apply_pdf_variations(events)
+                events, sumw_pdf_up, sumw_pdf_down = skimmer_utils.apply_pdf_variations(events,is_nano=self.nano_aod)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialPDFUp", sumw=sumw_pdf_up)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialPDFDown", sumw=sumw_pdf_down)
 
-        events = skimmer_utils.apply_variation(events, self.variation)
+        if self.nano_aod:
+            events = skimmer_utils.apply_variation_pfnano(events, variation=self.variation, year=self.year, run=self.is_mc, pfnano_sys_file=self.pfnano_corr_file)
+        else:
+            events = skimmer_utils.apply_variation(events, self.variation)
 
         events, cut_flow = self.process_function(events, cut_flow)
         skimmer_utils.update_cut_flow(cut_flow, "Final", events)
@@ -69,6 +82,12 @@ def add_coffea_args(parser):
         "-y", "--year",
         help="Data-taking year",
         required=True,
+    )
+    parser.add_argument(
+        "-mc", "--is_mc",
+        help='Set True if input files MC files', 
+        default=False, 
+        action='store_true',
     )
     parser.add_argument(
         "-pd", "--primary_dataset",
@@ -159,6 +178,15 @@ def add_coffea_args(parser):
         type=float,
         action='store',
     )
+
+    parser.add_argument(
+        '-corrfile', '--pfnano_corr_file',
+        help='Precompiled corrections file for PFNanoAOD', 
+        type=str,
+        action='store',
+        default=None,
+    )
+
     parser.add_argument(
         '-pn_tagger', '--pn_tagger',       
         help='Add particleNet jet tagger score', 
@@ -175,7 +203,7 @@ def add_coffea_args(parser):
         "-var", "--variation",
         help="What systematic variation to compute (choice=%(choices)s)",
         type=str,
-        choices=["jec_up", "jec_down", "jer_up", "jer_down"],
+        choices=["jec_up", "jec_down", "jer_up", "jer_down", "unclEn_up", "unclEn_down"],
         default=None,
     )
     parser.add_argument(
@@ -275,8 +303,12 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
         "treename": treename,
         "processor_instance": Skimmer(
             process_function,
+            args.year,
+            args.is_mc,
             args.variation,
             args.weight_variations,
+            args.nano_aod,
+            args.pfnano_corr_file,
         ),
         "executor": executor,
         "executor_args": executor_args,
