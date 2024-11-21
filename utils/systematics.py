@@ -1,4 +1,7 @@
 import awkward as ak
+import numpy as np
+import utils.gen_matching_tools as gen_matching_tools
+
 
 def calc_jec_variation(
         pt, eta, phi, energy,
@@ -103,3 +106,201 @@ def calc_jer_variation(
 
     corr = 1. / jer_factor * variation_jer_factor
     return pt*corr, eta, phi, energy*corr, reorder_final_to_var
+
+
+
+###############################
+####### PFNano section ########
+###############################
+
+
+def make_jets_for_jerc(events,jet_coll, event_rho, correction_key):
+        
+        jets = {}
+        jets["pt_raw"] = (1 - events[f"{jet_coll}_rawFactor"])*events[f"{jet_coll}_pt"]
+        jets["mass_raw"] = (1 - events[f"{jet_coll}_rawFactor"])*events[f"{jet_coll}_mass"]
+        jets["event_rho"] = ak.broadcast_arrays(event_rho, events[f"{jet_coll}_pt"])[0]
+        if "NOJER" not in correction_key:
+            if "FatJet" in jet_coll:
+                m_genMatch_dR2max = 0.4*0.4
+                jets["pt_gen"] = gen_matching_tools.get_matched_gen_jets(events[f"{jet_coll}_pt"], 
+                                                                         events[f"{jet_coll}_eta"], 
+                                                                         events[f"{jet_coll}_phi"], 
+                                                                         events[f"GenJetAK8_pt"], 
+                                                                         events[f"GenJetAK8_eta"], 
+                                                                         events[f"GenJetAK8_phi"], 
+                                                                         events[f"FatJet_genJetAK8Idx"],
+                                                                         m_genMatch_dR2max,
+                                                                         correction_key.replace("NOJEC",""),
+                                                                         jet_coll,
+                                                                         jets["event_rho"]
+                                                                         )
+            else:
+                m_genMatch_dR2max = 0.2*0.2
+                jets["pt_gen"] = gen_matching_tools.get_matched_gen_jets(events[f"{jet_coll}_pt"], 
+
+                                                                         events[f"{jet_coll}_eta"], 
+                                                                         events[f"{jet_coll}_phi"], 
+                                                                         events[f"Gen{jet_coll}_pt"], 
+                                                                         events[f"Gen{jet_coll}_eta"], 
+                                                                         events[f"Gen{jet_coll}_phi"], 
+                                                                         events[f"{jet_coll}_genJetIdx"],
+                                                                         m_genMatch_dR2max,
+                                                                         correction_key.replace("NOJEC",""),
+                                                                         jet_coll,
+                                                                         jets["event_rho"]
+                                                                         )
+
+
+        #make jets an ak array
+        if "NOJER" not in correction_key:
+            jets = ak.zip({
+                "pt": events[f"{jet_coll}_pt"],
+                "eta": events[f"{jet_coll}_eta"],
+                "phi": events[f"{jet_coll}_phi"],
+                "mass": events[f"{jet_coll}_mass"],
+                "area": events[f"{jet_coll}_area"],
+                "pt_raw": jets["pt_raw"],
+                "mass_raw": jets["mass_raw"],
+                "event_rho": jets["event_rho"],
+                "pt_gen": ak.values_astype(ak.fill_none(jets["pt_gen"], 0), np.float32),
+            })
+        else:
+            jets = ak.zip({
+                "pt": events[f"{jet_coll}_pt"],
+                "eta": events[f"{jet_coll}_eta"],
+                "phi": events[f"{jet_coll}_phi"],
+                "mass": events[f"{jet_coll}_mass"],
+                "area": events[f"{jet_coll}_area"],
+                "pt_raw": jets["pt_raw"],
+                "mass_raw": jets["mass_raw"],
+                "event_rho": jets["event_rho"],
+            })
+             
+        return jets
+
+#CZZ: hardcoded PFMET for now
+def make_met_for_jerc(events):
+        
+        met = {}
+
+        met["pt"] = events["MET_pt"]
+        met["phi"] = events["MET_phi"]
+        met["MetUnclustEnUpDeltaX"] = events["MET_MetUnclustEnUpDeltaX"]
+        met["MetUnclustEnUpDeltaY"] = events["MET_MetUnclustEnUpDeltaY"]
+
+        #make met an ak array
+        met = ak.zip({
+            "pt": met["pt"],
+            "phi": met["phi"],
+            "MetUnclustEnUpDeltaX": met["MetUnclustEnUpDeltaX"],
+            "MetUnclustEnUpDeltaY": met["MetUnclustEnUpDeltaY"],
+        })
+        
+             
+        return met
+
+
+
+def calc_jerc_variations_PFNano(
+    events: ak.Array,
+    year: str,
+    run: str,
+    jet_coll: str,
+    jerc_variations: dict,
+    variation: str,
+    jerc_cache: dict,
+    ) -> ak.Array:
+    
+    jet_factory = jerc_variations[f'{jet_coll.lower()}_factory']
+    met_factory = jerc_variations['met_factory']
+
+
+    # calculate all variables needed as inputs
+    jerc_key_label = ""
+    access_jerc_corr_jets =  ""
+    if "jec" in variation:
+        jerc_key_label = "NOJER"
+        access_jerc_corr_jets = "JES_jes"
+    if "jer" in variation:
+        jerc_key_label = "NOJEC"
+        access_jerc_corr_jets = "JER"
+
+
+    #build jet corrections
+    correction_key = None
+    if "2016" in year:
+        if "APV" in year:
+            correction_key = f"{year.replace('APV','preVFP')}{run.lower()}{jerc_key_label}" 
+        else:
+            correction_key = f"{year.replace(year,'2016postVFP')}{run.lower()}{jerc_key_label}"
+    else:
+        correction_key = f"{year}{run.lower()}{jerc_key_label}" 
+
+    rhos = events.fixedGridRhoFastjetAll
+    jets_corrected = jet_factory[correction_key].build(make_jets_for_jerc(events,jet_coll, rhos, correction_key), jerc_cache)
+
+    met =  None
+    if jet_coll == "Jet":
+        met = met_factory.build(make_met_for_jerc(events), jets_corrected, {})
+    
+        
+    #extract the direction of the variation
+    direction = "up" if "up" in variation else "down"
+
+    #extract corrections to jets
+    pt_corr = eval(f"jets_corrected.{access_jerc_corr_jets}.{direction}.pt")
+    eta_corr = eval(f"jets_corrected.{access_jerc_corr_jets}.{direction}.eta")
+    phi_corr = eval(f"jets_corrected.{access_jerc_corr_jets}.{direction}.phi")
+    mass_corr = eval(f"jets_corrected.{access_jerc_corr_jets}.{direction}.mass")
+
+    #extract corrections to met
+    met_ptcorr = None
+    met_phicorr = None
+    if jet_coll == "Jet":
+        met_ptcorr = eval(f"met.{access_jerc_corr_jets}.{direction}.pt")
+        met_phicorr = eval(f"met.{access_jerc_corr_jets}.{direction}.phi")
+
+    return pt_corr, eta_corr, phi_corr, mass_corr, met_ptcorr, met_phicorr
+
+
+def calc_unclustered_met_variations_PFNano(
+    events: ak.Array,
+    year: str,
+    run: str,
+    jet_coll: str,
+    jerc_variations: dict,
+    variation: str,
+    jerc_cache: dict,
+    ) -> ak.Array:
+    
+    jet_factory = jerc_variations[f'{jet_coll.lower()}_factory']
+    met_factory = jerc_variations['met_factory']
+
+    #build jet corrections
+    correction_key = None
+    if "2016" in year:
+        if "APV" in year:
+            correction_key = f"{year.replace('APV','preVFP')}{run.lower()}" 
+        else:
+            correction_key = f"{year.replace(year,'2016postVFP')}{run.lower()}"
+    else:
+        correction_key = f"{year}{run.lower()}"
+
+    rhos = events.fixedGridRhoFastjetAll
+    jets_corrected = jet_factory[correction_key].build(make_jets_for_jerc(events,jet_coll, rhos, correction_key), jerc_cache)
+    met = met_factory.build(make_met_for_jerc(events), jets_corrected, {})
+    
+        
+    #extract the direction of the variation
+    direction = "up" if "up" in variation else "down"
+
+    #extract corrections to met
+    met_ptcorr = None
+    met_phicorr = None
+
+    met_ptcorr = eval(f"met.MET_UnclusteredEnergy.{direction}.pt")
+    met_phicorr = eval(f"met.MET_UnclusteredEnergy.{direction}.phi")
+
+    return met_ptcorr, met_phicorr
+
