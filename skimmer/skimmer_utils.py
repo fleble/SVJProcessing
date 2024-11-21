@@ -2,13 +2,16 @@ import awkward as ak
 import numpy as np
 import numba as nb
 from coffea.nanoevents.methods import vector
+from coffea.util import load, save
 import uproot
 import pickle  
+import cachetools
 
 from utils.awkward_array_utilities import as_type
 from utils.tree_maker.triggers import trigger_table as trigger_table_treemaker
-from utils.systematics import calc_jec_variation, calc_jer_variation
+from utils.systematics import calc_jec_variation, calc_jer_variation, calc_jerc_variations_PFNano, calc_unclustered_met_variations_PFNano
 from utils.Logger import *
+from utils.met_significance_factory_pfnano import MetSignificanceCalculator 
 
 # Needed so that ak.zip({"pt": [...], "eta": [...], "phi": [...], "mass": [...]},
 #                         with_name="PtEtaPhiMLorentzVector")
@@ -157,6 +160,7 @@ def make_pt_eta_phi_energy_lorentz_vector(pt, eta=None, phi=None, energy=None):
 
 def is_tree_maker(events):
     return "TriggerPass" in events.fields
+
 
 
 def is_mc(events):
@@ -486,7 +490,7 @@ def __add_weight_variations(events, variation_up, variation_down, variation_name
     return events, sumw_up, sumw_down
 
 
-def apply_scale_variations(events):
+def apply_scale_variations(events,is_nano=False):
     """Calculate up/down renormalization and factorisation scale variation.
     
     Following definition here: https://github.com/TreeMaker/TreeMaker/blob/7a81115566ed1f2206eb4d447c9c7ba0870d88d0/Utils/src/PDFWeightProducer.cc#L167
@@ -508,13 +512,19 @@ def apply_scale_variations(events):
     """
 
     # Calculate up/down variations
-    variation_up = ak.max(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
-    variation_down = ak.min(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+    if is_tree_maker(events):
+        variation_up = ak.max(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+        variation_down = ak.min(events.ScaleWeights[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+    elif is_nano:
+        variation_up = ak.max(events.LHEScaleWeight[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+        variation_down = ak.min(events.LHEScaleWeight[:, [i for i in range(9) if i not in (5, 7)]], axis=-1)
+    else:
+        raise NotImplementedError()
 
     return __add_weight_variations(events, variation_up, variation_down, "Scale")
 
 
-def apply_pdf_variations(events):
+def apply_pdf_variations(events, is_nano=False):
     """Calculate the PDF up/down variations.
     
     This should be done **before** any event selection is applied.
@@ -537,11 +547,16 @@ def apply_pdf_variations(events):
     # Normalize the array of pdf weights by the first entry
     if is_tree_maker(events):
         pdf_variations = events.PDFweights.to_numpy()
-        max_value = np.max(pdf_variations, where=pdf_variations<20, initial=1)
-        pdf_variations = np.clip(pdf_variations, a_min=None, a_max=max_value)
-        pdf_variations = pdf_variations / pdf_variations[:, :1]
+        
+    elif is_nano:
+       pdf_variations = events.LHEPdfWeight
+
     else:
         raise NotImplementedError()
+    
+    max_value = np.max(pdf_variations, where=pdf_variations<20, initial=1)
+    pdf_variations = np.clip(pdf_variations, a_min=None, a_max=max_value)
+    pdf_variations = pdf_variations / pdf_variations[:, :1]
 
     # Calculate the mean and standard deviation across replicas per event
     mean = np.mean(pdf_variations, axis=1)
@@ -553,3 +568,107 @@ def apply_pdf_variations(events):
 
     return __add_weight_variations(events, variation_up, variation_down, "PDF")
 
+
+
+###############################
+####### PFNano section ########
+###############################
+
+
+
+
+def apply_variation_pfnano(events, variation, year, run, pfnano_sys_file):
+    
+    if variation is None: return events
+        
+    if variation in ["jec_up", "jec_down", "jer_up", "jer_down"]:
+        jerc_cache = cachetools.Cache(np.inf)
+        #load the JEC/JER variations from the pfnano file
+        if pfnano_sys_file is not None:
+            jerc_variations = load(pfnano_sys_file)
+        #CZZ: first compute the JEC variations for AK4 and AK8 jets
+        for radius in [4, 8]:
+            jet_coll = "Jet" if radius == 4 else "FatJet"
+            corrected_jets_met_jercs = calc_jerc_variations_PFNano(
+                events,
+                year,
+                run,
+                jet_coll,
+                jerc_variations,
+                variation,
+                jerc_cache,
+            )
+            
+            #here unpack corrections
+            if radius == 4:
+                corr_pt, corr_eta, corr_phi, corr_mass, met_ptcorr, met_phicorr = corrected_jets_met_jercs
+            else:
+                corr_pt, corr_eta, corr_phi, corr_mass, _, _ = corrected_jets_met_jercs
+            
+
+            #adding the JERC varied jets to the events
+            permutation = ak.argsort(corr_pt, ascending=False)
+            corr_pt = corr_pt[permutation]
+            corr_eta = corr_eta[permutation]
+            corr_phi = corr_phi[permutation]
+            corr_mass = corr_mass[permutation]
+            events[f"{jet_coll}_pt"] = corr_pt
+            events[f"{jet_coll}_eta"] = corr_eta
+            events[f"{jet_coll}_phi"] = corr_phi
+            events[f"{jet_coll}_mass"] = corr_mass
+            pf_cand_jet_idx = events[f"{jet_coll}PFCands_jetIdx"]
+            sorted_pf_cand_jet_idx = ak.Array([p[idx] for idx, p in zip(pf_cand_jet_idx, permutation)])
+            events[f"{jet_coll}PFCands_jetIdx"] = sorted_pf_cand_jet_idx
+        
+            #add the MET corrections
+            if radius == 4:
+                events["MET_pt"] = met_ptcorr
+                events["MET_phi"] = met_phicorr
+
+                #Here propagate the corrections to METSignificance
+                #CZZ: MET must come from jerc varied collections, otherwise nominal when running the unclustered energy variation
+                metSigCalc = MetSignificanceCalculator(events,
+                                          year,
+                                          run,
+                                          ) 
+                events["MET_significance"] = metSigCalc.getSignificance()                 
+        
+    
+    if variation in ["unclEn_up", "unclEn_down"]:
+
+        #then do the same for MET with coffea libraries
+        jerc_cache = cachetools.Cache(np.inf)
+        #load the JEC/JER variations from the pfnano file
+        if pfnano_sys_file is not None:
+            jerc_variations = load(pfnano_sys_file)
+
+        corrected_unclEn_met = calc_unclustered_met_variations_PFNano(
+            events,
+            year,
+            run,
+            jet_coll="Jet",
+            jerc_variations=jerc_variations,
+            variation=variation,
+            jerc_cache=jerc_cache,
+        )
+
+        #unpack corrected_unclEn_met
+        met_ptcorr, met_phicorr = corrected_unclEn_met
+
+        #Compute before the unclustered energy variations for MetSignificance manually
+        #CZZ: MET must come from jerc varied collections, otherwise nominal when running the unclustered energy variation
+        metSigCalc = MetSignificanceCalculator(events,
+                                    year,
+                                    run,
+                                    make_unclustered_En_var = True,
+                                    variation_direction = variation.split("_")[1],
+                                    ) 
+        
+        events["MET_significance"] = metSigCalc.getSignificance() 
+
+        #add the MET corrections
+        events["MET_pt"] = met_ptcorr
+        events["MET_phi"] = met_phicorr
+  
+
+    return events
