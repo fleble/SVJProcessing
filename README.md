@@ -105,6 +105,7 @@ When running on data, in order to handle the overlap between the different prima
 
 
 ## Making skims
+### Introduction
 
 An example bash script to produce skims is provided in [skimmer/examples.sh](https://github.com/fleble/SVJProcessing/blob/main/skimmer/example.sh).
 
@@ -123,6 +124,8 @@ Some explanation of the flags relative to the job submission:
 * -t/--walltime: The maximum time of the job (for SLURM only).
 * -q/--queue: The parition name for SLURM jobs.
 
+Note if you are running on PFNano for offline analysis or scouting, set the relative flags ```-nano``` or ```-nano_scout``` as options to ```skim.py``` as shown in the examples ```make_skims_pfnano.sh``` and ```make_skims_s_channel_scouting.sh```. In those examples can be found also the flags to set the x-section of a given input dataset which will be used to compute the weights.
+
 You can run locally on the interactive nodes where you are logged in, or distributed, using the LPCConderCluster (only at LPC!) or the SLURMCluster at any site with a SLURM batch submission system:    
 * If you run locally, you need to adjust the number of workers to not use too many and bother other users on that login node!
 * If you run distributed, you need to adjust the memory request: the more you ask, the more your jobs will queue, but if you do not request enough the jobs will run out of memory and crash. For 50k events per file and TreeMaker NTuples containing PF candidates, 4 GB of memory should be enough! When running ParticleNet inference with 50k events per file, 6 GB of memory is needed.
@@ -130,6 +133,9 @@ You can run locally on the interactive nodes where you are logged in, or distrib
 For processes with high efficiency, the bottleneck is the queuing time... It is much faster to run locally requesting one node if the queuing time is non-zero...
 
 If the total number of workers is too high, the OS limit of maximum number of files opened by one process is reached. At FNAL, this limit seems to be around 200 workers. It is recommended to ask for a maximum of 150 workers at once. It seems that the code terminates well if asking for more workers, but workers will all crash throwing an OSError...
+
+### Running systematics
+When running on ```Treemaker``` ntuples the systematics variations need not to be recomputed, and the code fetches the necessary information form the input files to create the varied skimmed datasets. An example of how to run the systematics variations for ```Tremaker``` can be found ```make_skims_t_channel.sh```.
 
 #### Tips for running at LPC
 
