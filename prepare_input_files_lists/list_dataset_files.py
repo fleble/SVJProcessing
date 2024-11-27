@@ -65,6 +65,8 @@ def __list_files(dataset_info, nano_aod):
             regex=info_dict["regex"],
         )
 
+        print("path: ", info_dict["path"])
+        
 
         # TODO: Do something more clever should be done insteead of relying of the file name
         try:
@@ -77,8 +79,10 @@ def __list_files(dataset_info, nano_aod):
                     files_list_ = sorted(files_list_, key=lambda x: int(x.split("/")[-1].split("-")[6].replace(".root","")))
                 elif "PFNanoAOD_SVJtaus_" in files_list[0].split("/")[-1]:
                     files_list_ = sorted(files_list_, key=lambda x: int(x.split("/")[-1].split("-")[6].replace(".root","")))
-                elif "PFNANOAOD" in files_list[0].split("/")[-1]:
+                elif "PFNANOAOD" in files_list[0].split("/")[-1] and files_list[0].split("/")[-1].split("-")[2].replace(".root","").isdigit():
                     files_list_ = sorted(files_list_, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
+                elif "PFNANOAOD" in files_list[0].split("/")[-1] and files_list[0].split("/")[-1].split("-")[3].replace(".root","").isdigit():
+                    files_list_ = sorted(files_list_, key=lambda x: int(x.split("/")[-1].split("-")[3].replace(".root","")))
                 elif "PFNanoAOD" in files_list[0].split("/")[-1]:
                     files_list_ = sorted(files_list_, key=lambda x: int(x.split("/")[-1].split("-")[2].replace(".root","")))
                 else:
