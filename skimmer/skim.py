@@ -26,6 +26,7 @@ class Skimmer(processor.ProcessorABC):
             nano_aod=False,
             pfnano_corr_file=None,
         ):
+
         self.process_function = process_function
         self.variation = variation
         self.weight_variations = weight_variations
@@ -180,7 +181,7 @@ def add_coffea_args(parser):
     )
 
     parser.add_argument(
-        '-corrfile', '--pfnano_corr_file',
+        '-corrfile', '--pfnano_corrections_file',
         help='Precompiled corrections file for PFNanoAOD', 
         type=str,
         action='store',
@@ -201,7 +202,14 @@ def add_coffea_args(parser):
     )
     parser.add_argument(
         "-var", "--variation",
-        help="What systematic variation to compute (choice=%(choices)s)",
+        help="What systematic variation to compute with TreeMaker (choice=%(choices)s)",
+        type=str,
+        choices=["jec_up", "jec_down", "jer_up", "jer_down"],
+        default=None,
+    )
+    parser.add_argument(
+        "-varnano", "--variation_nano",
+        help="What systematic variation to compute with (PF)Nano (choice=%(choices)s)",
         type=str,
         choices=["jec_up", "jec_down", "jer_up", "jer_down", "unclEn_up", "unclEn_down"],
         default=None,
@@ -299,16 +307,20 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
     else:
         treename = "TreeMaker2/PreSelection"
 
+    variation_type = args.variation
+    if args.nano_aod:
+        variation_type = args.variation_nano
+
     uproot_job_kwargs = {
         "treename": treename,
         "processor_instance": Skimmer(
             process_function,
             args.year,
             args.is_mc,
-            args.variation,
             args.weight_variations,
             args.nano_aod,
             args.pfnano_corr_file,
+            variation=variation_type,
         ),
         "executor": executor,
         "executor_args": executor_args,
