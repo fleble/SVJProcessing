@@ -320,7 +320,7 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
             variation=variation_type,
             weight_variations=args.weight_variations,
             nano_aod=args.nano_aod,
-            pfnano_corr_file=args.pfnano_corr_file,
+            pfnano_corr_file=args.pfnano_corrections_file,
         ),
         "executor": executor,
         "executor_args": executor_args,
