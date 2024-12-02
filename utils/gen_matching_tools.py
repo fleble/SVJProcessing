@@ -32,7 +32,17 @@ def get_dr2(phi1, eta1, phi2, eta2):
 
 
 nb.jit(nopython=True)
-def get_matched_gen_jets_(builder, jet_pt_reco , jet_eta_reco, jet_phi_reco,  jet_pt_gen, jet_eta_gen, jet_phi_gen, genJetIdx, m_genMatch_dR2max, pt_resolution):
+def get_matched_gen_jets_(builder, 
+                          jet_pt_reco , 
+                          jet_eta_reco, 
+                          jet_phi_reco,  
+                          jet_pt_gen, 
+                          jet_eta_gen, 
+                          jet_phi_gen, 
+                          genJetIdx, 
+                          m_genMatch_dR2max, 
+                          pt_resolution
+                          ):
     for j_pts_reco, j_etas_reco, j_phis_reco, j_pts_gen, j_etas_gen, j_phis_gen, j_reco_genIdxs, j_resos_reco in zip(jet_pt_reco , jet_eta_reco, jet_phi_reco, jet_pt_gen, jet_eta_gen, jet_phi_gen, genJetIdx, pt_resolution):
         builder.begin_list()
         for reco_j_idx,j_genIdx in enumerate(j_reco_genIdxs):
@@ -51,4 +61,13 @@ def get_matched_gen_jets_(builder, jet_pt_reco , jet_eta_reco, jet_phi_reco,  je
 def get_matched_gen_jets(jet_pt_reco , jet_eta_reco, jet_phi_reco, jet_pt_gen, jet_eta_gen, jet_phi_gen, genJetIdx, m_genMatch_dR2max, correction_key,jet_coll,rho):
     pt_resolution = jet_res_utils.get_jets_resolution(jet_pt_reco, jet_eta_reco, rho, correction_key,jet_coll,var="pt")
     builder = ak.ArrayBuilder()
-    return get_matched_gen_jets_(builder, jet_pt_reco , jet_eta_reco, jet_phi_reco,  jet_pt_gen, jet_eta_gen, jet_phi_gen, genJetIdx, m_genMatch_dR2max, pt_resolution).snapshot()
+    return get_matched_gen_jets_(builder, 
+                                 jet_pt_reco, 
+                                 jet_eta_reco, 
+                                 jet_phi_reco,  
+                                 jet_pt_gen, 
+                                 jet_eta_gen, 
+                                 jet_phi_gen, 
+                                 genJetIdx, 
+                                 m_genMatch_dR2max, 
+                                 pt_resolution).snapshot()
