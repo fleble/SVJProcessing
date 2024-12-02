@@ -19,7 +19,7 @@ class Skimmer(processor.ProcessorABC):
     def __init__(
             self,
             process_function,
-            year,
+            year=2018,
             is_mc=False,
             variation=None,
             weight_variations=[],
@@ -315,18 +315,19 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
         "treename": treename,
         "processor_instance": Skimmer(
             process_function,
-            args.year,
-            args.is_mc,
-            args.weight_variations,
-            args.nano_aod,
-            args.pfnano_corr_file,
+            year=args.year,
+            is_mc=args.is_mc,
             variation=variation_type,
+            weight_variations=args.weight_variations,
+            nano_aod=args.nano_aod,
+            pfnano_corr_file=args.pfnano_corr_file,
         ),
         "executor": executor,
         "executor_args": executor_args,
         "chunksize": args.chunk_size,
         "maxchunks": args.max_chunks,
     }
+
 
     return uproot_job_kwargs
 
