@@ -66,6 +66,25 @@ class Skimmer(processor.ProcessorABC):
                     skimmer_utils.update_cut_flow(cut_flow, "InitialPDFUpPUNom", sumw=sumw_pdf_up_pu_nom)
                     skimmer_utils.update_cut_flow(cut_flow, "InitialPDFDownPUNom", sumw=sumw_pdf_down_pu_nom)
 
+            if "psISR" in self.weight_variations:
+                events, sumw_ps_up, sumw_ps_down,_ = skimmer_utils.apply_ps_variations(events,is_nano=self.nano_aod, ps_type="ISR", multiply_by_pu_weight=False)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialPSISRUp", sumw=sumw_ps_up)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialPSISRDown", sumw=sumw_ps_down)
+                if "pu" in self.weight_variations:
+                    events, sumw_ps_up_pu_nom, sumw_ps_down_pu_nom, _ = skimmer_utils.apply_ps_variations(events,is_nano=self.nano_aod,ps_type="ISR",multiply_by_pu_weight=True)
+                    skimmer_utils.update_cut_flow(cut_flow, "InitialPSISRUpPUNom", sumw=sumw_ps_up_pu_nom)
+                    skimmer_utils.update_cut_flow(cut_flow, "InitialPSISRDownPUNom", sumw=sumw_ps_down_pu_nom)
+
+            if "psFSR" in self.weight_variations:
+                events, sumw_ps_up, sumw_ps_down,_ = skimmer_utils.apply_ps_variations(events,is_nano=self.nano_aod, ps_type="FSR", multiply_by_pu_weight=False)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialPSFSRUp", sumw=sumw_ps_up)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialPSFSRDown", sumw=sumw_ps_down)
+                if "pu" in self.weight_variations:
+                    events, sumw_ps_up_pu_nom, sumw_ps_down_pu_nom, _ = skimmer_utils.apply_ps_variations(events,is_nano=self.nano_aod,ps_type="FSR",multiply_by_pu_weight=True)
+                    skimmer_utils.update_cut_flow(cut_flow, "InitialPSFSRUpPUNom", sumw=sumw_ps_up_pu_nom)
+                    skimmer_utils.update_cut_flow(cut_flow, "InitialPSFSRDownPUNom", sumw=sumw_ps_down_pu_nom)
+
+
 
         if self.nano_aod:
             events = skimmer_utils.apply_variation_pfnano(events, variation=self.variation, year=self.year, run=self.is_mc, pfnano_sys_file=self.pfnano_corr_file)
@@ -243,7 +262,7 @@ def add_coffea_args(parser):
              "Can choose several weights variations.",
         type=str,
         nargs="*",
-        choices=["scale", "pdf" ,"pu"],
+        choices=["scale","pdf","pu","psISR","psFSR"],
         default=[],
     )
 

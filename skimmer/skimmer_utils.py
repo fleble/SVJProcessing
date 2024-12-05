@@ -638,11 +638,27 @@ def apply_pdf_variations(events, is_nano=False, multiply_by_pu_weight=False):
 
     return __add_weight_variations(events, variation_up, variation_down, "PDF", computed_nominal_weights=None, multiply_by_pu_weights=multiply_by_pu_weight)
 
+def apply_ps_variations(events,is_nano=False,ps_type="ISR", multiply_by_pu_weight=False):
+    """Calculate the PS up/down variations for ISR and FSR.
+    """
 
+    if is_nano:
+        if ps_type == "ISR":
+            variation_up = events.PSWeight[:, 0]
+            variation_down = events.PSWeight[:, 2]
+        if ps_type == "FSR":
+            variation_up = events.PSWeight[:, 1]
+            variation_down = events.PSWeight[:, 3]
+       
+    else:
+        raise NotImplementedError()
 
-###############################
-####### PFNano section ########
-###############################
+    return __add_weight_variations(events, variation_up, variation_down, f"PS{ps_type}", computed_nominal_weights=None, multiply_by_pu_weights=multiply_by_pu_weight)
+
+    
+
+   
+
 
 def apply_pu_variations(events, year, pfnano_sys_file=None , is_nano=False, multiply_by_pu_weight=False):
 
@@ -659,6 +675,9 @@ def apply_pu_variations(events, year, pfnano_sys_file=None , is_nano=False, mult
     return __add_weight_variations(events,pu_up, pu_down, "PU", computed_nominal_weights=pu_nom, multiply_by_pu_weights=multiply_by_pu_weight)
 
 
+###############################
+####### PFNano section ########
+###############################
 
 def apply_variation_pfnano(events, variation, year, run, pfnano_sys_file):
     
