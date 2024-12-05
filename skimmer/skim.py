@@ -42,16 +42,30 @@ class Skimmer(processor.ProcessorABC):
 
         if skimmer_utils.is_mc(events):
             # Calculate and store the weight variations
+            if "pu" in self.weight_variations:
+                events, sumw_pu_up, sumw_pu_down, sumw_pu_nom = skimmer_utils.apply_pu_variations(events,self.year,pfnano_sys_file=self.pfnano_corr_file,is_nano=self.nano_aod,multiply_by_pu_weight=False)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialPUNom", sumw=sumw_pu_nom)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialPUUp", sumw=sumw_pu_up)
+                skimmer_utils.update_cut_flow(cut_flow, "InitialPUDown", sumw=sumw_pu_down)
+
             if "scale" in self.weight_variations:
-                events, sumw_scale_up, sumw_scale_down = skimmer_utils.apply_scale_variations(events,is_nano=self.nano_aod)
+                events, sumw_scale_up, sumw_scale_down,_ = skimmer_utils.apply_scale_variations(events,is_nano=self.nano_aod,multiply_by_pu_weight=False)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialScaleUp", sumw=sumw_scale_up)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialScaleDown", sumw=sumw_scale_down)
-            
+                if "pu" in self.weight_variations:
+                    events, sumw_scale_up_pu_nom, sumw_scale_up_pu_nom, _ = skimmer_utils.apply_scale_variations(events,is_nano=self.nano_aod,multiply_by_pu_weight=True)
+                    skimmer_utils.update_cut_flow(cut_flow, "InitialScaleUpPUNom", sumw=sumw_scale_up_pu_nom)
+                    skimmer_utils.update_cut_flow(cut_flow, "InitialScaleUpPUNom", sumw=sumw_scale_up_pu_nom)
             
             if "pdf" in self.weight_variations:
-                events, sumw_pdf_up, sumw_pdf_down = skimmer_utils.apply_pdf_variations(events,is_nano=self.nano_aod)
+                events, sumw_pdf_up, sumw_pdf_down,_ = skimmer_utils.apply_pdf_variations(events,is_nano=self.nano_aod, multiply_by_pu_weight=False)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialPDFUp", sumw=sumw_pdf_up)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialPDFDown", sumw=sumw_pdf_down)
+                if "pu" in self.weight_variations:
+                    events, sumw_pdf_up_pu_nom, sumw_pdf_down_pu_nom, _ = skimmer_utils.apply_pdf_variations(events,is_nano=self.nano_aod,multiply_by_pu_weight=True)
+                    skimmer_utils.update_cut_flow(cut_flow, "InitialPDFUpPUNom", sumw=sumw_pdf_up_pu_nom)
+                    skimmer_utils.update_cut_flow(cut_flow, "InitialPDFDownPUNom", sumw=sumw_pdf_down_pu_nom)
+
 
         if self.nano_aod:
             events = skimmer_utils.apply_variation_pfnano(events, variation=self.variation, year=self.year, run=self.is_mc, pfnano_sys_file=self.pfnano_corr_file)
@@ -211,7 +225,7 @@ def add_coffea_args(parser):
         "-varnano", "--variation_nano",
         help="What systematic variation to compute with (PF)Nano (choice=%(choices)s)",
         type=str,
-        choices=["jec_up", "jec_down", "jer_up", "jer_down", "unclEn_up", "unclEn_down"],
+        choices=["jec_up", "jec_down", "jer_up", "jer_down", "unclEn_up", "unclEn_down", "SVJjec_up", "SVJjec_down"],
         default=None,
     )
     parser.add_argument(
@@ -221,6 +235,15 @@ def add_coffea_args(parser):
         type=str,
         nargs="*",
         choices=["scale", "pdf"],
+        default=[],
+    )
+    parser.add_argument(
+        "-wvarnano", "--weight_variations_nano",
+        help="What systematic weight variations to compute with (PF)Nano (choice=%(choices)s). "
+             "Can choose several weights variations.",
+        type=str,
+        nargs="*",
+        choices=["scale", "pdf" ,"pu"],
         default=[],
     )
 
@@ -308,8 +331,12 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
         treename = "TreeMaker2/PreSelection"
 
     variation_type = args.variation
+    weight_variations = args.weight_variations
     if args.nano_aod:
         variation_type = args.variation_nano
+        weight_variations = args.weight_variations_nano
+
+    
 
     uproot_job_kwargs = {
         "treename": treename,
@@ -318,7 +345,7 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
             year=args.year,
             is_mc=args.is_mc,
             variation=variation_type,
-            weight_variations=args.weight_variations,
+            weight_variations=weight_variations,
             nano_aod=args.nano_aod,
             pfnano_corr_file=args.pfnano_corrections_file,
         ),
