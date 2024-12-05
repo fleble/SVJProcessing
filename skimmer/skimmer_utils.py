@@ -9,7 +9,7 @@ import cachetools
 
 from utils.awkward_array_utilities import as_type
 from utils.tree_maker.triggers import trigger_table as trigger_table_treemaker
-from utils.systematics import calc_jec_variation, calc_jer_variation, calc_jerc_variations_PFNano, calc_unclustered_met_variations_PFNano
+from utils.systematics import calc_jec_variation, calc_jer_variation, calc_jerc_variations_PFNano, calc_unclustered_met_variations_PFNano, calc_custom_svj_jes_variations_PFNano
 from utils.Logger import *
 from utils.met_significance_factory_pfnano import MetSignificanceCalculator 
 
@@ -174,46 +174,107 @@ def is_data(events):
     return not is_mc(events)
 
 
-def __jet_var_i(var,i,pad_value=np.Inf):
-    padded_var = ak.fill_none(ak.pad_none(var,i+1),pad_value)
-    return padded_var[:,i]
+#def __jet_var_i(var,i,pad_value=np.Inf):
+#    padded_var = ak.fill_none(ak.pad_none(var,i+1),pad_value)
+#    return padded_var[:,i]
+#
+#
+#def __get_phi_spike_filter(hot_spots_dict,var_name,j_eta_i,j_phi_i,rad):
+#    hot_etas_i, hot_phis_i = hot_spots_dict[var_name]
+#    hot_etas_i_reshaped = np.reshape(hot_etas_i,(len(hot_etas_i),1))
+#    hot_phis_i_reshaped = np.reshape(hot_phis_i,(len(hot_phis_i),1))
+#    j_eta_i_reshaped = np.broadcast_to(list(j_eta_i),(len(hot_etas_i),len(j_eta_i)))
+#    j_phi_i_reshaped = np.broadcast_to(list(j_phi_i),(len(hot_phis_i),len(j_phi_i)))
+#    return np.prod((j_eta_i_reshaped - hot_etas_i_reshaped)**2 + (j_phi_i_reshaped - hot_phis_i_reshaped)**2 > rad, axis=0, dtype=bool)
+#
+#
+#def apply_phi_spike_filter(
+#        events,
+#        year,
+#        hot_spots_pkl,
+#        n_jets,
+#        jets_eta,
+#        jets_phi,
+#    ):
+#
+#    if year == "2016APV": year = "2016"
+#    with open(hot_spots_pkl,"rb") as infile:
+#        phi_spike_hot_spots = pickle.load(infile)
+#    rad = 0.028816*0.35 # the factor of 0.35 was optimized from the signal vs. background sensitivity study for s-channel
+#    hot_spots_dict = phi_spike_hot_spots[year]
+#    conditions = np.ones(len(events), dtype=bool)
+#    for i in range(n_jets):
+#        conditions &= __get_phi_spike_filter(
+#            hot_spots_dict,
+#            f"j{i+1}Phivsj{i+1}Eta",
+#            __jet_var_i(jets_eta, i),
+#            __jet_var_i(jets_phi, i),
+#            rad,
+#        )
+#    events = events[conditions]
+#    return events
 
+def apply_phi_spike_filter(events, year, jet_eta_branch_name="Jet_eta", jet_phi_branch_name="Jet_phi", reverse=False):
+    rad = 0.028816 # half the length of the diagonal of the eta-phi rectangular cell
+    rad *= 0.35 # the factor of 0.35 was optimized from the signal vs. background sensitivity study
 
-def __get_phi_spike_filter(hot_spots_dict,var_name,j_eta_i,j_phi_i,rad):
-    hot_etas_i, hot_phis_i = hot_spots_dict[var_name]
-    hot_etas_i_reshaped = np.reshape(hot_etas_i,(len(hot_etas_i),1))
-    hot_phis_i_reshaped = np.reshape(hot_phis_i,(len(hot_phis_i),1))
-    j_eta_i_reshaped = np.broadcast_to(list(j_eta_i),(len(hot_etas_i),len(j_eta_i)))
-    j_phi_i_reshaped = np.broadcast_to(list(j_phi_i),(len(hot_phis_i),len(j_phi_i)))
-    return np.prod((j_eta_i_reshaped - hot_etas_i_reshaped)**2 + (j_phi_i_reshaped - hot_phis_i_reshaped)**2 > rad, axis=0, dtype=bool)
+    eta_lead = None
+    eta_sub = None
+    phi_lead = None
+    phi_sub = None
+    if year == "2016":
+        eta_lead = [0.048,0.24,1.488,1.584,-1.008]
+        phi_lead = [-0.35,-0.35,-0.77,-0.77,-1.61]
+        eta_sub = [-1.2,-0.912,-0.912,-0.816,-0.72,-0.72,-0.528,-0.432,-0.336,-0.24,-0.24,-0.144,-0.144,-0.048,0.144,0.912,0.912,1.008,1.296,-1.584,-0.816,-0.72,-0.144,-0.048,-0.048,0.048,1.104,1.488]
+        phi_sub = [-1.19,2.03,3.01,-1.75,-2.17,-0.77,2.73,2.73,0.21,0.07,0.21,-2.59,0.77,0.91,1.75,1.75,2.87,0.63,-0.49,0.63,1.47,-2.31,0.07,-2.59,0.77,0.91,-3.15,2.73]
+    elif year == "2017":
+        eta_lead = [0.144,1.488,1.488,1.584,-0.624]
+        phi_lead = [-0.35,-0.77,-0.63,-0.77,0.91]
+        eta_sub = [-0.912,-0.912,-0.816,-0.72,-0.528,-0.336,-0.24,-0.24,-0.144,-0.144,-0.048,0.144,0.912,0.912,1.008,-1.2,-0.72,-0.72,-0.432,0.336,0.624,1.104,1.296]
+        phi_sub = [2.03,3.01,-1.75,-0.77,2.73,0.21,0.07,0.21,-2.59,0.77,0.91,1.75,1.75,2.87,0.63,-1.19,-2.31,-2.17,2.73,-0.77,-0.77,-3.15,-0.49]
+    elif year == "2018":
+        eta_lead = [1.488,1.488,1.584]
+        phi_lead = [-0.77,-0.63,-0.77]
+        eta_sub = [-1.584,-1.2,-0.912,-0.912,-0.816,-0.816,-0.72,-0.72,-0.528,-0.432,-0.336,-0.24,-0.24,-0.144,-0.144,-0.144,-0.048,-0.048,0.144,0.912,0.912,1.008,1.296,-0.72,1.104,1.488,1.776]
+        phi_sub = [0.63,-1.19,2.03,3.01,-1.75,-0.77,-2.17,-0.77,2.73,2.73,0.21,0.07,0.21,-2.59,0.07,0.77,0.77,0.91,1.75,1.75,2.87,0.63,-0.49,-2.31,-3.15,-0.21,0.77]
+    else:
+        raise ValueError("Invalid year")
 
+    eta_lead = nb.typed.List(eta_lead)
+    eta_sub = nb.typed.List(eta_sub)
+    phi_lead = nb.typed.List(phi_lead)
+    phi_sub = nb.typed.List(phi_sub)
 
-def apply_phi_spike_filter(
-        events,
-        year,
-        hot_spots_pkl,
-        n_jets,
-        jets_eta,
-        jets_phi,
-    ):
+    jets_eta = getattr(events, jet_eta_branch_name)
+    jets_phi = getattr(events, jet_phi_branch_name)
 
-    if year == "2016APV": year = "2016"
-    with open(hot_spots_pkl,"rb") as infile:
-        phi_spike_hot_spots = pickle.load(infile)
-    rad = 0.028816*0.35 # the factor of 0.35 was optimized from the signal vs. background sensitivity study for s-channel
-    hot_spots_dict = phi_spike_hot_spots[year]
-    conditions = np.ones(len(events), dtype=bool)
-    for i in range(n_jets):
-        conditions &= __get_phi_spike_filter(
-            hot_spots_dict,
-            f"j{i+1}Phivsj{i+1}Eta",
-            __jet_var_i(jets_eta, i),
-            __jet_var_i(jets_phi, i),
-            rad,
-        )
-    events = events[conditions]
+    builder = ak.ArrayBuilder()
+    phi_spike_filter = __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, jets_eta, jets_phi, reverse=reverse).snapshot()
+
+    events = events[phi_spike_filter]
+
     return events
 
+@nb.jit
+def __get_phi_spike_filter(builder, eta_lead, phi_lead, eta_sub, phi_sub, rad, jets_eta, jets_phi, reverse):
+    for jet_eta, jet_phi in zip(jets_eta, jets_phi):
+        if len(jet_eta) < 2:
+            builder.append(True)
+        else:
+            keep_event = True
+            for iep in range(len(eta_lead)):
+                if (eta_lead[iep] - jet_eta[0])**2 + (phi_lead[iep] - jet_phi[0])**2 < rad:
+                    keep_event = False
+                    break
+            for iep in range(len(eta_sub)):
+                if (eta_sub[iep] - jet_eta[1])**2 + (phi_sub[iep] - jet_phi[1])**2 < rad:
+                    keep_event = False
+                    break
+            if reverse:
+                builder.append(not keep_event)
+            else:
+                builder.append(keep_event)
+    return builder
 
 def get_hem_veto_filter(*objects_list):
 
@@ -460,7 +521,7 @@ def apply_variation(events, variation):
         return events
 
 
-def __add_weight_variations(events, variation_up, variation_down, variation_name):
+def __add_weight_variations(events, variation_up, variation_down, variation_name, computed_nominal_weights=None, multiply_by_pu_weights=False):
     """Add the up/down weight branches to the events.
     
     Args:
@@ -476,6 +537,15 @@ def __add_weight_variations(events, variation_up, variation_down, variation_name
     weight_name = "Weight" if is_tree_maker(events) else "genWeight"
     nominal_weights = events[weight_name]
 
+    sumw_nom = None
+    if "PU" in variation_name:
+        nominal_weights = nominal_weights*computed_nominal_weights
+        events[f"{weight_name}{variation_name}"] = nominal_weights
+        sumw_nom = ak.sum(nominal_weights)
+
+    if multiply_by_pu_weights:
+        nominal_weights = nominal_weights*events["genWeightPU"]
+
     weights_up = nominal_weights * variation_up
     weights_down = nominal_weights * variation_down
 
@@ -487,10 +557,10 @@ def __add_weight_variations(events, variation_up, variation_down, variation_name
     sumw_up = ak.sum(weights_up)
     sumw_down = ak.sum(weights_down)
 
-    return events, sumw_up, sumw_down
+    return events, sumw_up, sumw_down, sumw_nom
 
 
-def apply_scale_variations(events,is_nano=False):
+def apply_scale_variations(events,is_nano=False, multiply_by_pu_weight=False):
     """Calculate up/down renormalization and factorisation scale variation.
     
     Following definition here: https://github.com/TreeMaker/TreeMaker/blob/7a81115566ed1f2206eb4d447c9c7ba0870d88d0/Utils/src/PDFWeightProducer.cc#L167
@@ -521,10 +591,10 @@ def apply_scale_variations(events,is_nano=False):
     else:
         raise NotImplementedError()
 
-    return __add_weight_variations(events, variation_up, variation_down, "Scale")
+    return __add_weight_variations(events, variation_up, variation_down, "Scale", computed_nominal_weights=None, multiply_by_pu_weights=multiply_by_pu_weight)
 
 
-def apply_pdf_variations(events, is_nano=False):
+def apply_pdf_variations(events, is_nano=False, multiply_by_pu_weight=False):
     """Calculate the PDF up/down variations.
     
     This should be done **before** any event selection is applied.
@@ -549,7 +619,7 @@ def apply_pdf_variations(events, is_nano=False):
         pdf_variations = events.PDFweights.to_numpy()
         
     elif is_nano:
-       pdf_variations = events.LHEPdfWeight
+       pdf_variations = events.LHEPdfWeight.to_numpy()
 
     else:
         raise NotImplementedError()
@@ -566,7 +636,7 @@ def apply_pdf_variations(events, is_nano=False):
     variation_up = mean + std
     variation_down = mean - std
 
-    return __add_weight_variations(events, variation_up, variation_down, "PDF")
+    return __add_weight_variations(events, variation_up, variation_down, "PDF", computed_nominal_weights=None, multiply_by_pu_weights=multiply_by_pu_weight)
 
 
 
@@ -574,6 +644,19 @@ def apply_pdf_variations(events, is_nano=False):
 ####### PFNano section ########
 ###############################
 
+def apply_pu_variations(events, year, pfnano_sys_file=None , is_nano=False, multiply_by_pu_weight=False):
+
+    # Normalize the array of pdf weights by the first entry
+    if is_nano:
+       pu_nTrueInt = events.Pileup_nTrueInt
+       variations_factory = load(pfnano_sys_file)
+
+    else:
+        raise NotImplementedError()
+    
+    pu_nom, pu_up, pu_down   = variations_factory["get_pu_weight"](year, pu_nTrueInt)
+
+    return __add_weight_variations(events,pu_up, pu_down, "PU", computed_nominal_weights=pu_nom, multiply_by_pu_weights=multiply_by_pu_weight)
 
 
 
@@ -581,7 +664,7 @@ def apply_variation_pfnano(events, variation, year, run, pfnano_sys_file):
     
     if variation is None: return events
         
-    if variation in ["jec_up", "jec_down", "jer_up", "jer_down"]:
+    if variation in ["jec_up", "jec_down", "jer_up", "jer_down","SVJjec_up", "SVJjec_down"]:
         jerc_cache = cachetools.Cache(np.inf)
         #load the JEC/JER variations from the pfnano file
         if pfnano_sys_file is not None:
@@ -589,15 +672,26 @@ def apply_variation_pfnano(events, variation, year, run, pfnano_sys_file):
         #CZZ: first compute the JEC variations for AK4 and AK8 jets
         for radius in [4, 8]:
             jet_coll = "Jet" if radius == 4 else "FatJet"
-            corrected_jets_met_jercs = calc_jerc_variations_PFNano(
-                events,
-                year,
-                run,
-                jet_coll,
-                jerc_variations,
-                variation,
-                jerc_cache,
-            )
+            if variation in ["SVJjec_up", "SVJjec_down"]:
+                corrected_jets_met_jercs = calc_custom_svj_jes_variations_PFNano(
+                    events,
+                    year,
+                    run,
+                    jet_coll,
+                    jerc_variations,
+                    variation,
+                )
+
+            else:    
+                corrected_jets_met_jercs = calc_jerc_variations_PFNano(
+                    events,
+                    year,
+                    run,
+                    jet_coll,
+                    jerc_variations,
+                    variation,
+                    jerc_cache,
+                )
             
             #here unpack corrections
             if radius == 4:
