@@ -550,8 +550,12 @@ def __add_weight_variations(events, variation_up, variation_down, variation_name
     weights_down = nominal_weights * variation_down
 
     # Create the new branches
-    events[f"{weight_name}{variation_name}Up"] = weights_up
-    events[f"{weight_name}{variation_name}Down"] = weights_down
+    if multiply_by_pu_weights:
+        events[f"{weight_name}{variation_name}UpPUNom"] = weights_up
+        events[f"{weight_name}{variation_name}DownPUNom"] = weights_down
+    else:
+        events[f"{weight_name}{variation_name}Up"] = weights_up
+        events[f"{weight_name}{variation_name}Down"] = weights_down
 
     # Compute the sum of weights for the variations
     sumw_up = ak.sum(weights_up)
@@ -714,10 +718,10 @@ def apply_variation_pfnano(events, variation, year, run, pfnano_sys_file):
             
             #here unpack corrections
             if radius == 4:
-                corr_pt, corr_eta, corr_phi, corr_mass, met_ptcorr, met_phicorr = corrected_jets_met_jercs
+                corr_pt, corr_eta, corr_phi, corr_mass, met_ptcorr, met_phicorr, custom_corr_factor = corrected_jets_met_jercs
             else:
-                corr_pt, corr_eta, corr_phi, corr_mass, _, _ = corrected_jets_met_jercs
-            
+                corr_pt, corr_eta, corr_phi, corr_mass, _, _, custom_corr_factor = corrected_jets_met_jercs
+        
 
             #adding the JERC varied jets to the events
             permutation = ak.argsort(corr_pt, ascending=False)
@@ -725,10 +729,13 @@ def apply_variation_pfnano(events, variation, year, run, pfnano_sys_file):
             corr_eta = corr_eta[permutation]
             corr_phi = corr_phi[permutation]
             corr_mass = corr_mass[permutation]
+            custom_corr_factor = custom_corr_factor[permutation]
             events[f"{jet_coll}_pt"] = corr_pt
             events[f"{jet_coll}_eta"] = corr_eta
             events[f"{jet_coll}_phi"] = corr_phi
             events[f"{jet_coll}_mass"] = corr_mass
+            #add corr factor for custom SVJ JEC
+            events[f"{jet_coll}_corrSVJJEC"] = custom_corr_factor
             pf_cand_jet_idx = events[f"{jet_coll}PFCands_jetIdx"]
             sorted_pf_cand_jet_idx = ak.Array([p[idx] for idx, p in zip(pf_cand_jet_idx, permutation)])
             events[f"{jet_coll}PFCands_jetIdx"] = sorted_pf_cand_jet_idx

@@ -1,7 +1,9 @@
 import awkward as ak
 import numpy as np
 import utils.gen_matching_tools as gen_matching_tools
-
+from utils.jet_energy_scale_svj_factory import SVJCustomJESCalculator 
+from coffea.lookup_tools import extractor
+from coffea.jetmet_tools import CorrectedMETFactory
 
 def calc_jec_variation(
         pt, eta, phi, energy,
@@ -138,7 +140,6 @@ def make_jets_for_jerc(events,jet_coll, event_rho, correction_key):
             else:
                 m_genMatch_dR2max = 0.2*0.2
                 jets["pt_gen"] = gen_matching_tools.get_matched_gen_jets(events[f"{jet_coll}_pt"], 
-
                                                                          events[f"{jet_coll}_eta"], 
                                                                          events[f"{jet_coll}_phi"], 
                                                                          events[f"Gen{jet_coll}_pt"], 
@@ -248,6 +249,9 @@ def calc_jerc_variations_PFNano(
     #extract the direction of the variation
     direction = "up" if "up" in variation else "down"
 
+    #make dummy x_ratio
+    x_ratio = ak.ones_like(jets_corrected.pt)
+
     #extract corrections to jets
     pt_corr = eval(f"jets_corrected.{access_jerc_corr_jets}.{direction}.pt")
     eta_corr = eval(f"jets_corrected.{access_jerc_corr_jets}.{direction}.eta")
@@ -261,7 +265,7 @@ def calc_jerc_variations_PFNano(
         met_ptcorr = eval(f"met.{access_jerc_corr_jets}.{direction}.pt")
         met_phicorr = eval(f"met.{access_jerc_corr_jets}.{direction}.phi")
 
-    return pt_corr, eta_corr, phi_corr, mass_corr, met_ptcorr, met_phicorr
+    return pt_corr, eta_corr, phi_corr, mass_corr, met_ptcorr, met_phicorr, x_ratio
 
 
 def calc_unclustered_met_variations_PFNano(
@@ -304,3 +308,63 @@ def calc_unclustered_met_variations_PFNano(
 
     return met_ptcorr, met_phicorr
 
+
+def calc_custom_svj_jes_variations_PFNano(
+                events: ak.Array,
+                year: str,
+                run: str,
+                jet_coll: str,
+                jerc_variations: dict,
+                variation: str,
+                ) -> ak.Array:
+    
+
+    #build jet corrections
+    correction_key = None
+    if "2016" in year:
+        if "APV" in year:
+            correction_key = f"{year.replace('APV','preVFP')}{run.lower()}" 
+        else:
+            correction_key = f"{year.replace(year,'2016postVFP')}{run.lower()}"
+    else:
+        correction_key = f"{year}{run.lower()}"
+
+    #extract the direction of the variation
+    direction = "up" if "up" in variation else "down"
+
+    #build custom jec calculator
+    svjJESCalc = SVJCustomJESCalculator(
+        events,
+        jet_coll,
+        correction_key
+    )
+
+    #fetch correction
+    svj_jecs, x_ratio = svjJESCalc.getVariation(direction)
+    jets_corrected = ak.zip({
+        "pt": events[f"{jet_coll}_pt"]*svj_jecs,
+        "phi": events[f"{jet_coll}_phi"],
+        "pt_raw": events[f"{jet_coll}_pt"],
+    })
+
+
+    #now propagate custom jes to met (T1-like correction)
+    met_factory = jerc_variations['met_factory']
+    if jet_coll == "Jet":
+        met = met_factory.build(make_met_for_jerc(events), jets_corrected, {})
+
+
+    #extract corrections to met
+    met_ptcorr = None
+    met_phicorr = None
+    if jet_coll == "Jet":
+        met_ptcorr = eval(f"met.MET_UnclusteredEnergy.{direction}.pt")
+        met_phicorr = eval(f"met.MET_UnclusteredEnergy.{direction}.phi")
+
+
+    return jets_corrected.pt, events[f"{jet_coll}_eta"], jets_corrected.phi, events[f"{jet_coll}_mass"], met_ptcorr, met_phicorr, x_ratio
+    
+
+
+
+    

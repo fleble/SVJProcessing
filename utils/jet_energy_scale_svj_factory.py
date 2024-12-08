@@ -63,22 +63,24 @@ class SVJCustomJESCalculator:
             })
 
         #compute ratio of gen pt to reco pt
-        x_jes = np.abs(jets.pt_gen / jets.pt - ak.ones_like(jets.pt))
-        svj_jecsup = ak.ones_like(jets.pt) + x_jes
-        svj_jecdown = ak.ones_like(jets.pt) - x_jes
+        x_ratio = jets.pt_gen / jets.pt
+        #if x_ratio has 0 values, set them to 1
+        x_ratio = ak.where(x_ratio == 0, ak.ones_like(x_ratio), x_ratio)
+        svj_jecsup = x_ratio
+        svj_jecdown = 2*ak.ones_like(jets.pt) - svj_jecsup
         #if svj_jecdown has negative values, set them to 0
         svj_jecdown = ak.where(svj_jecdown < 0, ak.zeros_like(svj_jecdown), svj_jecdown)
         
 
-        return svj_jecsup , svj_jecdown
+        return svj_jecsup , svj_jecdown, x_ratio
 
 
     def getVariation(self, direction):
-        svj_jecsup , svj_jecdown =  self._build()
+        svj_jecsup , svj_jecdown, x_ratio =  self._build()
         if direction == "up":
-            return svj_jecsup
+            return svj_jecsup, x_ratio
         elif direction == "down":
-            return svj_jecdown
+            return svj_jecdown, x_ratio
 
         
         

@@ -53,9 +53,9 @@ class Skimmer(processor.ProcessorABC):
                 skimmer_utils.update_cut_flow(cut_flow, "InitialScaleUp", sumw=sumw_scale_up)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialScaleDown", sumw=sumw_scale_down)
                 if "pu" in self.weight_variations:
-                    events, sumw_scale_up_pu_nom, sumw_scale_up_pu_nom, _ = skimmer_utils.apply_scale_variations(events,is_nano=self.nano_aod,multiply_by_pu_weight=True)
+                    events, sumw_scale_up_pu_nom, sumw_scale_down_pu_nom, _ = skimmer_utils.apply_scale_variations(events,is_nano=self.nano_aod,multiply_by_pu_weight=True)
                     skimmer_utils.update_cut_flow(cut_flow, "InitialScaleUpPUNom", sumw=sumw_scale_up_pu_nom)
-                    skimmer_utils.update_cut_flow(cut_flow, "InitialScaleUpPUNom", sumw=sumw_scale_up_pu_nom)
+                    skimmer_utils.update_cut_flow(cut_flow, "InitialScaleDownPUNom", sumw=sumw_scale_down_pu_nom)
             
             if "pdf" in self.weight_variations:
                 events, sumw_pdf_up, sumw_pdf_down,_ = skimmer_utils.apply_pdf_variations(events,is_nano=self.nano_aod, multiply_by_pu_weight=False)
