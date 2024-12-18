@@ -218,7 +218,7 @@ def get_hem_veto_filter(*objects_list):
     phi_min = -1.62
     phi_max = -0.82
 
-    veto = ak.ones_like(range(len(objects_list[0])), dtype=bool)
+    veto = ak.zeros_like(range(len(objects_list[0])), dtype=bool)
     for objects in objects_list:
         hem_veto = (
             (objects.eta > eta_min)
