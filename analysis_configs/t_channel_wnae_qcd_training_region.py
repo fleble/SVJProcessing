@@ -3,7 +3,7 @@ import awkward as ak
 from skimmer import skimmer_utils
 from utils.awkward_array_utilities import as_type
 import analysis_configs.triggers as trg
-from analysis_configs.met_filters import met_filters_treemaker as met_filters
+import analysis_configs.met_filters as met_filters
 from analysis_configs import sequences
 
 
@@ -41,7 +41,8 @@ def process(events, cut_flow, year, **kwargs):
     skimmer_utils.update_cut_flow(cut_flow, "STGt800GeV", events)
 
     # MET filter event selection
-    events = skimmer_utils.apply_met_filters_cut(events, met_filters)
+    met_filters_names = getattr(met_filters, f"met_filters_treemaker_{year}")
+    events = skimmer_utils.apply_met_filters_cut(events, met_filters_names)
     skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
     # HEM veto
