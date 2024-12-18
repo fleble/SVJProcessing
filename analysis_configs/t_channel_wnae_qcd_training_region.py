@@ -3,8 +3,7 @@ import awkward as ak
 from skimmer import skimmer_utils
 from utils.awkward_array_utilities import as_type
 import analysis_configs.triggers as trg
-from analysis_configs.met_filters import met_filters_treemaker as met_filters
-from analysis_configs import objects_definition as obj
+import analysis_configs.met_filters as met_filters
 from analysis_configs import sequences
 
 
@@ -42,19 +41,18 @@ def process(events, cut_flow, year, **kwargs):
     skimmer_utils.update_cut_flow(cut_flow, "STGt800GeV", events)
 
     # MET filter event selection
-    events = skimmer_utils.apply_met_filters_cut(events, met_filters)
+    met_filters_names = getattr(met_filters, f"met_filters_treemaker_{year}")
+    events = skimmer_utils.apply_met_filters_cut(events, met_filters_names)
     skimmer_utils.update_cut_flow(cut_flow, "METFilters", events)
 
     # HEM veto
     good_ak4_jets = events.Jets[events.Jets.isGood]
-    veto_electrons = events.Electrons[events.Electrons.isVeto]
-    veto_muons = events.Muons[events.Muons.isVeto]
     good_photons = events.Photons[events.Photons.isGood]
     if year == "2018" and skimmer_utils.is_data(events):
-        events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, veto_electrons, veto_muons, good_photons)
+        events = skimmer_utils.apply_hem_veto(events, good_ak4_jets, good_photons)
         skimmer_utils.update_cut_flow(cut_flow, "HEMVeto", events)
     if year == "2018" and skimmer_utils.is_mc(events):
-        filter = skimmer_utils.get_hem_veto_filter(good_ak4_jets, veto_electrons, veto_muons, good_photons)
+        filter = skimmer_utils.get_hem_veto_filter(good_ak4_jets, good_photons)
         events["HEMVeto"] = filter
 
     # Define as training jets the AK8 jets with angular separation

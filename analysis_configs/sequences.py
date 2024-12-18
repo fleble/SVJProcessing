@@ -114,6 +114,24 @@ def add_is_veto_muon_branch(events):
     return events
 
 
+def add_is_tag_electron_branch(events):
+    events["Electrons"] = ak.with_field(
+        events["Electrons"],
+        obj.is_tag_electron(events["Electrons"]),
+        "isTag",
+    )
+    return events
+
+
+def add_is_tag_muon_branch(events):
+    events["Muons"] = ak.with_field(
+        events["Muons"],
+        obj.is_tag_muon(events["Muons"]),
+        "isTag",
+    )
+    return events
+
+
 def add_good_photon_branch(events):
     events["Photons"] = ak.with_field(
         events["Photons"],

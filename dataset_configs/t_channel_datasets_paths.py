@@ -19,21 +19,37 @@
 ################################################################################
 
 
+def __get_signals():
+    import os
+    with open(f"{os.environ['SVJ_PROCESSING_ROOT']}/dataset_configs/t_channel_signal_samples.txt", "r") as file:
+        signals = file.readlines()
+    signals = [x.replace("\n", "") for x in signals]
+    return signals
+
+
 years = ["2016", "2016APV", "2017", "2018"]
 
 datasets_info = {
     year: {} for year in years
 }
 
-signal_models = [
+training_signal_models = [
     "t-channel_mMed-600_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
     "t-channel_mMed-800_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
     "t-channel_mMed-1000_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
     "t-channel_mMed-1500_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
+    "t-channel_mMed-2000_mDark-1_rinv-0p3_alpha-peak_yukawa-1",
+    "t-channel_mMed-2000_mDark-50_rinv-0p3_alpha-peak_yukawa-1",
+    "t-channel_mMed-2000_mDark-100_rinv-0p3_alpha-peak_yukawa-1",
+    "t-channel_mMed-2000_mDark-20_rinv-0p1_alpha-peak_yukawa-1",
     "t-channel_mMed-2000_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
+    "t-channel_mMed-2000_mDark-20_rinv-0p5_alpha-peak_yukawa-1",
+    "t-channel_mMed-2000_mDark-20_rinv-0p7_alpha-peak_yukawa-1",
     "t-channel_mMed-3000_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
     "t-channel_mMed-4000_mDark-20_rinv-0p3_alpha-peak_yukawa-1",
 ]
+
+signal_models = __get_signals()
 
 qcd_bins = [
     "QCD_Pt_170to300",
@@ -106,6 +122,13 @@ diboson_bins = [
     "WWTo1L1Nu2Q",
 ]
 
+gjets_bins = [
+    "GJets_DR-0p4_HT-100To200",
+    "GJets_DR-0p4_HT-200To400",
+    "GJets_DR-0p4_HT-400To600",
+    "GJets_DR-0p4_HT-600ToInf",
+]
+
 background_bins = (
     qcd_bins
     + ttjets_bins
@@ -113,9 +136,25 @@ background_bins = (
     + zjets_bins
     + single_top_bins
     + diboson_bins
+    + gjets_bins
 )
 
 
+# Signals for DNN training
+for year in years:
+    datasets_info[year].update({
+        f"training_{signal_model}": [
+            {
+                "redirector": "root://cmseos.fnal.gov/",
+                "path": f"/store/user/lpcdarkqcd/tchannel_UL/{year}/Full/PrivateSamples/SVJ_UL{year}_{signal_model}_13TeV-madgraphMLM-pythia8_n-1000",
+                "regex": "",
+            },
+        ]
+        for signal_model in training_signal_models
+    })
+
+
+# Signals for stat inference
 for year in years:
     datasets_info[year].update({
         signal_model: [
@@ -129,13 +168,14 @@ for year in years:
     })
 
 
+# Background MC
 for year in years:
     year_tag = year[2:]
 
     for bin in background_bins:
         if "QCD_" in bin:
               suffix = "TuneCP5_13TeV_pythia8"
-        elif "TTJets" in bin or "WJets" in bin or "ZJets" in bin:
+        elif "TTJets" in bin or "WJets" in bin or "ZJets" in bin or "GJets_DR-0p4" in bin:
             suffix = "TuneCP5_13TeV-madgraphMLM-pythia8"
         elif "ST_s-channel" in bin or "tZq_" in bin:
             suffix = "TuneCP5_13TeV-amcatnlo-pythia8"
@@ -156,7 +196,6 @@ for year in years:
                 }
             ]
         })
-
 
 
 # Data
@@ -552,6 +591,92 @@ datasets_info["2017"].update({
         {
             "redirector": "root://cmseos.fnal.gov/",
             "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017F-UL2017-v1/SingleElectron/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# SinglePhoton 2016APV
+datasets_info["2016APV"].update({
+    "SinglePhoton": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016B-UL2016_HIPM-ver2-v2/SinglePhoton/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016C-UL2016_HIPM-v4/SinglePhoton/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016D-UL2016_HIPM-v2/SinglePhoton/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016E-UL2016_HIPM-v2/SinglePhoton/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016_HIPM-v2/SinglePhoton/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# SinglePhoton 2016
+datasets_info["2016"].update({
+    "SinglePhoton": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016F-UL2016-v2/SinglePhoton/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016G-UL2016-v3/SinglePhoton/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2016H-UL2016-v2/SinglePhoton/",
+            "regex": "",
+        },
+    ]
+})
+
+
+# SinglePhoton 2017
+datasets_info["2017"].update({
+    "SinglePhoton": [
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017B-UL2017-v1/SinglePhoton/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017C-UL2017-v1/SinglePhoton/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017D-UL2017-v1/SinglePhoton/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017E-UL2017-v1/SinglePhoton/",
+            "regex": "",
+        },
+        {
+            "redirector": "root://cmseos.fnal.gov/",
+            "path": "/store/user/lpcsusyhad/SusyRA2Analysis2015/Run2ProductionV20/Run2017F-UL2017-v1/SinglePhoton/",
             "regex": "",
         },
     ]

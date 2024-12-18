@@ -156,10 +156,19 @@ primary_dataset_triggers = {
             "Ele35_WPTight_Gsf",
         ],
     },
+    "SinglePhoton": {
+        "2016": [
+            "Photon165_HE10",
+        ],
+        "2017": [
+            "Photon200",
+        ],
+    },
     "EGamma": {
         "2018": [
             "Ele23_Ele12_CaloIdL_TrackIdL_IsoVL",
             "Ele28_eta2p1_WPTight_Gsf_HT150",
+            "Photon200",
         ],
     },
 }
