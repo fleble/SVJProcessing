@@ -43,10 +43,7 @@ class Skimmer(processor.ProcessorABC):
         if skimmer_utils.is_mc(events):
             # Calculate and store the weight variations
             if "pu" in self.weight_variations:
-                events, sumw_pu_up, sumw_pu_down, sumw_pu_nom = skimmer_utils.apply_pu_variations(events,self.year,pfnano_sys_file=self.pfnano_corr_file,is_nano=self.nano_aod,multiply_by_pu_weight=False)
-                skimmer_utils.update_cut_flow(cut_flow, "InitialPUNom", sumw=sumw_pu_nom)
-                skimmer_utils.update_cut_flow(cut_flow, "InitialPUUp", sumw=sumw_pu_up)
-                skimmer_utils.update_cut_flow(cut_flow, "InitialPUDown", sumw=sumw_pu_down)
+                events, _, _, _ = skimmer_utils.apply_pu_variations(events,self.year,pfnano_sys_file=self.pfnano_corr_file,is_nano=self.nano_aod,multiply_by_pu_weight=False)
 
             if "scale" in self.weight_variations:
                 events, sumw_scale_up, sumw_scale_down,_ = skimmer_utils.apply_scale_variations(events,is_nano=self.nano_aod,multiply_by_pu_weight=False)

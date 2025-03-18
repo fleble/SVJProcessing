@@ -308,8 +308,8 @@ def get_mu_tight_id_sf (year, eta, pt):
 def get_pu_weight(year, trueint):
     correction = {'2018': 'Collisions18_UltraLegacy_goldenJSON',
                   '2017': 'Collisions17_UltraLegacy_goldenJSON',
-                  '2016preVFP': 'Collisions16_UltraLegacy_goldenJSON',
-                  '2016postVFP':'Collisions16_UltraLegacy_goldenJSON'}
+                  '2016APV': 'Collisions16_UltraLegacy_goldenJSON',
+                  '2016':'Collisions16_UltraLegacy_goldenJSON'}
     evaluator = correctionlib.CorrectionSet.from_file(f'{out_path_corrections}/lum/'+year+'_UL/puWeights.json.gz')
     weight_nom = evaluator[correction[year]].evaluate(trueint, 'nominal')
     weight_up = evaluator[correction[year]].evaluate(trueint, 'up')
@@ -606,7 +606,7 @@ def build_jet_and_corrections():
 
 def fetch_lum_corrections():
 
-    for year in ["2016preVFP", "2016postVFP", "2017", "2018"]:
+    for year in ["2016APV", "2016", "2017", "2018"]:
         _ = fetch_and_save_files_corrections(pog="lum",observable="pu",year=year)
 
     return 
@@ -615,7 +615,7 @@ def fetch_lum_corrections():
 def fetch_xy_met_corrections():
     
         #fetch the corrections for the met
-        for year in ["2016preVFP", "2016postVFP", "2017", "2018"]:
+        for year in ["2016APV", "2016", "2017", "2018"]:
           _ = fetch_and_save_files_corrections(pog='jme',observable='met',year=year)
     
         return
