@@ -423,14 +423,15 @@ def apply_variation(events, variation):
     
     Args:
         events (ak.Array)
-        variation (str): choose from "jec_up", "jec_down", "jer_up", "jer_down".
+        variation (str): choose from "jec_up", "jec_down", "jer_up", "jer_down",
+            "ue_up", "ue_down" for JEC, JER, unclustered energy up/down.
 
     Returns:
         events (ak.Array)
     """
 
     if variation is None: return events
-    elif variation in ["jec_up", "jec_down", "jer_up", "jer_down"]:
+    elif variation in ["jec_up", "jec_down", "jer_up", "jer_down", "ue_up", "ue_down"]:
         if "jec" in variation:
             pt_var, eta_var, phi_var, energy_var, permutation = calc_jec_variation(
                 events.JetsAK8.pt,
@@ -455,7 +456,7 @@ def apply_variation(events, variation):
                 events[ht_variation_name],
                 "HT",
             )
-        else:
+        elif "jer" in variation:
             pt_var, eta_var, phi_var, energy_var, permutation = calc_jer_variation(
                 events.JetsAK8.pt,
                 events.JetsAK8.eta,
@@ -478,46 +479,54 @@ def apply_variation(events, variation):
                 events[ht_variation_name],
                 "HT",
             )
+        else:
+            met_variation_name = "METUp" if "_up" in variation else "METDown"
+            events = ak.with_field(
+                events,
+                events[met_variation_name][:, 5],
+                "MET",
+            )
 
-        corrected_jets = make_pt_eta_phi_energy_lorentz_vector(
-            pt=pt_var,
-            eta=eta_var,
-            phi=phi_var,
-            energy=energy_var,
-        )
-
-        events["JetsAK8"] = ak.with_field(
-            events["JetsAK8"],
-            corrected_jets.pt,
-            "pt",
-        )
-        events["JetsAK8"] = ak.with_field(
-            events["JetsAK8"],
-            corrected_jets.eta,
-            "eta",
-        )
-        events["JetsAK8"] = ak.with_field(
-            events["JetsAK8"],
-            corrected_jets.phi,
-            "phi",
-        )
-        events["JetsAK8"] = ak.with_field(
-            events["JetsAK8"],
-            corrected_jets.energy,
-            "energy",
-        )
-        events["JetsAK8"] = ak.with_name(
-            events["JetsAK8"],
-            "PtEtaPhiELorentzVector",
-        )
-        for k in events["JetsAK8"].fields:
-            if k in ["pt", "eta", "phi", "energy"]: continue
+        if "jec" in variation or "jer" in variation:
+            corrected_jets = make_pt_eta_phi_energy_lorentz_vector(
+                pt=pt_var,
+                eta=eta_var,
+                phi=phi_var,
+                energy=energy_var,
+            )
 
             events["JetsAK8"] = ak.with_field(
                 events["JetsAK8"],
-                events["JetsAK8"][k][permutation],
-                k,
+                corrected_jets.pt,
+                "pt",
             )
+            events["JetsAK8"] = ak.with_field(
+                events["JetsAK8"],
+                corrected_jets.eta,
+                "eta",
+            )
+            events["JetsAK8"] = ak.with_field(
+                events["JetsAK8"],
+                corrected_jets.phi,
+                "phi",
+            )
+            events["JetsAK8"] = ak.with_field(
+                events["JetsAK8"],
+                corrected_jets.energy,
+                "energy",
+            )
+            events["JetsAK8"] = ak.with_name(
+                events["JetsAK8"],
+                "PtEtaPhiELorentzVector",
+            )
+            for k in events["JetsAK8"].fields:
+                if k in ["pt", "eta", "phi", "energy"]: continue
+
+                events["JetsAK8"] = ak.with_field(
+                    events["JetsAK8"],
+                    events["JetsAK8"][k][permutation],
+                    k,
+                )
 
         return events
 
