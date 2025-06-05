@@ -105,7 +105,6 @@ When running on data, in order to handle the overlap between the different prima
 
 
 ## Making skims
-### Introduction
 
 An example bash script to produce skims is provided in [skimmer/examples.sh](https://github.com/fleble/SVJProcessing/blob/main/skimmer/example.sh).
 
@@ -124,8 +123,6 @@ Some explanation of the flags relative to the job submission:
 * -t/--walltime: The maximum time of the job (for SLURM only).
 * -q/--queue: The parition name for SLURM jobs.
 
-Note if you are running on PFNano for offline analysis or scouting, set the relative flags ```-nano``` or ```-nano_scout``` as options to ```skim.py``` as shown in the examples ```make_skims_pfnano.sh``` and ```make_skims_s_channel_scouting.sh```. In those examples can be found also the flags to set the x-section of a given input dataset which will be used to compute the weights.
-
 You can run locally on the interactive nodes where you are logged in, or distributed, using the LPCConderCluster (only at LPC!) or the SLURMCluster at any site with a SLURM batch submission system:    
 * If you run locally, you need to adjust the number of workers to not use too many and bother other users on that login node!
 * If you run distributed, you need to adjust the memory request: the more you ask, the more your jobs will queue, but if you do not request enough the jobs will run out of memory and crash. For 50k events per file and TreeMaker NTuples containing PF candidates, 4 GB of memory should be enough! When running ParticleNet inference with 50k events per file, 6 GB of memory is needed.
@@ -133,13 +130,6 @@ You can run locally on the interactive nodes where you are logged in, or distrib
 For processes with high efficiency, the bottleneck is the queuing time... It is much faster to run locally requesting one node if the queuing time is non-zero...
 
 If the total number of workers is too high, the OS limit of maximum number of files opened by one process is reached. At FNAL, this limit seems to be around 200 workers. It is recommended to ask for a maximum of 150 workers at once. It seems that the code terminates well if asking for more workers, but workers will all crash throwing an OSError...
-
-### Running systematics
-When running on ```Treemaker``` ntuples the systematics variations need not to be recomputed, and the code fetches the necessary information form the input files to create the varied skimmed datasets. An example of how to run the systematics variations for ```Tremaker``` can be found ```make_skims_t_channel.sh```.
-
-When running on ```(PF)NanoAOD``` ntuples, the systematics  need to be recomputed. This is handled in the framework using [coffea](https://coffeateam.github.io/coffea/) tools and [correctionlib](https://github.com/cms-nanoAOD/correctionlib). There are two main steps to run the skims with the systematics variations:
-1. Produce a ```.coffea``` file with the whole set of compiled corrections (corrections factory). This can be done by running the code ```skimmer/make_compiled_corrections_file_pfnano.sh```. The bash script will run ```corrections_pfnano_coffea.py``` which will create a ```data``` directory in the repository with inside all the needed ```.txt``` files to be used to create the corrections factory, and it will output in the same directory also the ```.coffa``` file. It is possible to include in the corrections factory specific corrections, such as JME ones, with flags like ```-jme``` or include all possible ones implemented in ```corrections_pfnano_coffea.py```  with ```-all```. Suported arguments for ```corrections_pfnano_coffea.py```: ```-all``` (include all implemented corrections), ```-jme``` (include only JME corrections)
-2. Run the skimmer code. An example can be found in ```make_skims_pfnano_sys.sh```. There you will need to specify the full path to the corrections factory file in ```pfnano_corrections_file```. In order to add ```pdfs``` and ```scales``` variations you can set also ```add_weights_variations=1```. When running variations it is important to set the ```-mc``` flag.
 
 #### Tips for running at LPC
 
