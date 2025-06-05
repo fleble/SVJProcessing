@@ -19,21 +19,12 @@ class Skimmer(processor.ProcessorABC):
     def __init__(
             self,
             process_function,
-            year=2018,
-            is_mc=False,
             variation=None,
             weight_variations=[],
-            nano_aod=False,
-            pfnano_corr_file=None,
         ):
-
         self.process_function = process_function
         self.variation = variation
         self.weight_variations = weight_variations
-        self.nano_aod = nano_aod
-        self.pfnano_corr_file = pfnano_corr_file
-        self.is_mc = "mc" if is_mc else "data"
-        self.year = year
 
     def process(self, events):
 
@@ -42,51 +33,16 @@ class Skimmer(processor.ProcessorABC):
 
         if skimmer_utils.is_mc(events):
             # Calculate and store the weight variations
-            if "pu" in self.weight_variations:
-                events, _, _, _ = skimmer_utils.apply_pu_variations(events,self.year,pfnano_sys_file=self.pfnano_corr_file,is_nano=self.nano_aod,multiply_by_pu_weight=False)
-
             if "scale" in self.weight_variations:
-                events, sumw_scale_up, sumw_scale_down,_ = skimmer_utils.apply_scale_variations(events,is_nano=self.nano_aod,multiply_by_pu_weight=False)
+                events, sumw_scale_up, sumw_scale_down = skimmer_utils.apply_scale_variations(events)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialScaleUp", sumw=sumw_scale_up)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialScaleDown", sumw=sumw_scale_down)
-                if "pu" in self.weight_variations:
-                    events, sumw_scale_up_pu_nom, sumw_scale_down_pu_nom, _ = skimmer_utils.apply_scale_variations(events,is_nano=self.nano_aod,multiply_by_pu_weight=True)
-                    skimmer_utils.update_cut_flow(cut_flow, "InitialScaleUpPUNom", sumw=sumw_scale_up_pu_nom)
-                    skimmer_utils.update_cut_flow(cut_flow, "InitialScaleDownPUNom", sumw=sumw_scale_down_pu_nom)
-            
             if "pdf" in self.weight_variations:
-                events, sumw_pdf_up, sumw_pdf_down,_ = skimmer_utils.apply_pdf_variations(events,is_nano=self.nano_aod, multiply_by_pu_weight=False)
+                events, sumw_pdf_up, sumw_pdf_down = skimmer_utils.apply_pdf_variations(events)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialPDFUp", sumw=sumw_pdf_up)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialPDFDown", sumw=sumw_pdf_down)
-                if "pu" in self.weight_variations:
-                    events, sumw_pdf_up_pu_nom, sumw_pdf_down_pu_nom, _ = skimmer_utils.apply_pdf_variations(events,is_nano=self.nano_aod,multiply_by_pu_weight=True)
-                    skimmer_utils.update_cut_flow(cut_flow, "InitialPDFUpPUNom", sumw=sumw_pdf_up_pu_nom)
-                    skimmer_utils.update_cut_flow(cut_flow, "InitialPDFDownPUNom", sumw=sumw_pdf_down_pu_nom)
 
-            if "psISR" in self.weight_variations:
-                events, sumw_ps_up, sumw_ps_down,_ = skimmer_utils.apply_ps_variations(events,is_nano=self.nano_aod, ps_type="ISR", multiply_by_pu_weight=False)
-                skimmer_utils.update_cut_flow(cut_flow, "InitialPSISRUp", sumw=sumw_ps_up)
-                skimmer_utils.update_cut_flow(cut_flow, "InitialPSISRDown", sumw=sumw_ps_down)
-                if "pu" in self.weight_variations:
-                    events, sumw_ps_up_pu_nom, sumw_ps_down_pu_nom, _ = skimmer_utils.apply_ps_variations(events,is_nano=self.nano_aod,ps_type="ISR",multiply_by_pu_weight=True)
-                    skimmer_utils.update_cut_flow(cut_flow, "InitialPSISRUpPUNom", sumw=sumw_ps_up_pu_nom)
-                    skimmer_utils.update_cut_flow(cut_flow, "InitialPSISRDownPUNom", sumw=sumw_ps_down_pu_nom)
-
-            if "psFSR" in self.weight_variations:
-                events, sumw_ps_up, sumw_ps_down,_ = skimmer_utils.apply_ps_variations(events,is_nano=self.nano_aod, ps_type="FSR", multiply_by_pu_weight=False)
-                skimmer_utils.update_cut_flow(cut_flow, "InitialPSFSRUp", sumw=sumw_ps_up)
-                skimmer_utils.update_cut_flow(cut_flow, "InitialPSFSRDown", sumw=sumw_ps_down)
-                if "pu" in self.weight_variations:
-                    events, sumw_ps_up_pu_nom, sumw_ps_down_pu_nom, _ = skimmer_utils.apply_ps_variations(events,is_nano=self.nano_aod,ps_type="FSR",multiply_by_pu_weight=True)
-                    skimmer_utils.update_cut_flow(cut_flow, "InitialPSFSRUpPUNom", sumw=sumw_ps_up_pu_nom)
-                    skimmer_utils.update_cut_flow(cut_flow, "InitialPSFSRDownPUNom", sumw=sumw_ps_down_pu_nom)
-
-
-
-        if self.nano_aod:
-            events = skimmer_utils.apply_variation_pfnano(events, variation=self.variation, year=self.year, run=self.is_mc, pfnano_sys_file=self.pfnano_corr_file)
-        else:
-            events = skimmer_utils.apply_variation(events, self.variation)
+        events = skimmer_utils.apply_variation(events, self.variation)
 
         events, cut_flow = self.process_function(events, cut_flow)
         skimmer_utils.update_cut_flow(cut_flow, "Final", events)
@@ -113,12 +69,6 @@ def add_coffea_args(parser):
         "-y", "--year",
         help="Data-taking year",
         required=True,
-    )
-    parser.add_argument(
-        "-mc", "--is_mc",
-        help='Set True if input files MC files', 
-        default=False, 
-        action='store_true',
     )
     parser.add_argument(
         "-pd", "--primary_dataset",
@@ -209,15 +159,6 @@ def add_coffea_args(parser):
         type=float,
         action='store',
     )
-
-    parser.add_argument(
-        '-corrfile', '--pfnano_corrections_file',
-        help='Precompiled corrections file for PFNanoAOD', 
-        type=str,
-        action='store',
-        default=None,
-    )
-
     parser.add_argument(
         '-pn_tagger', '--pn_tagger',       
         help='Add particleNet jet tagger score', 
@@ -232,16 +173,9 @@ def add_coffea_args(parser):
     )
     parser.add_argument(
         "-var", "--variation",
-        help="What systematic variation to compute with TreeMaker (choice=%(choices)s)",
+        help="What systematic variation to compute (choice=%(choices)s)",
         type=str,
         choices=["jec_up", "jec_down", "jer_up", "jer_down", "ue_up", "ue_down"],
-        default=None,
-    )
-    parser.add_argument(
-        "-varnano", "--variation_nano",
-        help="What systematic variation to compute with (PF)Nano (choice=%(choices)s)",
-        type=str,
-        choices=["jec_up", "jec_down", "jer_up", "jer_down", "unclEn_up", "unclEn_down", "SVJjec_up", "SVJjec_down"],
         default=None,
     )
     parser.add_argument(
@@ -251,15 +185,6 @@ def add_coffea_args(parser):
         type=str,
         nargs="*",
         choices=["scale", "pdf"],
-        default=[],
-    )
-    parser.add_argument(
-        "-wvarnano", "--weight_variations_nano",
-        help="What systematic weight variations to compute with (PF)Nano (choice=%(choices)s). "
-             "Can choose several weights variations.",
-        type=str,
-        nargs="*",
-        choices=["scale","pdf","pu","psISR","psFSR"],
         default=[],
     )
 
@@ -346,31 +271,18 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
     else:
         treename = "TreeMaker2/PreSelection"
 
-    variation_type = args.variation
-    weight_variations = args.weight_variations
-    if args.nano_aod:
-        variation_type = args.variation_nano
-        weight_variations = args.weight_variations_nano
-
-    
-
     uproot_job_kwargs = {
         "treename": treename,
         "processor_instance": Skimmer(
             process_function,
-            year=args.year,
-            is_mc=args.is_mc,
-            variation=variation_type,
-            weight_variations=weight_variations,
-            nano_aod=args.nano_aod,
-            pfnano_corr_file=args.pfnano_corrections_file,
+            args.variation,
+            args.weight_variations,
         ),
         "executor": executor,
         "executor_args": executor_args,
         "chunksize": args.chunk_size,
         "maxchunks": args.max_chunks,
     }
-
 
     return uproot_job_kwargs
 
