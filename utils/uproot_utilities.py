@@ -5,6 +5,7 @@ import uproot
 from utils import awkward_array_utilities as akUtl
 from utils.Logger import *
 
+import sys
 
 def __cast_unknown_type_branches(ak_array, field):
 
@@ -62,9 +63,12 @@ def __zip_composite(ak_array):
         "j": "jerFactor",
         "o": "origIndex",
     }
-
+    
+    #branches_to_ignore = [a.replace('Counts', '') for a in ak_array.fields if 'Counts' in a ]
+    
     dict_ = {}
     for n in ak_array.fields:
+        #if n in branches_to_ignore or 'darkHadron' in n: continue
         ak_array_ = __prepare_array(ak_array[n], n)
         if __is_rootcompat(ak_array_):
             dict_[_rename_lookup.get(n, n)] = ak_array_
@@ -83,13 +87,16 @@ def __make_tree_maker_event_tree(events):
     """
 
     out = {}
+
     for bname in events.fields:
         if events[bname].fields:
+            fields_to_remove = ['darkHadronJetsCounts', 'darkHadronJetsMultiplicityCounts', 'darkHadronsCounts',  'nConstituents', 'softDropMass', 'darkHadronJets', 'darkHadronJetsMultiplicity', 'darkHadrons']
+            events[bname] = events[bname][[x for x in events[bname].fields if x not in fields_to_remove]]
             sub_collection = [  # Handling sub collection first
                 x.replace("Counts", "")
                 for x in events[bname].fields
                 if x.endswith("Counts")
-            ]
+            ]            
             if sub_collection:
                 for subname in sub_collection:
                     if events[bname][subname].fields:
@@ -102,6 +109,7 @@ def __make_tree_maker_event_tree(events):
                         )
             out[bname] = __zip_composite(events[bname])
         else:
+            
             out[bname] = __prepare_array(events[bname], bname)
     return out
 

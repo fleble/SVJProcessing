@@ -13,6 +13,8 @@ from utils.coffea.job_submission_helper import get_executor, get_executor_args
 from skimmer import skimmer_utils
 from utils.Logger import *
 
+import LundReweighting
+from LundReweighting.svjReweighter import *
 
 class Skimmer(processor.ProcessorABC):
 
@@ -21,10 +23,14 @@ class Skimmer(processor.ProcessorABC):
             process_function,
             variation=None,
             weight_variations=[],
+            lund_reweighting=False,
+            year=None,
         ):
         self.process_function = process_function
         self.variation = variation
         self.weight_variations = weight_variations
+        self.lund_reweighting = lund_reweighting
+        self.year = year
 
     def process(self, events):
 
@@ -41,12 +47,15 @@ class Skimmer(processor.ProcessorABC):
                 events, sumw_pdf_up, sumw_pdf_down = skimmer_utils.apply_pdf_variations(events)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialPDFUp", sumw=sumw_pdf_up)
                 skimmer_utils.update_cut_flow(cut_flow, "InitialPDFDown", sumw=sumw_pdf_down)
-
+                
         events = skimmer_utils.apply_variation(events, self.variation)
 
         events, cut_flow = self.process_function(events, cut_flow)
         skimmer_utils.update_cut_flow(cut_flow, "Final", events)
 
+        if self.lund_reweighting:
+            events = calculate_lund_weights(events, self.year) 
+        
         accumulator = {
             "events": AkArrayAccumulator(ak.copy(events)),
             "cut_flow": DictAccumulator(cut_flow.copy()),
@@ -188,6 +197,13 @@ def add_coffea_args(parser):
         default=[],
     )
 
+    parser.add_argument(
+        "-lund", "--lund_reweighting",
+        help="Run lund reweight procedure",
+        default=False,
+        action='store_true',
+    )
+
 
 def __get_arguments():
     parser = argparse.ArgumentParser()
@@ -241,6 +257,7 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
         year=args.year,
         primary_dataset=args.primary_dataset,
         pn_tagger=args.pn_tagger,
+        lund_reweighting=args.lund_reweighting,
     )
 
     executor = get_executor(args.executor_name)
@@ -277,6 +294,8 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
             process_function,
             args.variation,
             args.weight_variations,
+            args.lund_reweighting,
+            args.year,
         ),
         "executor": executor,
         "executor_args": executor_args,

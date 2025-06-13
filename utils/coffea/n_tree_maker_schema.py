@@ -90,13 +90,18 @@ class NTreeMakerSchema(BaseSchema):
         # Generating collection from branch name
         # Cannot start with "n" as this is generated from uproot counting
         collections = [k for k in branch_forms if "_" in k and not k.startswith("n")]
-        collections = set(
-            [
-                "_".join(k.split("_")[:-1])
-                for k in collections
-                if k.split("_")[-1] != "AK8"
-                # Excluding per-event variables with AK8 variants like Mjj and MT
-            ]
+        collections = sorted(
+            set(
+                [
+                    "_".join(k.split("_")[:-1])
+                    for k in collections
+                    if k.split("_")[-1] != "AK8"
+                    # Excluding per-event variables with AK8 variants like Mjj and MT
+                ]
+            ),
+            # Always process nested items first
+            key=lambda colname: colname.count("_"),
+            reverse=True,
         )
 
         subcollections = []
