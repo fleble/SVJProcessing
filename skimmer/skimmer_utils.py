@@ -484,9 +484,11 @@ def __add_weight_variations(events, variation_up, variation_down, variation_name
     weights_up = nominal_weights * variation_up
     weights_down = nominal_weights * variation_down
 
-    # Create the new branches
-    events[f"{weight_name}{variation_name}Up"] = weights_up
-    events[f"{weight_name}{variation_name}Down"] = weights_down
+    # Lund variations are already added to the events
+    if not variation_name.startswith("lund"):
+        # Create the new branches
+        events[f"{weight_name}{variation_name}Up"] = weights_up
+        events[f"{weight_name}{variation_name}Down"] = weights_down
 
     # Compute the sum of weights for the variations
     sumw_up = ak.sum(weights_up)
@@ -562,3 +564,40 @@ def apply_pdf_variations(events):
 
     return __add_weight_variations(events, variation_up, variation_down, "PDF")
 
+
+def apply_lund_variation(events, var):
+    """Calculate the Lund reweighting variations.
+    
+    This should be done **before** any event selection is applied.
+
+    The following collections/branches are added in place:
+        * WeightLundUp (TreeMaker) / genWeightLundUp (PFNanoAOD)
+        * WeightLundDown (TreeMaker) / genWeightLundDown (PFNanoAOD)
+
+    The definition of the weights includes normalization factors, such that
+    the normalization to unit luminosity is the same for the variations and
+    the nominal weights.
+
+    Args:
+        events (ak.Array)
+        var (str): the Lund variation to apply, choose from:
+            "lundWeight_ bquark", "lundWeight_ distortion", "lundWeight_ prongs",
+            "lundWeight_ pt", "lundWeight_ stat", "lundWeight_ sys", "lundWeight_ unclust"
+
+    Returns:
+        ak.Array, float, float: events, sumw up, and sumw down
+    """
+
+    vars = ["lundWeightBquark", "lundWeightDistortion", "lundWeightProngs", "lundWeightPt",
+            "lundWeightStat", "lundWeightSys", "lundWeightUnclust"]
+    
+    assert var in vars, f"Invalid Lund variation: {var}. Choose from {vars}."
+
+    # Calculate up/down variations
+    variation_up = events[var+"Up"]
+    variation_down = events[var+"Down"]
+
+    # assert ak.all(variation_up >= 0), f"Variation {var} up is negative, this should not happen."
+    # assert ak.all(variation_down >= 0), f"Variation {var} down is negative, this should not happen."
+
+    return __add_weight_variations(events, variation_up, variation_down, var)
