@@ -37,6 +37,25 @@ class Skimmer(processor.ProcessorABC):
         cut_flow = {}
         skimmer_utils.update_cut_flow(cut_flow, "Initial", events)
 
+        if self.lund_reweighting:
+            events = calculate_lund_weights(events, self.year)
+            # Normalize the Lund reweighting weights
+            sumw_lund = ak.sum(events["lundWeightNom"] * events["Weight"])
+            skimmer_utils.update_cut_flow(cut_flow, "InitialLundNominal", sumw=sumw_lund)
+            # Normalize the Lund variation weights
+            for k in [
+                "lundWeightBquark",
+                "lundWeightDistortion",
+                "lundWeightProngs",
+                "lundWeightPt",
+                "lundWeightStat",
+                "lundWeightSys",
+                "lundWeightUnclust",
+            ]:
+                events, sumw_lund_var_up, sumw_lund_var_down = skimmer_utils.apply_lund_variation(events, k)
+                skimmer_utils.update_cut_flow(cut_flow, f"InitialLund{k.capitalize()}Up", sumw=sumw_lund_var_up)
+                skimmer_utils.update_cut_flow(cut_flow, f"InitialLund{k.capitalize()}Down", sumw=sumw_lund_var_down)
+
         if skimmer_utils.is_mc(events):
             # Calculate and store the weight variations
             if "scale" in self.weight_variations:
@@ -52,9 +71,6 @@ class Skimmer(processor.ProcessorABC):
 
         events, cut_flow = self.process_function(events, cut_flow)
         skimmer_utils.update_cut_flow(cut_flow, "Final", events)
-
-        if self.lund_reweighting:
-            events = calculate_lund_weights(events, self.year) 
         
         accumulator = {
             "events": AkArrayAccumulator(ak.copy(events)),
@@ -184,7 +200,7 @@ def add_coffea_args(parser):
         "-var", "--variation",
         help="What systematic variation to compute (choice=%(choices)s)",
         type=str,
-        choices=["jec_up", "jec_down", "jer_up", "jer_down", "ue_up", "ue_down"],
+        choices=["jec_up", "jec_down", "jer_up", "jer_down", "ue_up", "ue_down", "svj_jec_up", "svj_jec_down"],
         default=None,
     )
     parser.add_argument(
