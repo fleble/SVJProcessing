@@ -38,7 +38,7 @@ class Skimmer(processor.ProcessorABC):
         skimmer_utils.update_cut_flow(cut_flow, "Initial", events)
 
         if self.lund_reweighting:
-            events = calculate_lund_weights(events, self.year)
+            events = calculate_lund_weights(events, self.year, subjetMinPt=10.0)
             # Normalize the Lund reweighting weights
             sumw_lund = ak.sum(events["lundWeightNom"] * events["Weight"])
             skimmer_utils.update_cut_flow(cut_flow, "InitialLundNominal", sumw=sumw_lund)

@@ -88,7 +88,7 @@ def __make_tree_maker_event_tree(events):
 
     out = {}
 
-    to_remove = ['lundWeightJetRawDistortion','lundWeightNProngs', 'lundWeightSubjetpts', 'lundWeightSubjetweights', 'lundWeightNsplittings', 'lundWeightSplittingweights', 'lundWeightLpidxs']
+    to_remove = ['lundWeightJetRawDistortion','lundWeightNProngs', 'lundWeightSubjetpts', 'lundWeightSubjetweights', 'lundWeightNsplittings', 'lundWeightSplittingweights', 'lundWeightLpidxs', 'lundWeightSubjetstatvars', 'lundWeightSubJetStatVars', 'lundWeightJetStatVars', 'lundWeightEventStatVars']
     events = events[[x for x in events.fields if x not in to_remove]]
     for bname in events.fields:
         if events[bname].fields:
