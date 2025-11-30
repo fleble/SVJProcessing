@@ -484,12 +484,6 @@ def __add_weight_variations(events, variation_up, variation_down, variation_name
     weights_up = nominal_weights * variation_up
     weights_down = nominal_weights * variation_down
 
-    # Lund variations are already added to the events
-    if not variation_name.startswith("lund"):
-        # Create the new branches
-        events[f"{weight_name}{variation_name}Up"] = weights_up
-        events[f"{weight_name}{variation_name}Down"] = weights_down
-
     # Compute the sum of weights for the variations
     sumw_up = ak.sum(weights_up)
     sumw_down = ak.sum(weights_down)
@@ -565,7 +559,7 @@ def apply_pdf_variations(events):
     return __add_weight_variations(events, variation_up, variation_down, "PDF")
 
 
-def apply_lund_variation(events, var):
+def apply_lund_variation(events, var, all_events):
     """Calculate the Lund reweighting variations.
     
     This should be done **before** any event selection is applied.
@@ -588,16 +582,30 @@ def apply_lund_variation(events, var):
         ak.Array, float, float: events, sumw up, and sumw down
     """
 
-    vars = ["lundWeightBquark", "lundWeightDistortion", "lundWeightProngs", "lundWeightPt",
-            "lundWeightStat", "lundWeightSys", "lundWeightUnclust"]
+    vars = ["lundWeightDistortion", "lundWeightPt",
+            "lundWeightStat", "lundWeightSys"]
     
     assert var in vars, f"Invalid Lund variation: {var}. Choose from {vars}."
 
-    # Calculate up/down variations
-    variation_up = events[var+"Up"]
-    variation_down = events[var+"Down"]
+    # Calculate up/down variations from events passing selection only
+    weight_name = "Weight" if is_tree_maker(events) else "genWeight"
+    nominal_weights = events[weight_name]
+    weights_up = nominal_weights * events[var+'Up']
+    weights_down = nominal_weights * events[var+'Down']
 
-    # assert ak.all(variation_up >= 0), f"Variation {var} up is negative, this should not happen."
-    # assert ak.all(variation_down >= 0), f"Variation {var} down is negative, this should not happen."
+    #Lund variations are already added to the events
+    if not var.startswith("lund"):
+        # Create the new branches
+        events[f"{weight_name}{var}Up"] = weights_up
+        events[f"{weight_name}{var}Down"] = weights_down
 
-    return __add_weight_variations(events, variation_up, variation_down, var)
+    # Calculate up/down variations from all events for normalization purposes 
+    all_nominal_weights = all_events[weight_name]
+    all_weights_up = all_nominal_weights * all_events[var+'Up']
+    all_weights_down = all_nominal_weights * all_events[var+'Down']
+
+    # Compute the sum of weights for the variations
+    sumw_up = ak.sum(all_weights_up)
+    sumw_down = ak.sum(all_weights_down)
+
+    return events, sumw_up, sumw_down

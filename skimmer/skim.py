@@ -16,6 +16,8 @@ from utils.Logger import *
 import LundReweighting
 from LundReweighting.svjReweighter import *
 
+from plot_lund import plotLundWeights
+
 class Skimmer(processor.ProcessorABC):
 
     def __init__(
@@ -38,23 +40,14 @@ class Skimmer(processor.ProcessorABC):
         skimmer_utils.update_cut_flow(cut_flow, "Initial", events)
 
         if self.lund_reweighting:
-            events = calculate_lund_weights(events, self.year, subjetMinPt=10.0)
-            # Normalize the Lund reweighting weights
-            sumw_lund = ak.sum(events["lundWeightNom"] * events["Weight"])
-            skimmer_utils.update_cut_flow(cut_flow, "InitialLundNominal", sumw=sumw_lund)
-            # Normalize the Lund variation weights
-            for k in [
-                "lundWeightBquark",
-                "lundWeightDistortion",
-                "lundWeightProngs",
-                "lundWeightPt",
-                "lundWeightStat",
-                "lundWeightSys",
-                "lundWeightUnclust",
-            ]:
-                events, sumw_lund_var_up, sumw_lund_var_down = skimmer_utils.apply_lund_variation(events, k)
-                skimmer_utils.update_cut_flow(cut_flow, f"InitialLund{k.capitalize()}Up", sumw=sumw_lund_var_up)
-                skimmer_utils.update_cut_flow(cut_flow, f"InitialLund{k.capitalize()}Down", sumw=sumw_lund_var_down)
+            # returns list of jet level weights for each event
+            events, norm_lund = calculate_lund_weights(events, self.year, subjetMinPt=10.0)
+            #plotLundWeights(events)
+
+            # Setup values to add to accumulator for overall normalization of Lund Weights
+            to_norm = ["lundWeightNprongs", "lundWeightNom", "lundWeightPtVars", "lundWeightStatVars", "lundWeightSysUp", "lundWeightSysDown", "lundWeightDistortionUp", "lundWeightDistortionDown"]
+            lund_weights = events[[f for f in events.fields if f in to_norm ] ]
+            lund_weights["Weight"] = events["Weight"]
 
         if skimmer_utils.is_mc(events):
             # Calculate and store the weight variations
@@ -76,6 +69,10 @@ class Skimmer(processor.ProcessorABC):
             "events": AkArrayAccumulator(ak.copy(events)),
             "cut_flow": DictAccumulator(cut_flow.copy()),
         }
+
+        if self.lund_reweighting:
+            accumulator["norm_lund"] = DictAccumulator(norm_lund.copy())
+            accumulator["lund_weights"] = AkArrayAccumulator(ak.copy(lund_weights))
 
         return accumulator
 
@@ -345,6 +342,37 @@ def main():
 
     accumulator = skim(input_file_names, args)
 
+    events = accumulator["events"].value
+    if len(events) == 0:
+        log.warning("No events passed selection")
+        return
+
+    if args.lund_reweighting:
+        cut_flow = accumulator["cut_flow"].value
+        norm = accumulator["norm_lund"].value
+        lund_weights = accumulator["lund_weights"].value
+
+        for k in norm.keys():
+            if 'lundWeight' not in k: continue
+            # apply lund weights per-prong, returns reweighted jet level weights
+            events[k] = lund_normalization(events, k, norm)
+            if k in lund_weights.fields: lund_weights[k] = lund_normalization(lund_weights, k, norm)
+        for f in events.fields:
+            if 'lundWeight' not in f: continue
+            # take jet level weights to event level, compute stat and pt variations etc
+            lund_post(events, f)
+            if f in lund_weights.fields: lund_post(lund_weights, f)
+
+        # Now do overall normalization that Roberto added, requires event level, per prong normalized lund weights (processed above)
+        sumw_lund = ak.sum(lund_weights["lundWeightNom"] * lund_weights["Weight"])
+        skimmer_utils.update_cut_flow(cut_flow, "InitialLundNominal", sumw=sumw_lund)
+
+        # Normalize the Lund variation weights
+        for f in ["lundWeightPt", "lundWeightStat", "lundWeightSys", "lundWeightDistortion"]:
+            events, sumw_lund_var_up, sumw_lund_var_down = skimmer_utils.apply_lund_variation(events, f, lund_weights)
+            skimmer_utils.update_cut_flow(cut_flow, f"InitialLund{f.capitalize()}Up", sumw=sumw_lund_var_up)
+            skimmer_utils.update_cut_flow(cut_flow, f"InitialLund{f.capitalize()}Down", sumw=sumw_lund_var_down)
+
     # Making output ROOT file
     cut_flow_tree = __prepare_cut_flow_tree(accumulator["cut_flow"].value)
     if args.skim_source:
@@ -354,12 +382,6 @@ def main():
     trees = {
         "CutFlow": cut_flow_tree
     }
-   
-    events = accumulator["events"].value
-    if len(events) == 0:
-        log.warning("No events passed selection")
-        return
-
     if args.cross_section:
         # Add cross-section in the custom PFNanoAOD way
         trees["Metadata"] = {
