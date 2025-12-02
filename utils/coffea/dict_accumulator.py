@@ -14,8 +14,7 @@ class DictAccumulator(processor.AccumulatorABC):
         elif len(self.value.keys()) == 0:
             self.value = other.value
         else:
-            if set(other.value.keys()) != set(self.value.keys()):
-                raise ValueError
             for key in other.value.keys():
-                self.value[key] += other.value[key]
+                if key in self.value.keys(): self.value[key] += other.value[key]
+                else: self.value[key] = other.value[key]
 
