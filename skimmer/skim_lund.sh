@@ -12,6 +12,6 @@ variations=nominal
 variation_flag="--variation nominal"
 weight_variation_flag="--weight_variation lund"
 
-python skim.py -i ${inputFile} -o ${outputFile} -p ${module} -pd ${dataset_name} -y ${year} -lund -m 1 -c 200 #-m 2 -c 16076 #
+python skim.py -i ${inputFile} -o ${outputFile} -p ${module} -pd ${dataset_name} -y ${year} -lund -m 1 -c 32152 #-m 2 -c 16076 #
 
 #-pn_tagger #${weight_variation_flag} #${variation_flag} #-e ${EXECUTOR} -n ${N_WORKERS} -c ${CHUNK_SIZE} --memory ${MEMORY} --cores ${CORES} 

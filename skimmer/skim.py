@@ -40,7 +40,7 @@ class Skimmer(processor.ProcessorABC):
         if self.lund_reweighting:
             # returns list of jet level weights for each event
             events, norm_lund = calculate_lund_weights(events, self.year, subjetMinPt=10.0)
-
+            all_events = ak.copy(events)
             # Setup values to add to accumulator for overall normalization of Lund Weights
             to_norm = ["lundWeightNprongs", "lundWeightNom", "lundWeightPtVars", "lundWeightStatVars", "lundWeightSysUp", "lundWeightSysDown", "lundWeightDistortionUp", "lundWeightDistortionDown"]
             lund_weights = events[[f for f in events.fields if f in to_norm ] ]
@@ -69,7 +69,7 @@ class Skimmer(processor.ProcessorABC):
 
         if self.lund_reweighting:
             accumulator["norm_lund"] = DictAccumulator(norm_lund.copy())
-            accumulator["lund_weights"] = AkArrayAccumulator(ak.copy(lund_weights))
+            accumulator["lund_weights"] = AkArrayAccumulator(ak.copy(all_events))
 
         return accumulator
 
@@ -360,8 +360,8 @@ def main():
             lund_post(events, f)
             if f in lund_weights.fields: lund_post(lund_weights, f)
 
-        # from plot_lund import plotLundWeights
-        # plotLundWeights(lund_weights)
+        from plot_lund import plotLundWeights
+        plotLundWeights(lund_weights)
         # Now do overall normalization that Roberto added, requires event level, per prong normalized lund weights (processed above)
         sumw_lund = ak.sum(lund_weights["lundWeightNom"] * lund_weights["Weight"])
         skimmer_utils.update_cut_flow(cut_flow, "InitialLundNominal", sumw=sumw_lund)
