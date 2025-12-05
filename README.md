@@ -22,8 +22,29 @@ At each new login do:
 source setup.sh
 ```
 
+### At LPC
 The environment to run the code at the LPC is borrowed from the [FNAL t-channel analysis framework](https://github.com/cms-svj/t-channel_Analysis/tree/master). Follow instructions there to install the repo and initialize the singularity container.
 
+**Important note**: Check your coffea version after the creation of the singularity container. First, enter the container:
+```bash
+cd t-channel_Analysis
+source init.sh
+```
+and check the coffea version:
+```
+python
+>>> import coffea
+>>> coffea.__version__
+'0.7.17'
+```
+If have a different version than `0.7.17` it is recommended to install this version (the code is known to crash with version 0.7.21):
+```bash
+pip install coffea==0.7.17
+```
+
+To check your environment, run the automated tests (see below).
+
+### At the PSI T3
 The environment to run the code at the PSI T3 is borrowed from the [ETH t-channel analysis framework](https://github.com/eth-svj/SVJanalysis). Follow instructions [here](https://github.com/jniedzie/SVJanalysis_wiki/wiki/Creating-SVJ-virtual-environment) to install the virtual environment.
 
 To check your environment, run the automated tests (see below).
