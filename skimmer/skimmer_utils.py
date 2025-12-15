@@ -342,7 +342,10 @@ def get_number_of_events(events):
 
 def get_cut_flow_from_skims(input_file, cut_flow_tree):
     f = uproot.open(input_file)
-    cut_flow = f["CutFlow"].arrays(cut_flow_tree.keys(),  library="pd")
+    # FIXME: temporary hack or, somehow, the different values
+    # of initial sums of weights are lost when inferencing pNet on skims
+    # cut_flow = f["CutFlow"].arrays(cut_flow_tree.keys(),  library="pd")
+    cut_flow = f["CutFlow"].arrays(f["CutFlow"].keys(),  library="pd")
     return cut_flow.to_dict("list")
 
 
