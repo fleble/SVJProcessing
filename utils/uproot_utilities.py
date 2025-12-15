@@ -101,6 +101,7 @@ def __make_tree_maker_event_tree(events):
             ]            
             if sub_collection:
                 for subname in sub_collection:
+                    if subname in ["UnmatchedPdgid"]: continue
                     if events[bname][subname].fields:
                         out[f"{bname}_{subname}"] = __zip_composite(
                             ak.flatten(events[bname][subname], axis=-1)
