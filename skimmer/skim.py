@@ -214,6 +214,13 @@ def add_coffea_args(parser):
         action='store_true',
     )
 
+    parser.add_argument(
+        "-d", "--distortion",
+        help="Run the second distortion option",
+        default=False,
+        action='store_true',
+    )
+
 
 def __get_arguments():
     parser = argparse.ArgumentParser()
@@ -268,6 +275,7 @@ def __prepare_uproot_job_kwargs_from_coffea_args(args):
         primary_dataset=args.primary_dataset,
         pn_tagger=args.pn_tagger,
         lund_reweighting=args.lund_reweighting,
+        distortion=args.distortion
     )
 
     executor = get_executor(args.executor_name)
@@ -363,11 +371,11 @@ def main():
             if 'lundWeight' not in f: continue
             if f == 'lundWeightNom': continue
             # take jet level weights to event level, compute stat and pt variations etc
-            lund_post(events, f)
-            if f in lund_weights.fields: lund_post(lund_weights, f)
+            lund_post(events, f, doTestDist=args.distortion)
+            if f in lund_weights.fields: lund_post(lund_weights, f, doTestDist=args.distortion)
 
-        # from plot_lund import plotLundWeights
-        # plotLundWeights(events)
+        #from plot_lund import plotLundWeights
+        #plotLundWeights(events)
         # Now do overall normalization that Roberto added, requires event level, per prong normalized lund weights (processed above)
         sumw_lund = ak.sum(lund_weights["lundWeightNom"] * lund_weights["Weight"])
         skimmer_utils.update_cut_flow(cut_flow, "InitialLundNominal", sumw=sumw_lund)
