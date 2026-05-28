@@ -218,6 +218,12 @@ def add_st(events):
     events["ST"] = events.MET + events.HT
     return events
 
+def apply_gapJet_veto(events):
+    leading_jet = ak.firsts(events.Jets)
+    is_gap_jet = (leading_jet.pt > 1000) & (leading_jet.photonEnergyFraction > 0.7)
+    is_gap_jet = ak.fill_none(is_gap_jet, False)
+    events = events[~is_gap_jet]
+    return events
 
 def add_analysis_branches(events):
 
