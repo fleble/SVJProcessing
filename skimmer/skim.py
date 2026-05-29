@@ -1,7 +1,3 @@
-import sys
-sys.path.append('/uscms_data/d3/easmith/svj/SVJProcessing/')
-sys.path.append('/uscms_data/d3/easmith/svj/SVJProcessing/LundReweighting')
-
 import argparse
 from importlib import import_module
 
@@ -370,8 +366,8 @@ def main():
             lund_post(events, f)
             if f in lund_weights.fields: lund_post(lund_weights, f)
 
-        from plot_lund import plotLundWeights
-        plotLundWeights(events)
+        # from plot_lund import plotLundWeights
+        # plotLundWeights(events)
         # Now do overall normalization that Roberto added, requires event level, per prong normalized lund weights (processed above)
         sumw_lund = ak.sum(lund_weights["lundWeightNom"] * lund_weights["Weight"])
         skimmer_utils.update_cut_flow(cut_flow, "InitialLundNominal", sumw=sumw_lund)

@@ -85,7 +85,7 @@ def process(events, cut_flow, year, primary_dataset="", pn_tagger=False, **kwarg
     skimmer_utils.update_cut_flow(cut_flow, "PhiSpikeFilter", events)
 
     # GapJet veto
-    events = sequences.apply_gap_jet_veto(events)
+    events = sequences.apply_gapjet_veto(events)
     skimmer_utils.update_cut_flow(cut_flow, "GapJetVeto", events)
 
     if pn_tagger:
